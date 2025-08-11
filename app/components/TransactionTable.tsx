@@ -25,7 +25,7 @@ interface Transaction {
 interface TransactionTableProps {
   transactions: Transaction[]; // Array of combined transaction objects
   currentPage: number; // Current page number for pagination
-  itemsPerPage: number; // Number of items displayed per page
+  itemsPerPage: number; // Number of items displayed per page (kept in interface for prop consistency)
   totalTransactions: number; // Total count of transactions in the database
   totalPages: number; // Total number of pages
   onPageChange: (page: number) => void; // Callback function for page change
@@ -37,7 +37,8 @@ interface TransactionTableProps {
 export const TransactionTable: React.FC<TransactionTableProps> = ({
   transactions,
   currentPage,
-  itemsPerPage,
+  // ⭐ FIX: Removed itemsPerPage from destructuring as it's not used in this component's logic/rendering.
+  // It remains in the interface because the parent component passes it.
   totalTransactions,
   totalPages,
   onPageChange,

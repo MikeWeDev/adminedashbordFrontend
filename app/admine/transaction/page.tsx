@@ -52,7 +52,7 @@ export default function TransactionHistoryPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [totalTransactions, setTotalTransactions] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage, setItemsPerPage] = useState<number>(10); // Default items per page
+  const itemsPerPage = 10; // ⭐ FIX: Changed from useState to a constant, as setItemsPerPage was unused
   const [totalPages, setTotalPages] = useState<number>(1);
   // State for sorting
   const [sortBy, setSortBy] = useState<string>('date'); // Default sort field for transactions (date)
@@ -82,9 +82,9 @@ export default function TransactionHistoryPage() {
           totalWithdrawalAmount: data.totalWithdrawalAmount || 0,
           totalPendingTransactions: data.totalPendingTransactions || 0,
         });
-      } catch (err: any) {
+      } catch (err: unknown) { // ⭐ FIX: Changed 'any' to 'unknown'
         console.error("Error fetching transaction summary data:", err);
-        setErrorSummary(err.message);
+        setErrorSummary((err as Error).message); // ⭐ FIX: Type assertion to safely access .message
         setSummary(defaultTransactionSummary); // Fallback to defaults on error
       } finally {
         setLoadingSummary(false);
@@ -117,11 +117,11 @@ export default function TransactionHistoryPage() {
         setTransactions(data.transactions || []);
         setTotalTransactions(data.totalTransactions || 0);
         setTotalPages(data.totalPages || 1);
-      } catch (err: any) {
+      } catch (err: unknown) { // ⭐ FIX: Changed 'any' to 'unknown'
         console.error("Error fetching transaction list:", err);
-        setErrorTransactions(err.message);
+        setErrorTransactions((err as Error).message); // ⭐ FIX: Type assertion to safely access .message
         setTransactions([]); // Clear transactions on error
-        setTotalTransactions(0); // ⭐ FIX: Changed setTotalUsers to setTotalTransactions
+        setTotalTransactions(0);
         setTotalPages(1);
       } finally {
         setLoadingTransactions(false);
@@ -169,7 +169,7 @@ export default function TransactionHistoryPage() {
           <DashboardCard
             title="Total Withdrawals"
             value={`${summary.totalWithdrawalAmount.toLocaleString()} Birr`}
-            icon="revenue" // ⭐ FIX: Changed "money" to "revenue" (a valid icon type)
+            icon="revenue"
           />
           <DashboardCard
             title="Pending Transactions"

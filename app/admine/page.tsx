@@ -119,11 +119,11 @@ export default function Home() {
         // Update the games state with the fetched data
         setGames(gamesData);
 
-      } catch (err: any) {
+      } catch (err: unknown) { // ⭐ FIX: Changed 'any' to 'unknown'
         // Catch any errors during the fetch operation (network issues, JSON parsing errors,
         // or errors explicitly thrown by our `if (!res.ok)` checks).
         console.error("Error fetching dashboard data:", err); // Log the full error for development
-        setError(err.message); // Set the error message to be displayed to the user
+        setError((err as Error).message); // ⭐ FIX: Type assertion to safely access .message
         // IMPORTANT: If an error occurs, the `summary` and `games` states
         // retain their initial `defaultSummary` and empty array values,
         // ensuring the UI does not disappear and shows "0" or "N/A" for data.

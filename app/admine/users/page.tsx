@@ -45,7 +45,7 @@ export default function UserManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage, setItemsPerPage] = useState<number>(10); // Default items per page
+  const itemsPerPage = 10; // ⭐ FIX: Changed from useState to a constant, as setItemsPerPage was unused
   const [totalPages, setTotalPages] = useState<number>(1);
   // State for sorting
   const [sortBy, setSortBy] = useState<string>('registeredAt'); // Default sort field
@@ -76,9 +76,9 @@ export default function UserManagementPage() {
           totalGamesOverall: data.totalGamesOverall || 0,
           totalAccountBalance: data.totalAccountBalance || 0,
         });
-      } catch (err: any) {
+      } catch (err: unknown) { // ⭐ FIX: Changed 'any' to 'unknown'
         console.error("Error fetching user summary data:", err);
-        setErrorSummary(err.message);
+        setErrorSummary((err as Error).message); // ⭐ FIX: Type assertion to safely access .message
         setSummary(defaultUserSummary); // Fallback to defaults on error
       } finally {
         setLoadingSummary(false);
@@ -111,9 +111,9 @@ export default function UserManagementPage() {
         setUsers(data.users || []); // Ensure users array is always present, even if empty
         setTotalUsers(data.totalUsers || 0);
         setTotalPages(data.totalPages || 1);
-      } catch (err: any) {
+      } catch (err: unknown) { // ⭐ FIX: Changed 'any' to 'unknown'
         console.error("Error fetching user list:", err);
-        setErrorUsers(err.message);
+        setErrorUsers((err as Error).message); // ⭐ FIX: Type assertion to safely access .message
         setUsers([]); // Clear users on error to display "No users found"
         setTotalUsers(0);
         setTotalPages(1);
@@ -174,9 +174,6 @@ export default function UserManagementPage() {
       )}
 
       {/* User Table Section */}
-      {/* This section's content is conditionally rendered based on its loading/error state. */}
-      {/* UserTable component will display "No users found" if the `users` array is empty,
-          which happens on initial load, during loading, or if an error clears the array. */}
       {loadingUsers ? (
         <div className="text-center text-gray-600 mt-8 p-4 rounded-lg bg-white shadow-sm">Loading user list...</div>
       ) : errorUsers ? (

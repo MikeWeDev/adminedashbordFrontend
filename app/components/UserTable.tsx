@@ -20,7 +20,7 @@ interface User {
 interface UserTableProps {
   users: User[]; // Array of user objects to display
   currentPage: number; // Current page number for pagination
-  itemsPerPage: number; // Number of items displayed per page
+  itemsPerPage: number; // Number of items displayed per page (kept in interface for prop consistency)
   totalUsers: number; // Total count of users in the database
   totalPages: number; // Total number of pages
   onPageChange: (page: number) => void; // Callback function for page change
@@ -32,7 +32,8 @@ interface UserTableProps {
 export const UserTable: React.FC<UserTableProps> = ({
   users,
   currentPage,
-  itemsPerPage,
+  // ⭐ FIX: Removed itemsPerPage from destructuring as it's not used in this component's logic/rendering.
+  // It remains in the interface because the parent component passes it.
   totalUsers,
   totalPages,
   onPageChange,
@@ -104,7 +105,6 @@ export const UserTable: React.FC<UserTableProps> = ({
         </table>
       </div>
 
-      {/* Pagination Controls */}
       {totalUsers > 0 && (
         <div className="flex justify-between items-center mt-6 p-3 bg-gray-50 rounded-lg">
           <button
