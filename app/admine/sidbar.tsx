@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { FaUser, FaMoneyBillWave, FaGamepad, FaChartBar, FaThLarge } from 'react-icons/fa';
+import { FaUser, FaMoneyBillWave, FaGamepad, FaSignOutAlt, FaThLarge } from 'react-icons/fa';
 // If you need to implement active link states based on the current path,
 // uncomment the line below and the relevant 'className' logic inside the Link component.
 // import { useRouter } from 'next/router'; // For Next.js App Router, use 'next/navigation' for `usePathname`
@@ -26,7 +26,13 @@ const sidebarLinks = [
     category: "Game Monitoring & Control",
     icon: <FaGamepad />,
     href: "/admine/games" // Example href
+  },
+   {
+    category: "Logout",
+    icon: <FaSignOutAlt />, // ⭐ Used FaSignOutAlt icon
+    href: "/admine" // ⭐ Changed href to a logout specific path
   }
+  
 
 ];
 
