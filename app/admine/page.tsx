@@ -33,7 +33,7 @@ interface GameHistoryEntry {
 }
 
 // Base URL for the backend API endpoints
-const API_URL = 'https://adminedashbordbackend.onrender.com//api/dashboard';
+const API_URL = 'https://adminedashbordbackend.onrender.com/api/dashboard';
 
 /**
  * Defines the default values for the summary data.

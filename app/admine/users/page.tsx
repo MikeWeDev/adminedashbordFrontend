@@ -27,7 +27,7 @@ interface User {
   registeredAt: string;
 }
 
-const API_URL = 'https://adminedashbordbackend.onrender.com//api/dashboard'; // Backend API URL
+const API_URL = 'https://adminedashbordbackend.onrender.com/api/dashboard'; // Backend API URL
 
 /**
  * Default summary values for the User Management page.
