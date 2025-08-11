@@ -1,7 +1,7 @@
-import (redirect) from "next/navigation"
+import { redirect } from "next/navigation"; // Corrected import syntax
 
 export default function Home() {
-  return (   
+  return (
     redirect("/admine")
   );
 }
