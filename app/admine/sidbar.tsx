@@ -25,13 +25,9 @@ const sidebarLinks = [
   {
     category: "Game Monitoring & Control",
     icon: <FaGamepad />,
-    href: "/games" // Example href
-  },
-  {
-    category: "Analytics & Dispute Resolution",
-    icon: <FaChartBar />,
-    href: "/analytics" // Example href
-  },
+    href: "/admine/games" // Example href
+  }
+
 ];
 
 const Sidebar = () => {
