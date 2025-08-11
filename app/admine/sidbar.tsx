@@ -27,12 +27,17 @@ const sidebarLinks = [
     icon: <FaGamepad />,
     href: "/admine/games" // Example href
   },
-   {
+  /* {
+    category: "Game Monitoring & Control",
+    icon: <FaGamepad />,
+    href: "/" // Example href
+  }
+*/
+ {
     category: "Logout",
     icon: <FaSignOutAlt />, // ⭐ Used FaSignOutAlt icon
-    href: "/admine" // ⭐ Changed href to a logout specific path
+    href: "/admine/logout" // ⭐ Changed href to a logout specific path
   }
-  
 
 ];
 
