@@ -33,8 +33,8 @@ interface Transaction {
   account_number?: string;
 }
 
-const API_URL = 'http://localhost:5000/api/dashboard'; // For summary cards
-const TRANSACTIONS_API_URL = 'http://localhost:5000/api/transactions'; // For combined transactions table
+const API_URL = 'https://adminedashbordbackend.onrender.com//api/dashboard'; // For summary cards
+const TRANSACTIONS_API_URL = 'https://adminedashbordbackend.onrender.com//api/transactions'; // For combined transactions table
 
 /**
  * Default summary values for the Transaction History page.
