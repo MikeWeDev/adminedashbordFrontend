@@ -200,35 +200,36 @@ export default function Home() {
   // Main dashboard content rendered once data is loaded or defaults are set
   return (
    // ADDED responsive padding & margins for mobile
-<main className="bg-gray-100 min-h-screen p-4 sm:p-6 lg:p-8 ">
+<main className="bg-gray-100 min-h-[100vh] sm:min-h-screen p-4 sm:p-6 lg:p-8">
   {/* Page Title */}
   <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-800">
     Admin Dashboard Overview
   </h1>
 
   {/* Cards Section: Displays key summary metrics */}
-  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-    <DashboardCard
-      title="Total Revenue"
-      value={`${summary.revenue.toLocaleString()} Birr`}
-      icon="revenue"
-    />
-    <DashboardCard
-      title="Total Profit"
-      value={`${summary.profit.toLocaleString()} Birr`}
-      icon="profit"
-    />
-    <DashboardCard
-      title="Total Users"
-      value={summary.users.toLocaleString()}
-      icon="users"
-    />
-    <DashboardCard
-      title="Games Played Today"
-      value={`${summary.totalGamesToday}`}
-      icon="games"
-    />
-  </div>
+<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
+  <DashboardCard
+    title="Total Revenue"
+    value={`${summary.revenue.toLocaleString()} Birr`}
+    icon="revenue"
+  />
+  <DashboardCard
+    title="Total Profit"
+    value={`${summary.profit.toLocaleString()} Birr`}
+    icon="profit"
+  />
+  <DashboardCard
+    title="Total Users"
+    value={summary.users.toLocaleString()}
+    icon="users"
+  />
+  <DashboardCard
+    title="Games Played Today"
+    value={`${summary.totalGamesToday}`}
+    icon="games"
+  />
+</div>
+
 
   {/* Table Section: Lists individual games played today */}
   <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 overflow-x-auto">
