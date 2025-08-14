@@ -1,8 +1,45 @@
 'use client'; // This directive marks the component as a Client Component in Next.js
-
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { DashboardCard } from '../components/DashboardCard'; // Component for displaying individual dashboard metrics
 import { DashboardTable } from '../components/DashboardTable'; // Component for displaying the table of games played
+
+
+
+
+
+/* ------------------- Session Check Hook ------------------- */
+function useSessionCheck() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const username = localStorage.getItem('username');
+    const role = localStorage.getItem('role');
+    const expiry = localStorage.getItem('expiry');
+
+    if (!username || !role || !expiry) {
+      router.push('/auth/login');
+      return;
+    }
+
+    const expiryTime = parseInt(expiry, 10);
+    const now = new Date().getTime();
+
+    if (now > expiryTime) {
+      // Session expired → clear storage and redirect
+      localStorage.removeItem('username');
+      localStorage.removeItem('role');
+      localStorage.removeItem('expiry');
+      router.push('/auth/login');
+    }
+  }, [router]);
+}
+/* ----------------------------------------------------------- */
+
+
+
+
+
 
 /**
  * Interface defining the structure of the summary data fetched from the backend.
@@ -53,6 +90,8 @@ const defaultSummary: SummaryData = {
  * It fetches and displays summary statistics and a list of games played today.
  */
 export default function Home() {
+    useSessionCheck(); // ✅ Check session immediately
+
   // State to hold the summary data for the dashboard cards.
   // Initialized with `defaultSummary` to ensure the UI always renders.
   const [summary, setSummary] = useState<SummaryData>(defaultSummary);
