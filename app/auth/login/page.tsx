@@ -21,7 +21,7 @@ export default function LoginPage() {
       const response = await fetch('https://adminedashbordbackend.onrender.com/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: username, password }), // backend expects identifier
+        body:body: JSON.stringify({ username, password }), // backend expects identifier
       });
 
       const data = await response.json();

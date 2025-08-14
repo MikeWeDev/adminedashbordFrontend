@@ -5,9 +5,6 @@ import { DashboardCard } from '../components/DashboardCard'; // Component for di
 import { DashboardTable } from '../components/DashboardTable'; // Component for displaying the table of games played
 
 
-
-
-
 /* ------------------- Session Check Hook ------------------- */
 function useSessionCheck() {
   const router = useRouter();
