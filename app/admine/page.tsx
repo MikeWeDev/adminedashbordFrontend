@@ -66,8 +66,8 @@ interface GameHistoryEntry {
   endedAt: string | null; // Timestamp when the game session ended, can be null if ongoing or not properly closed
 }
 
-// Base URL for the backend API endpoints
-const API_URL = 'https://adminedashbordbackend.onrender.com/api/dashboard';
+// Base URL for the backend API endpoints  
+const API_URL = ' https://adminedashbordbackend.onrender.com/api/dashboard';
 
 /**
  * Defines the default values for the summary data.
@@ -199,44 +199,42 @@ export default function Home() {
 
   // Main dashboard content rendered once data is loaded or defaults are set
   return (
-    // ADDED ml-64 to create space for the fixed sidebar
-    <main className="bg-gray-100 min-h-screen p-8 ml-64">
-      {/* Page Title */}
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">Admin Dashboard Overview</h1>
-      
-      {/* Cards Section: Displays key summary metrics */}
-      {/* The cards are always rendered because 'summary' state is initialized with default values. */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <DashboardCard
-          title="Total Revenue"
-          // Formats the revenue with locale-specific thousands separators and "Birr" currency
-          value={`${summary.revenue.toLocaleString()} Birr`}
-          icon="revenue"
-        />
-        <DashboardCard
-          title="Total Profit"
-          // Formats the profit with locale-specific thousands separators and "Birr" currency
-          value={`${summary.profit.toLocaleString()} Birr`}
-          icon="profit"
-        />
-        <DashboardCard
-          title="Total Users"
-          // Formats the user count with locale-specific thousands separators
-          value={summary.users.toLocaleString()}
-          icon="users"
-        />
-        <DashboardCard
-          title="Games Played Today"
-          // UPDATED: Now only shows the total number of games played today.
-          value={`${summary.totalGamesToday} `}
-          icon="games"
-        />
-      </div>
+   // ADDED responsive padding & margins for mobile
+<main className="bg-gray-100 min-h-screen p-4 sm:p-6 lg:p-8 ">
+  {/* Page Title */}
+  <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-800">
+    Admin Dashboard Overview
+  </h1>
 
-      {/* Table Section: Lists individual games played today */}
-      {/* The DashboardTable component handles rendering "No games" if the 'games' array is empty,
-          so no extra conditional rendering is needed here. */}
-      <DashboardTable games={games} />
-    </main>
+  {/* Cards Section: Displays key summary metrics */}
+  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+    <DashboardCard
+      title="Total Revenue"
+      value={`${summary.revenue.toLocaleString()} Birr`}
+      icon="revenue"
+    />
+    <DashboardCard
+      title="Total Profit"
+      value={`${summary.profit.toLocaleString()} Birr`}
+      icon="profit"
+    />
+    <DashboardCard
+      title="Total Users"
+      value={summary.users.toLocaleString()}
+      icon="users"
+    />
+    <DashboardCard
+      title="Games Played Today"
+      value={`${summary.totalGamesToday}`}
+      icon="games"
+    />
+  </div>
+
+  {/* Table Section: Lists individual games played today */}
+  <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 overflow-x-auto">
+    <DashboardTable games={games} />
+  </div>
+</main>
+
   );
 }
