@@ -35,7 +35,7 @@ export default function RegisterPage() {
         setPassword('');
         setRole('');
         setTimeout(() => {
-          router.push('/login');
+          router.push('/auth/login');
         }, 2000);
       } else {
         setMessage(data.message || 'Registration failed. Please try again.');
