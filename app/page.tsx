@@ -17,7 +17,7 @@ export default function Home() {
     if (username && role && isSessionValid) {
       // Redirect based on role
       if (role === 'superadmin') router.push('/superadmin');
-      else if (role === 'admin') router.push('/admin');
+      else if (role === 'admin') router.push('/admine');
     } else {
       // Not logged in or session expired → clear storage and redirect to register
       localStorage.clear();
