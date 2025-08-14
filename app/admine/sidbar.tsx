@@ -21,11 +21,12 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose:
       ></div>
 
       {/* Sidebar container */}
-    <aside
+  <aside
   className={`fixed top-0 left-0 h-screen bg-gradient-to-br from-gray-900 to-gray-700 text-gray-100 flex flex-col shadow-2xl z-40 transform transition-transform duration-300
     ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
-    w-1/3 lg:w-64 lg:translate-x-0 lg:static lg:flex`}
+    w-2/3 sm:w-1/2 md:w-1/3 lg:w-64 lg:translate-x-0 lg:static lg:flex`}
 >
+
 
         {/* Header */}
         <div className="flex items-center justify-between h-20 bg-gray-950 border-b border-gray-700 px-4">
