@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import Sidebar from './Sidbar'
+import Sidebar from './Sidebar'
 import { FaBars } from 'react-icons/fa';
 
 export default function SuperAdminLayout({
