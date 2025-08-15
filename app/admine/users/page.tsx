@@ -37,8 +37,9 @@ const icons = {
   users: <FaUsers className="text-2xl sm:text-3xl text-purple-500 flex-shrink-0" />,
 };
 
+
 const Card = ({ title, value, icon }: { title: string; value: string | number; icon: keyof typeof icons }) => (
-  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start w-full ">
+  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start w-2/3">
     <div className="mb-2 sm:mb-0 sm:mr-3">{icons[icon]}</div>
     <div className="text-center sm:text-left">
       <p className="text-gray-500 text-sm truncate">{title}</p>
@@ -164,19 +165,19 @@ export default function UserManagementPage() {
   }
 
   return (
-<main className="flex-1 w-[70%] p-4 flex items-start justify-start ">
+<main className="flex-1 w-[70%] p-4 flex items-center justify-center ">
   <div className="w-[clamp(250px,100%,800px)] ">
   
-         <div className=" mx-auto flex flex-col gap-6">
+    <div className=" mx-auto flex flex-col gap-6">
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card title="Total Registered Users" value={summary.users.toLocaleString()} icon="users" />
           <Card title="Total Games (Overall)" value={`${summary.totalGamesOverall.toLocaleString()} Games`} icon="games" />
           <Card title="Total Account Balance" value={`${summary.totalAccountBalance.toLocaleString()} Birr`} icon="revenue" />
         </div>
 
         {/* Users Table */}
-        <div className="max-w-full">
+      <div className="max-w-full">
           <UserTable
             users={users}
             currentPage={currentPage}
