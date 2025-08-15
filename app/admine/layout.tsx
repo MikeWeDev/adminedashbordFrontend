@@ -7,7 +7,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen w-full relative bg-red-500 overflow-x-hidden">
+    <div className="flex min-h-screen w-full relative  overflow-x-hidden">
       {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
@@ -15,7 +15,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       />
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col bg-yellow-200">
+      <div className="flex-1 flex flex-col ">
         {/* Mobile top bar */}
         <div className="p-4 bg-blue-300 shadow-md lg:hidden flex items-center">
           <button
@@ -29,7 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Main content */}
-        <main className="flex-1 flex justify-start overflow-x-hidden ">
+        <main className="flex-1 flex justify-start overflow-x-hidden  bg-gray-100">
           {/* Inner wrapper controlling width */}
           <div className="w-full sm:w-[80%] max-w-[800px]">
             {children}

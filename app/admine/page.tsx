@@ -148,7 +148,7 @@ export default function Home() {
       </div>
 
       {/* Games Table */}
-      <div className="border-4 max-w-full">
+      <div className="max-w-full">
         <DashboardTable games={games} />
       </div>
 
