@@ -134,7 +134,7 @@ export default function Home() {
   }
 
   return (
-<main className="bg-gray-100 min-h-screen  w-[clamp(250px,70%,800px)] border-4 border-red-500 border-solid overflow-x-hidden">
+<main className="bg-gray-100 min-h-screen  w-[clamp(250px,70%,800px)] border-4 border-red-500 border-solid ">
 
       <div className="max-w-[1200px] mx-auto flex flex-col gap-6">
         
