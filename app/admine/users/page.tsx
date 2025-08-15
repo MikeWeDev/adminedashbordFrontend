@@ -43,7 +43,7 @@ const Card = ({ title, value, icon }: { title: string; value: string | number; i
     <div className="mb-2 sm:mb-0 sm:mr-3">{icons[icon]}</div>
     <div className="text-center sm:text-left">
       <p className="text-gray-500 text-sm truncate">{title}</p>
-      <h2 className="text-lg font-bold truncate">{value}</h2>
+      <h2 className="text-lg font-bold truncate text-black">{value}</h2>
     </div>
   </div>
 );
@@ -165,8 +165,8 @@ export default function UserManagementPage() {
   }
 
   return (
-<main className="flex-1 w-[70%] p-4 flex items-center justify-center ">
-  <div className="w-[clamp(250px,100%,800px)] ">
+<main className="flex-1 w-[70%] lg:w-full p-4 flex items-start justify-start">
+  <div className="w-[clamp(250px,100%,800px)] lg:w-full lg:mt-8">
   
     <div className=" mx-auto flex flex-col gap-6">
         {/* Summary Cards */}

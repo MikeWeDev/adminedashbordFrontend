@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { TransactionTable } from '../../components/TransactionTable'; // Table stays external
+import { FaMoneyBill, FaChartLine, FaUsers, FaGamepad } from 'react-icons/fa';
 
 interface TransactionSummaryData {
   totalDepositAmount: number;
@@ -33,12 +34,19 @@ const defaultTransactionSummary: TransactionSummaryData = {
   totalPendingTransactions: 0,
 };
 
-// Self-contained Card component
-const Card = ({ title, value }: { title: string; value: string | number }) => (
-  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start w-2/3">
+const icons = {
+  revenue: <FaMoneyBill className="text-2xl sm:text-3xl text-green-500 flex-shrink-0" />,
+  profit: <FaChartLine className="text-2xl sm:text-3xl text-blue-500 flex-shrink-0" />,
+  users: <FaUsers className="text-2xl sm:text-3xl text-purple-500 flex-shrink-0" />,
+  games: <FaGamepad className="text-2xl sm:text-3xl text-yellow-500 flex-shrink-0" />,
+};
+
+const Card = ({ title, value, icon }: { title: string; value: string | number; icon: keyof typeof icons }) => (
+  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start w-full">
+    <div className="mb-2 sm:mb-0 sm:mr-3">{icons[icon]}</div>
     <div className="text-center sm:text-left">
       <p className="text-gray-500 text-sm truncate">{title}</p>
-      <h2 className="text-lg font-bold truncate">{value}</h2>
+      <h2 className="text-lg font-bold truncate text-black">{value}</h2>
     </div>
   </div>
 );
@@ -125,8 +133,8 @@ export default function TransactionHistoryPage() {
   };
 
   return (
-    <main className="flex-1 w-[70%] p-4 flex items-start justify-start">
-      <div className="w-[clamp(250px,100%,800px)] mx-auto flex flex-col gap-6">
+    <main className="flex-1 w-[70%] lg:w-full p-4 flex items-start justify-start">
+      <div className="w-[clamp(250px,100%,800px)] lg:w-full lg:mt-8 mx-auto flex flex-col gap-6">
         <h1 className="text-3xl font-bold mb-8 text-gray-800">Transaction History</h1>
 
         {/* Summary Cards */}
@@ -139,10 +147,10 @@ export default function TransactionHistoryPage() {
             Error fetching transaction summary: {errorSummary}. Displaying defaults.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <Card title="Total Deposits" value={`${summary.totalDepositAmount.toLocaleString()} Birr`} />
-            <Card title="Total Withdrawals" value={`${summary.totalWithdrawalAmount.toLocaleString()} Birr`} />
-            <Card title="Pending Transactions" value={`${summary.totalPendingTransactions.toLocaleString()} Items`} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
+            <Card title="Total Deposits" value={`${summary.totalDepositAmount.toLocaleString()} Birr`} icon="revenue" />
+            <Card title="Total Withdrawals" value={`${summary.totalWithdrawalAmount.toLocaleString()} Birr`} icon="profit" />
+            <Card title="Pending Transactions" value={`${summary.totalPendingTransactions.toLocaleString()} Items`} icon="games" />
           </div>
         )}
 
