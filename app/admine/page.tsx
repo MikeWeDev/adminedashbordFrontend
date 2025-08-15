@@ -65,7 +65,7 @@ const Card = ({ title, value, icon }: { title: string; value: string | number; i
     <div className="mb-2 sm:mb-0 sm:mr-3">{icons[icon]}</div>
     <div className="text-center sm:text-left">
       <p className="text-gray-500 text-sm truncate">{title}</p>
-      <h2 className="text-lg font-bold truncate">{value}</h2>
+      <h2 className="text-lg font-bold truncate text-black">{value}</h2>
     </div>
   </div>
 );
@@ -134,13 +134,13 @@ export default function Home() {
   }
 
   return (
-<main className="flex-1 w-[70%] p-4 flex items-start justify-start ">
+<main className="flex-1 w-[70%] lg:w-full p-4 flex items-start justify-start">
   {/* Inner container with clamp and actual background */}
-  <div className="w-[clamp(250px,100%,800px)] ">
-    <div className=" mx-auto flex flex-col gap-6">
+  <div className="w-[clamp(250px,100%,800px)] lg:w-full">
+    <div className="mx-auto flex flex-col gap-6">
       
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 gap-4 ">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card title="Total Revenue" value={`${summary.revenue.toLocaleString()} Birr`} icon="revenue" />
         <Card title="Total Profit" value={`${summary.profit.toLocaleString()} Birr`} icon="profit" />
         <Card title="Total Users" value={summary.users.toLocaleString()} icon="users" />

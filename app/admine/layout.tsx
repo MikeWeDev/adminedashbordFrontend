@@ -29,9 +29,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Main content */}
-        <main className="flex-1 flex justify-start overflow-x-hidden  bg-gray-100">
+        <main className="flex-1 flex justify-start overflow-x-hidden  bg-red-500">
           {/* Inner wrapper controlling width */}
-          <div className="w-full sm:w-[80%] max-w-[800px]">
+          <div className="w-full">
             {children}
           </div>
         </main>
