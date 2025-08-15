@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { UserTable } from '../../components/UserTable';
 import { FaMoneyBill, FaGamepad, FaUsers } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
 
 /* -------------------- Interfaces -------------------- */
 interface UserSummaryData {
@@ -36,19 +37,41 @@ const icons = {
   users: <FaUsers className="text-2xl sm:text-3xl text-purple-500 flex-shrink-0" />,
 };
 
-
 const Card = ({ title, value, icon }: { title: string; value: string | number; icon: keyof typeof icons }) => (
-  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-start w-1/3 sm:w-full">
-    <div className="flex items-center gap-3 mb-2">
-      {icons[icon]}
-      <p className="text-gray-500 text-sm">{title}</p>
+  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start">
+    <div className="mb-2 sm:mb-0 sm:mr-3">{icons[icon]}</div>
+    <div className="text-center sm:text-left">
+      <p className="text-gray-500 text-sm truncate">{title}</p>
+      <h2 className="text-lg font-bold truncate">{value}</h2>
     </div>
-    <h2 className="text-lg font-bold">{value}</h2>
   </div>
 );
 
+/* -------------------- Session Check Hook -------------------- */
+function useSessionCheck() {
+  const router = useRouter();
+  useEffect(() => {
+    const username = localStorage.getItem('username');
+    const role = localStorage.getItem('role');
+    const expiry = localStorage.getItem('expiry');
+    if (!username || !role || !expiry) {
+      router.push('/auth/login');
+      return;
+    }
+    const expiryTime = parseInt(expiry, 10);
+    if (Date.now() > expiryTime) {
+      localStorage.removeItem('username');
+      localStorage.removeItem('role');
+      localStorage.removeItem('expiry');
+      router.push('/auth/login');
+    }
+  }, [router]);
+}
+
 /* -------------------- Main Component -------------------- */
 export default function UserManagementPage() {
+  useSessionCheck();
+
   const [summary, setSummary] = useState<UserSummaryData>(defaultUserSummary);
   const [users, setUsers] = useState<User[]>([]);
   const [totalUsers, setTotalUsers] = useState<number>(0);
@@ -61,7 +84,7 @@ export default function UserManagementPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  /* --------- Fetch Data --------- */
+  /* -------- Fetch Summary & Users -------- */
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -73,7 +96,7 @@ export default function UserManagementPage() {
         if (!summaryRes.ok) throw new Error(`Failed to fetch summary: ${summaryRes.statusText}`);
         const summaryData = await summaryRes.json();
 
-        // Fetch users
+        // Fetch users with pagination & sorting
         const queryParams = new URLSearchParams({
           page: currentPage.toString(),
           limit: itemsPerPage.toString(),
@@ -106,7 +129,7 @@ export default function UserManagementPage() {
     fetchData();
   }, [currentPage, itemsPerPage, sortBy, sortOrder]);
 
-  /* --------- Handlers --------- */
+  /* -------- Handlers -------- */
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
@@ -116,7 +139,7 @@ export default function UserManagementPage() {
     setCurrentPage(1);
   };
 
-  /* --------- Render --------- */
+  /* -------- Render -------- */
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -141,41 +164,31 @@ export default function UserManagementPage() {
   }
 
   return (
-  <main className="bg-gray-100 min-h-screen p-4  ">
-  <div className="flex flex-col gap-4  justify-center items-start overflow-hidden ">
+    <main className="bg-gray-100 min-h-screen p-4 overflow-hidden">
+      <div className="max-w-[1200px] mx-auto flex flex-col gap-6">
 
-    {/* Summary Cards */}
-    <div className="flex flex-col gap-4 w-full sm:w-3/4 md:w-2/3 lg:w-1/2 mx-auto  ">
-      <Card title="Total Registered Users" value={summary.users.toLocaleString()} icon="users" />
-      <Card
-        title="Total Games (Overall)"
-        value={`${summary.totalGamesOverall.toLocaleString()} Games`}
-        icon="games"
-      />
-      <Card
-        title="Total Account Balance"
-        value={`${summary.totalAccountBalance.toLocaleString()} Birr`}
-        icon="revenue"
-      />
-    </div>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 gap-4">
+          <Card title="Total Registered Users" value={summary.users.toLocaleString()} icon="users" />
+          <Card title="Total Games (Overall)" value={`${summary.totalGamesOverall.toLocaleString()} Games`} icon="games" />
+          <Card title="Total Account Balance" value={`${summary.totalAccountBalance.toLocaleString()} Birr`} icon="revenue" />
+        </div>
 
-    {/* User Table */}
-    <div className="w-full overflow-x-auto">
-      <UserTable
-        users={users}
-        currentPage={currentPage}
-        itemsPerPage={itemsPerPage}
-        totalUsers={totalUsers}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-        onSortChange={handleSortChange}
-        currentSortBy={sortBy}
-        currentSortOrder={sortOrder}
-      />
-    </div>
-  </div>
-</main>
-
-
+        {/* Users Table */}
+        <div className="w-full">
+          <UserTable
+            users={users}
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            totalUsers={totalUsers}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            onSortChange={handleSortChange}
+            currentSortBy={sortBy}
+            currentSortOrder={sortOrder}
+          />
+        </div>
+      </div>
+    </main>
   );
 }

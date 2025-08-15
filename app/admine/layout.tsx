@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { FaBars } from "react-icons/fa";
-import Sidebar from "./sidbar";
+import Sidebar from "./Sidebar"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
