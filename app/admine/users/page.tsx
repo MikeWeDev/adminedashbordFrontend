@@ -166,7 +166,8 @@ export default function UserManagementPage() {
   return (
 <main className="flex-1 w-[70%] p-4 flex items-start justify-start ">
   <div className="w-[clamp(250px,100%,800px)] ">
-
+  
+         <div className=" mx-auto flex flex-col gap-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 gap-4">
           <Card title="Total Registered Users" value={summary.users.toLocaleString()} icon="users" />
@@ -188,6 +189,10 @@ export default function UserManagementPage() {
             currentSortOrder={sortOrder}
           />
         </div>
+
+
+        </div>
+
       </div>
     </main>
   );
