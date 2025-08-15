@@ -35,7 +35,7 @@ const defaultTransactionSummary: TransactionSummaryData = {
 
 // Self-contained Card component
 const Card = ({ title, value }: { title: string; value: string | number }) => (
-  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start w-3/4">
+  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start w-2/3">
     <div className="text-center sm:text-left">
       <p className="text-gray-500 text-sm truncate">{title}</p>
       <h2 className="text-lg font-bold truncate">{value}</h2>
