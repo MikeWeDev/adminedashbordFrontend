@@ -61,7 +61,7 @@ const icons = {
 };
 
 const Card = ({ title, value, icon }: { title: string; value: string | number; icon: keyof typeof icons }) => (
-  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start w-3/4 ">
+  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start w-2/3 ">
     <div className="mb-2 sm:mb-0 sm:mr-3">{icons[icon]}</div>
     <div className="text-center sm:text-left">
       <p className="text-gray-500 text-sm truncate">{title}</p>
@@ -134,11 +134,11 @@ export default function Home() {
   }
 
   return (
-    <main className="bg-gray-100 min-h-screen p-4 overflow-hidden">
+    <main className="bg-gray-100 min-h-screen p-4 overflow-hidden border-4 border-red-500 border-solid">
       <div className="max-w-[1200px] mx-auto flex flex-col gap-6">
         
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-4 border-4 border-blue-500 border-solid">
           <Card title="Total Revenue" value={`${summary.revenue.toLocaleString()} Birr`} icon="revenue" />
           <Card title="Total Profit" value={`${summary.profit.toLocaleString()} Birr`} icon="profit" />
           <Card title="Total Users" value={summary.users.toLocaleString()} icon="users" />
@@ -146,7 +146,7 @@ export default function Home() {
         </div>
 
         {/* Games Table */}
-        <div className="w-full">
+        <div className="w-full border-4 border-pink-500 border-solid">
           <DashboardTable games={games} />
         </div>
       </div>
