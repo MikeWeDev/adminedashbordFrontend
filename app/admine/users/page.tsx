@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import SuperAdminLayout from '../layout'; // Make sure this exists
-import { DashboardCard } from '../../components/DashboardCard';
 import { UserTable } from '../../components/UserTable';
+import { FaMoneyBill, FaGamepad, FaUsers } from 'react-icons/fa';
 
 /* -------------------- Interfaces -------------------- */
 interface UserSummaryData {
@@ -30,9 +29,26 @@ const defaultUserSummary: UserSummaryData = {
   totalAccountBalance: 0,
 };
 
+/* -------------------- Icons & Card -------------------- */
+const icons = {
+  revenue: <FaMoneyBill className="text-2xl sm:text-3xl text-green-500 flex-shrink-0" />,
+  games: <FaGamepad className="text-2xl sm:text-3xl text-yellow-500 flex-shrink-0" />,
+  users: <FaUsers className="text-2xl sm:text-3xl text-purple-500 flex-shrink-0" />,
+};
+
+
+const Card = ({ title, value, icon }: { title: string; value: string | number; icon: keyof typeof icons }) => (
+  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-start w-1/3 sm:w-full">
+    <div className="flex items-center gap-3 mb-2">
+      {icons[icon]}
+      <p className="text-gray-500 text-sm">{title}</p>
+    </div>
+    <h2 className="text-lg font-bold">{value}</h2>
+  </div>
+);
+
 /* -------------------- Main Component -------------------- */
 export default function UserManagementPage() {
-  /* --------- State --------- */
   const [summary, setSummary] = useState<UserSummaryData>(defaultUserSummary);
   const [users, setUsers] = useState<User[]>([]);
   const [totalUsers, setTotalUsers] = useState<number>(0);
@@ -42,68 +58,52 @@ export default function UserManagementPage() {
   const [sortBy, setSortBy] = useState<string>('registeredAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const [loadingSummary, setLoadingSummary] = useState<boolean>(true);
-  const [loadingUsers, setLoadingUsers] = useState<boolean>(true);
-  const [errorSummary, setErrorSummary] = useState<string | null>(null);
-  const [errorUsers, setErrorUsers] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  /* --------- Fetch Summary Data --------- */
+  /* --------- Fetch Data --------- */
   useEffect(() => {
-    const fetchSummary = async () => {
+    const fetchData = async () => {
       try {
-        setLoadingSummary(true);
-        setErrorSummary(null);
-        const res = await fetch(`${API_URL}/summary`);
-        if (!res.ok) throw new Error(`Failed to fetch summary: ${res.status} ${res.statusText}`);
-        const data = await res.json();
-        setSummary({
-          users: data.users || 0,
-          totalGamesOverall: data.totalGamesOverall || 0,
-          totalAccountBalance: data.totalAccountBalance || 0,
-        });
-      } catch (err: unknown) {
-        console.error('Error fetching summary:', err);
-        setErrorSummary((err as Error).message);
-        setSummary(defaultUserSummary);
-      } finally {
-        setLoadingSummary(false);
-      }
-    };
-    fetchSummary();
-  }, []);
+        setLoading(true);
+        setError(null);
 
-  /* --------- Fetch User Table --------- */
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoadingUsers(true);
-        setErrorUsers(null);
+        // Fetch summary
+        const summaryRes = await fetch(`${API_URL}/summary`);
+        if (!summaryRes.ok) throw new Error(`Failed to fetch summary: ${summaryRes.statusText}`);
+        const summaryData = await summaryRes.json();
 
+        // Fetch users
         const queryParams = new URLSearchParams({
           page: currentPage.toString(),
           limit: itemsPerPage.toString(),
           sortBy,
           sortOrder,
         }).toString();
+        const usersRes = await fetch(`${API_URL}/users?${queryParams}`);
+        if (!usersRes.ok) throw new Error(`Failed to fetch users: ${usersRes.statusText}`);
+        const usersData = await usersRes.json();
 
-        const res = await fetch(`${API_URL}/users?${queryParams}`);
-        if (!res.ok) throw new Error(`Failed to fetch users: ${res.status} ${res.statusText}`);
-
-        const data = await res.json();
-        setUsers(data.users || []);
-        setTotalUsers(data.totalUsers || 0);
-        setTotalPages(data.totalPages || 1);
+        setSummary({
+          users: summaryData.users || 0,
+          totalGamesOverall: summaryData.totalGamesOverall || 0,
+          totalAccountBalance: summaryData.totalAccountBalance || 0,
+        });
+        setUsers(usersData.users || []);
+        setTotalUsers(usersData.totalUsers || 0);
+        setTotalPages(usersData.totalPages || 1);
       } catch (err: unknown) {
-        console.error('Error fetching users:', err);
-        setErrorUsers((err as Error).message);
+        setError((err as Error).message);
+        setSummary(defaultUserSummary);
         setUsers([]);
         setTotalUsers(0);
         setTotalPages(1);
       } finally {
-        setLoadingUsers(false);
+        setLoading(false);
       }
     };
-    fetchUsers();
+
+    fetchData();
   }, [currentPage, itemsPerPage, sortBy, sortOrder]);
 
   /* --------- Handlers --------- */
@@ -117,60 +117,65 @@ export default function UserManagementPage() {
   };
 
   /* --------- Render --------- */
-  return (
-    <SuperAdminLayout>
-      {/* Using vh unit trick to avoid mobile black space */}
-      <div className="p-4 sm:p-6 lg:p-8 bg-gray-100 min-h-[calc(var(--vh,1vh)*100)]">
-        <h1 className="text-3xl font-bold mb-8 text-gray-800">User Management</h1>
-
-        {/* Summary Cards */}
-        {loadingSummary ? (
-          <div className="text-center text-gray-600 p-4 rounded-lg bg-white shadow-sm">
-            Loading summary data...
-          </div>
-        ) : errorSummary ? (
-          <div className="text-center text-red-600 p-4 rounded-lg bg-white shadow-sm">
-            Error fetching summary: {errorSummary}. Displaying defaults.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <DashboardCard title="Total Registered Users" value={summary.users.toLocaleString()} icon="users" />
-            <DashboardCard
-              title="Total Games (Overall)"
-              value={`${summary.totalGamesOverall.toLocaleString()} Games`}
-              icon="games"
-            />
-            <DashboardCard
-              title="Total Account Balance"
-              value={`${summary.totalAccountBalance.toLocaleString()} Birr`}
-              icon="revenue"
-            />
-          </div>
-        )}
-
-        {/* User Table */}
-        {loadingUsers ? (
-          <div className="text-center text-gray-600 mt-8 p-4 rounded-lg bg-white shadow-sm">
-            Loading user list...
-          </div>
-        ) : errorUsers ? (
-          <div className="text-center text-red-600 mt-8 p-4 rounded-lg bg-white shadow-sm">
-            Error fetching users: {errorUsers}.
-          </div>
-        ) : (
-          <UserTable
-            users={users}
-            currentPage={currentPage}
-            itemsPerPage={itemsPerPage}
-            totalUsers={totalUsers}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-            onSortChange={handleSortChange}
-            currentSortBy={sortBy}
-            currentSortOrder={sortOrder}
-          />
-        )}
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-center text-lg font-semibold text-gray-700 bg-white p-6 rounded-lg shadow-md">
+          Loading dashboard data... Please wait.
+        </div>
       </div>
-    </SuperAdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-center text-lg font-semibold text-red-600 bg-white p-6 rounded-lg shadow-md">
+          <p>Error: {error}</p>
+          <p className="text-sm text-gray-500 mt-2">
+            Displaying default values due to a data fetching issue.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+  <main className="bg-gray-100 min-h-screen p-4  ">
+  <div className="flex flex-col gap-4  justify-center items-start overflow-hidden ">
+
+    {/* Summary Cards */}
+    <div className="flex flex-col gap-4 w-full sm:w-3/4 md:w-2/3 lg:w-1/2 mx-auto  ">
+      <Card title="Total Registered Users" value={summary.users.toLocaleString()} icon="users" />
+      <Card
+        title="Total Games (Overall)"
+        value={`${summary.totalGamesOverall.toLocaleString()} Games`}
+        icon="games"
+      />
+      <Card
+        title="Total Account Balance"
+        value={`${summary.totalAccountBalance.toLocaleString()} Birr`}
+        icon="revenue"
+      />
+    </div>
+
+    {/* User Table */}
+    <div className="w-full overflow-x-auto">
+      <UserTable
+        users={users}
+        currentPage={currentPage}
+        itemsPerPage={itemsPerPage}
+        totalUsers={totalUsers}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        onSortChange={handleSortChange}
+        currentSortBy={sortBy}
+        currentSortOrder={sortOrder}
+      />
+    </div>
+  </div>
+</main>
+
+
   );
 }
