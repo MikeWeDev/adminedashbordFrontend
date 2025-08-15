@@ -31,7 +31,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Main content */}
-        <main className="flex-1 overflow-x-hidden  bg-red-200">{children}</main>
+        <main className="flex-1  bg-red-200">{children}</main>
       </div>
     </div>
   );

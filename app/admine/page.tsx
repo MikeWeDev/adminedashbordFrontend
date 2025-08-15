@@ -136,7 +136,7 @@ export default function Home() {
   return (
 <main className="flex-1 w-[70%] p-4 flex items-start justify-start border-4 border-red-500 border-solid ">
   {/* Inner container with clamp and actual background */}
-  <div className="w-[clamp(250px,80%,800px)]  bg-gray-100">
+  <div className="w-[clamp(250px,100%,800px)]  bg-gray-100">
     <div className=" mx-auto flex flex-col gap-6">
       
       {/* Summary Cards */}
