@@ -7,13 +7,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen w-full relative bg-red-500">
+    <div className="flex min-h-screen w-full relative bg-red-500 overflow-x-hidden">
       {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        // Debug background for sidebar container (optional)
-        // style={{ backgroundColor: 'rgba(0,255,0,0.3)' }}
       />
 
       {/* Main content area */}
@@ -31,7 +29,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Main content */}
-        <main className="flex-1  bg-red-200">{children}</main>
+        <main className="flex-1 flex justify-start overflow-x-hidden ">
+          {/* Inner wrapper controlling width */}
+          <div className="w-full sm:w-[80%] max-w-[800px]">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );
