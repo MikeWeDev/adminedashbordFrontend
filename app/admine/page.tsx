@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { DashboardTable } from '../components/DashboardTable';
 import { FaMoneyBill, FaChartLine, FaUsers, FaGamepad } from 'react-icons/fa';
-
+//fixing the responsivness issue
 /* ------------------- Session Check Hook ------------------- */
 function useSessionCheck() {
   const router = useRouter();
@@ -134,7 +134,7 @@ export default function Home() {
   }
 
   return (
-<main className="bg-gray-100 min-h-screen  w-[clamp(250px,60%,800px)] border-4 border-red-500 border-solid overflow-x-hidden">
+<main className="bg-gray-100 min-h-screen  w-[clamp(250px,70%,800px)] border-4 border-red-500 border-solid overflow-x-hidden">
 
       <div className="max-w-[1200px] mx-auto flex flex-col gap-6">
         
