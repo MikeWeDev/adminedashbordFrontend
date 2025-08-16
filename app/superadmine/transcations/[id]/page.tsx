@@ -33,39 +33,34 @@ export default function PaymentEditPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-useEffect(() => {
-  if (!id) {
-    setError('Transaction reference not found in URL.');
-    setLoading(false);
-    return;
-  }
-
-  const fetchTransactionData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Fetch by tx_ref using the new backend route
-      const res = await fetch(`${API_URL}/by-tx-ref/${id}`);
-      if (!res.ok) {
-        if (res.status === 404) throw new Error(`Transaction with tx_ref ${id} not found.`);
-        throw new Error(`Failed to fetch transaction: ${res.status}`);
-      }
-
-      const data: Transaction = await res.json();
-      setTransaction(data);
-
-      // Set form data with current transaction status and amount
-      setFormData({ status: data.status, amount: data.amount });
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
+  useEffect(() => {
+    if (!id) {
+      setError('Transaction ID not found in URL.');
       setLoading(false);
+      return;
     }
-  };
 
-  fetchTransactionData();
-}, [id]);
+    const fetchTransactionData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch(`${API_URL}/${id}`);
+        if (!res.ok) {
+          if (res.status === 404) throw new Error(`Transaction with ID ${id} not found.`);
+          throw new Error(`Failed to fetch transaction: ${res.status}`);
+        }
+        const data: Transaction = await res.json();
+        setTransaction(data);
+        setFormData({ status: data.status, amount: data.amount });
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactionData();
+  }, [id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -75,50 +70,47 @@ useEffect(() => {
     }));
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  if (!transaction?._id) {
-    setError('Cannot submit: Transaction ID is missing.');
-    return;
-  }
-
-  if (!formData.status || isNaN(Number(formData.amount))) {
-    setError('Status and Amount are required.');
-    return;
-  }
-
-  try {
-    setSubmitting(true);
-    setError(null);
-    setSuccessMessage(null);
-
-    // Use the actual MongoDB _id for the PUT request
-    const res = await fetch(`${API_URL}/${transaction._id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
-    });
-
-    if (!res.ok) {
-      const errData = await res.json();
-      throw new Error(errData.message || `Failed to update transaction: ${res.status}`);
+    if (!id) {
+      setError('Cannot submit: Transaction ID is missing.');
+      return;
     }
 
-    const updatedTransaction: Transaction = await res.json();
+    if (!formData.status || isNaN(Number(formData.amount))) {
+      setError('Status and Amount are required.');
+      return;
+    }
 
-    setSuccessMessage('Transaction updated successfully!');
-    setTransaction(updatedTransaction);
-  } catch (err) {
-    setError((err as Error).message);
-  } finally {
-    setSubmitting(false);
-  }
-};
+    try {
+      setSubmitting(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || `Failed to update transaction: ${res.status}`);
+      }
+
+      setSuccessMessage('Transaction updated successfully!');
+      setTransaction(prev => (prev ? { ...prev, ...formData } as Transaction : null));
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-8 ">
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-8">
         <FaSpinner className="animate-spin text-indigo-600 text-4xl mr-3" />
         <span className="text-xl text-gray-700">Loading transaction data...</span>
       </div>
@@ -127,7 +119,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   if (error && !transaction) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-8 ">
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-8">
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
           <strong className="font-bold">Error!</strong>
           <span className="ml-2">{error}</span>
@@ -138,7 +130,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   if (!transaction) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-8 ml-64">
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-8">
         <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative">
           <strong className="font-bold">Not Found!</strong>
           <span className="ml-2">Transaction could not be loaded.</span>
@@ -156,21 +148,22 @@ const handleSubmit = async (e: React.FormEvent) => {
     : ['pending', 'success', 'failed'];
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen ">
-      <div className="bg-white p-6 rounded-lg shadow-md mb-8 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-extrabold text-gray-800 mb-2">
-            <FaEdit className="inline mr-3 text-indigo-600" />
-            Edit {transaction.type}: {transaction.tx_ref}
-          </h1>
-          <p className="text-gray-600 text-lg">Modify transaction details manually.</p>
-        </div>
-        <Link href="/superadmine/transcations">
-          <button className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg flex items-center gap-2">
-            <FaArrowLeft /> Back 
-          </button>
-        </Link>
-      </div>
+    <div className="p-8 bg-gray-100 min-h-screen">
+     <div className="bg-white p-6 rounded-lg shadow-md mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
+  <div className="w-full md:w-auto">
+    <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800 mb-2 flex items-center flex-wrap">
+      <FaEdit className="inline mr-2 md:mr-3 text-indigo-600" />
+      <span>Edit {transaction.type}: {transaction.tx_ref}</span>
+    </h1>
+    <p className="text-gray-600 text-base md:text-lg">Modify transaction details manually.</p>
+  </div>
+  <Link href="/superadmine/transcations" className="w-full md:w-auto">
+    <button className="w-full md:w-auto bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2">
+      <FaArrowLeft /> Back
+    </button>
+  </Link>
+</div>
+
 
       <div className="bg-white p-8 rounded-lg shadow-md">
         {successMessage && <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">{successMessage}</div>}
