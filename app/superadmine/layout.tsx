@@ -69,7 +69,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
           >
             <FaBars />
           </button>
-          <h1 className="ml-4 font-bold text-lg">Admin Dashboard</h1>
+          <h1 className="ml-4 font-bold text-lg">Super Admin Dashboard</h1>
         </div>
 
         {/* Main content */}

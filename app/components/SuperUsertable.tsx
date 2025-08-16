@@ -93,7 +93,7 @@ export const UserTable: React.FC<UserTableProps> = ({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="table-auto border-collapse max-w-[1500px]">
+        <table className="table-auto border-collapse w-full ">
           <thead>
             <tr className="bg-gray-200 text-gray-700 uppercase text-xs leading-normal">
               <th
@@ -103,7 +103,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                 Username {renderSortIcon('username')}
               </th>
               <th
-                className="py-3 px-6 text-left cursor-pointer hover:bg-gray-300 transition-colors duration-150"
+                className="py-3 px-6 text-left cursor-pointer hover:bg-gray-300 transition-colors duration-150 hidden md:table-cell"
                 onClick={() => handleSortClick('telegramId')}
               >
                 Telegram ID {renderSortIcon('telegramId')}
@@ -135,7 +135,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                   <td className="py-3 px-6 text-left whitespace-nowrap">
                     {user.username}
                   </td>
-                  <td className="py-3 px-6 text-left">
+                  <td className="py-3 px-6 text-left hidden md:table-cell">
                     {user.telegramId || 'N/A'}
                   </td>
                   <td className="py-3 px-6 text-left">
@@ -179,27 +179,30 @@ export const UserTable: React.FC<UserTableProps> = ({
         </table>
       </div>
 
-      {totalUsers > 0 && (
-        <div className="flex justify-between items-center mt-6 p-3 bg-gray-50 rounded-lg">
-          <button
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Previous
-          </button>
-          <span className="text-gray-700">
-            Page {currentPage} of {totalPages} ({totalUsers} users)
-          </span>
-          <button
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Next
-          </button>
-        </div>
-      )}
+     {totalUsers > 0 && (
+  <div className="flex flex-col md:flex-row justify-between items-center mt-6 p-3 bg-gray-50 rounded-lg gap-2">
+    <button
+      onClick={() => onPageChange(currentPage - 1)}
+      disabled={currentPage === 1}
+      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full md:w-auto"
+    >
+      Previous
+    </button>
+
+    <span className="text-gray-700 text-center">
+      Page {currentPage} of {totalPages} ({totalUsers} users)
+    </span>
+
+    <button
+      onClick={() => onPageChange(currentPage + 1)}
+      disabled={currentPage === totalPages}
+      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full md:w-auto"
+    >
+      Next
+    </button>
+  </div>
+)}
+
     </div>
   );
 };
