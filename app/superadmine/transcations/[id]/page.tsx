@@ -33,34 +33,39 @@ export default function PaymentEditPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!id) {
-      setError('Transaction ID not found in URL.');
-      setLoading(false);
-      return;
-    }
+useEffect(() => {
+  if (!id) {
+    setError('Transaction reference not found in URL.');
+    setLoading(false);
+    return;
+  }
 
-    const fetchTransactionData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await fetch(`${API_URL}/${id}`);
-        if (!res.ok) {
-          if (res.status === 404) throw new Error(`Transaction with ID ${id} not found.`);
-          throw new Error(`Failed to fetch transaction: ${res.status}`);
-        }
-        const data: Transaction = await res.json();
-        setTransaction(data);
-        setFormData({ status: data.status, amount: data.amount });
-      } catch (err) {
-        setError((err as Error).message);
-      } finally {
-        setLoading(false);
+  const fetchTransactionData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch by tx_ref using the new backend route
+      const res = await fetch(`${API_URL}/by-tx-ref/${id}`);
+      if (!res.ok) {
+        if (res.status === 404) throw new Error(`Transaction with tx_ref ${id} not found.`);
+        throw new Error(`Failed to fetch transaction: ${res.status}`);
       }
-    };
 
-    fetchTransactionData();
-  }, [id]);
+      const data: Transaction = await res.json();
+      setTransaction(data);
+
+      // Set form data with current transaction status and amount
+      setFormData({ status: data.status, amount: data.amount });
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchTransactionData();
+}, [id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -70,47 +75,50 @@ export default function PaymentEditPage() {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    if (!id) {
-      setError('Cannot submit: Transaction ID is missing.');
-      return;
+  if (!transaction?._id) {
+    setError('Cannot submit: Transaction ID is missing.');
+    return;
+  }
+
+  if (!formData.status || isNaN(Number(formData.amount))) {
+    setError('Status and Amount are required.');
+    return;
+  }
+
+  try {
+    setSubmitting(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    // Use the actual MongoDB _id for the PUT request
+    const res = await fetch(`${API_URL}/${transaction._id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json();
+      throw new Error(errData.message || `Failed to update transaction: ${res.status}`);
     }
 
-    if (!formData.status || isNaN(Number(formData.amount))) {
-      setError('Status and Amount are required.');
-      return;
-    }
+    const updatedTransaction: Transaction = await res.json();
 
-    try {
-      setSubmitting(true);
-      setError(null);
-      setSuccessMessage(null);
-
-      const res = await fetch(`${API_URL}/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || `Failed to update transaction: ${res.status}`);
-      }
-
-      setSuccessMessage('Transaction updated successfully!');
-      setTransaction(prev => (prev ? { ...prev, ...formData } as Transaction : null));
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    setSuccessMessage('Transaction updated successfully!');
+    setTransaction(updatedTransaction);
+  } catch (err) {
+    setError((err as Error).message);
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-8 ml-64">
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-8 ">
         <FaSpinner className="animate-spin text-indigo-600 text-4xl mr-3" />
         <span className="text-xl text-gray-700">Loading transaction data...</span>
       </div>
@@ -119,7 +127,7 @@ export default function PaymentEditPage() {
 
   if (error && !transaction) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-8 ml-64">
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-8 ">
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
           <strong className="font-bold">Error!</strong>
           <span className="ml-2">{error}</span>

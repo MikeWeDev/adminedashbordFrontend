@@ -175,7 +175,7 @@ export default function SuperAdminUserEditPage() {
         <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative" role="alert">
           <strong className="font-bold">Not Found!</strong>
           <span className="block sm:inline ml-2">User details could not be loaded.</span>
-          <Link href="/super-admin/users">
+          <Link href="/superadmine/userMangment">
             <a className="ml-4 text-indigo-600 hover:underline">Back to User List</a>
           </Link>
         </div>
@@ -197,7 +197,7 @@ export default function SuperAdminUserEditPage() {
       Modify user data and audit balance changes.
     </p>
   </div>
-  <Link href="/super-admin/users" className="w-full md:w-auto">
+  <Link href="/superadmine/userMangment" className="w-full md:w-auto">
     <button className="w-full md:w-auto bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg flex justify-center items-center gap-2 transition-colors duration-200">
       <FaArrowLeft />
       Back
