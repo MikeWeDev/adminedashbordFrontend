@@ -1,21 +1,34 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { UserTable } from '../../components/SuperUsertable'; // New UserTable component
+import { useRouter } from 'next/navigation';
+import { UserTable } from '../../components/SuperUsertable';
 
-/**
- * Interface defining the summary data for the User Management dashboard.
- */
-interface UserSummaryData {
-  users: number; // Total registered users
-  totalGamesOverall: number; // Total games played overall
-  totalAccountBalance: number; // Total sum of all user balances
+function useSessionCheck() {
+  const router = useRouter();
+  useEffect(() => {
+    const username = localStorage.getItem('username');
+    const role = localStorage.getItem('role');
+    const expiry = localStorage.getItem('expiry');
+
+    if (!username || !role || !expiry) router.push('/auth/login');
+
+    const expiryTime = parseInt(expiry || '0', 10);
+    if (new Date().getTime() > expiryTime) {
+      localStorage.removeItem('username');
+      localStorage.removeItem('role');
+      localStorage.removeItem('expiry');
+      router.push('/auth/login');
+    }
+  }, [router]);
 }
 
-/**
- * Interface defining the structure of a single User document.
- * This should match your backend User schema.
- */
+interface UserSummaryData {
+  users: number;
+  totalGamesOverall: number;
+  totalAccountBalance: number;
+}
+
 interface User {
   _id: string;
   telegramId: number;
@@ -26,59 +39,42 @@ interface User {
   registeredAt: string;
 }
 
-const API_URL = 'https://adminedashbordbackend.onrender.com/api/dashboard'; // Backend API URL
+const API_URL = 'https://adminedashbordbackend.onrender.com/api/dashboard';
+const defaultSummary: UserSummaryData = { users: 0, totalGamesOverall: 0, totalAccountBalance: 0 };
 
-/**
- * Default summary values for the User Management page.
- */
-const defaultUserSummary: UserSummaryData = {
-  users: 0,
-  totalGamesOverall: 0,
-  totalAccountBalance: 0,
-};
 
 export default function UserManagementPage() {
-  // State for summary cards, initialized with default values
-  const [summary, setSummary] = useState<UserSummaryData>(defaultUserSummary);
-  // State for the user list and pagination, initialized as an empty array
-  const [users, setUsers] = useState<User[]>([]);
-  const [totalUsers, setTotalUsers] = useState<number>(0);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 10; // ⭐ FIX: Changed from useState to a constant, as setItemsPerPage was unused
-  const [totalPages, setTotalPages] = useState<number>(1);
-  // State for sorting
-  const [sortBy, setSortBy] = useState<string>('registeredAt'); // Default sort field
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // Default sort order
+  useSessionCheck();
 
-  // Separate loading and error states for summary cards and user table
-  const [loadingSummary, setLoadingSummary] = useState<boolean>(true);
-  const [loadingUsers, setLoadingUsers] = useState<boolean>(true);
+  const [summary, setSummary] = useState<UserSummaryData>(defaultSummary);
+  const [users, setUsers] = useState<User[]>([]);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const [totalPages, setTotalPages] = useState(1);
+  const [sortBy, setSortBy] = useState('registeredAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  const [loadingSummary, setLoadingSummary] = useState(true);
+  const [loadingUsers, setLoadingUsers] = useState(true);
   const [errorSummary, setErrorSummary] = useState<string | null>(null);
   const [errorUsers, setErrorUsers] = useState<string | null>(null);
 
-  /**
-   * useEffect hook to fetch summary data (Total Users, Total Games Overall, Total Account Balance).
-   * This runs once on component mount.
-   */
   useEffect(() => {
     const fetchSummary = async () => {
       try {
         setLoadingSummary(true);
-        setErrorSummary(null); // Clear previous errors
+        setErrorSummary(null);
         const res = await fetch(`${API_URL}/summary`);
-        if (!res.ok) {
-          throw new Error(`Failed to fetch summary: ${res.status} ${res.statusText}`);
-        }
+        if (!res.ok) throw new Error(`Failed to fetch summary: ${res.statusText}`);
         const data = await res.json();
         setSummary({
           users: data.users || 0,
           totalGamesOverall: data.totalGamesOverall || 0,
           totalAccountBalance: data.totalAccountBalance || 0,
         });
-      } catch (err: unknown) { // ⭐ FIX: Changed 'any' to 'unknown'
-        console.error("Error fetching user summary data:", err);
-        setErrorSummary((err as Error).message); // ⭐ FIX: Type assertion to safely access .message
-        setSummary(defaultUserSummary); // Fallback to defaults on error
+      } catch (err: unknown) {
+        setErrorSummary((err as Error).message);
       } finally {
         setLoadingSummary(false);
       }
@@ -86,36 +82,25 @@ export default function UserManagementPage() {
     fetchSummary();
   }, []);
 
-  /**
-   * useEffect hook to fetch paginated user data.
-   * This runs on mount and whenever `currentPage`, `itemsPerPage`, `sortBy`, or `sortOrder` changes.
-   */
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         setLoadingUsers(true);
-        setErrorUsers(null); // Clear previous errors
-        const queryParams = new URLSearchParams({
+        setErrorUsers(null);
+        const query = new URLSearchParams({
           page: currentPage.toString(),
           limit: itemsPerPage.toString(),
-          sortBy: sortBy,
-          sortOrder: sortOrder,
+          sortBy,
+          sortOrder,
         }).toString();
-
-        const res = await fetch(`${API_URL}/users?${queryParams}`);
-        if (!res.ok) {
-          throw new Error(`Failed to fetch users: ${res.status} ${res.statusText}`);
-        }
+        const res = await fetch(`${API_URL}/users?${query}`);
+        if (!res.ok) throw new Error(`Failed to fetch users: ${res.statusText}`);
         const data = await res.json();
-        setUsers(data.users || []); // Ensure users array is always present, even if empty
+        setUsers(data.users || []);
         setTotalUsers(data.totalUsers || 0);
         setTotalPages(data.totalPages || 1);
-      } catch (err: unknown) { // ⭐ FIX: Changed 'any' to 'unknown'
-        console.error("Error fetching user list:", err);
-        setErrorUsers((err as Error).message); // ⭐ FIX: Type assertion to safely access .message
-        setUsers([]); // Clear users on error to display "No users found"
-        setTotalUsers(0);
-        setTotalPages(1);
+      } catch (err: unknown) {
+        setErrorUsers((err as Error).message);
       } finally {
         setLoadingUsers(false);
       }
@@ -123,34 +108,45 @@ export default function UserManagementPage() {
     fetchUsers();
   }, [currentPage, itemsPerPage, sortBy, sortOrder]);
 
-  // Handler for page change in UserTable
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  // Handler for sort change in UserTable
+  const handlePageChange = (page: number) => page >= 1 && page <= totalPages && setCurrentPage(page);
   const handleSortChange = (field: string, order: 'asc' | 'desc') => {
     setSortBy(field);
     setSortOrder(order);
-    setCurrentPage(1); // Reset to first page on sort change
+    setCurrentPage(1);
   };
 
-  return (
-    // The pl-64 class provides space for the fixed sidebar
-    <main className="bg-gray-100 min-h-screen p-8 ml-64">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">User Management</h1>
-
-      
-      {/* User Table Section */}
-      {loadingUsers ? (
-        <div className="text-center text-gray-600 mt-8 p-4 rounded-lg bg-white shadow-sm">Loading user list...</div>
-      ) : errorUsers ? (
-        <div className="text-center text-red-600 mt-8 p-4 rounded-lg bg-white shadow-sm">
-          Error fetching users: {errorUsers}.
+  // Full-page loading
+  if (loadingSummary || loadingUsers) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-center text-lg font-semibold text-gray-700 bg-white p-6 rounded-lg shadow-md">
+          Loading dashboard data... Please wait.
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+  // Full-page error
+  if (errorSummary || errorUsers) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-center text-lg font-semibold text-red-600 bg-white p-6 rounded-lg shadow-md">
+          <p>Error: {errorSummary || errorUsers}</p>
+          <p className="text-sm text-gray-500 mt-2">
+            Displaying default values due to a data fetching issue.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Page content
+  return (
+<main className="flex-1 w-[70%] lg:w-full p-4 flex items-start justify-start">
+  <div className="w-[clamp(250px,100%,800px)] lg:w-full lg:mt-8">
+
+
+      <div className="max-w-full">
         <UserTable
           users={users}
           currentPage={currentPage}
@@ -162,7 +158,8 @@ export default function UserManagementPage() {
           currentSortBy={sortBy}
           currentSortOrder={sortOrder}
         />
-      )}
+        </div>
+      </div>
     </main>
   );
 }

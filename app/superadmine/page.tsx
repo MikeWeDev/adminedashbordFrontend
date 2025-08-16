@@ -50,7 +50,7 @@ const icons = {
 };
 
 const Card = ({ title, value, icon }: { title: string; value: string | number; icon: keyof typeof icons }) => (
-  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start w-2/3">
+  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start w-[100%] md:w-full">
     <div className="mb-2 sm:mb-0 sm:mr-3">{icons[icon]}</div>
     <div className="text-center sm:text-left">
       <p className="text-gray-500 text-sm truncate">{title}</p>

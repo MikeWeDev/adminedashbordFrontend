@@ -76,7 +76,7 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                 Transaction ID
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -95,7 +95,7 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                 <div className="flex items-center">Status {getSortIcon('status')}</div>
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hidden md:table-cell"
                 onClick={() => handleSortClick('createdAt')}
               >
                 <div className="flex items-center">Date {getSortIcon('createdAt')}</div>
@@ -109,7 +109,7 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
             {transactions.length > 0 ? (
               transactions.map((transaction) => (
                 <tr key={transaction._id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 hidden md:table-cell">
                     {transaction.tx_ref.substring(0, 10)}...
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -133,17 +133,18 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                       {transaction.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
                     {new Date(transaction.createdAt).toLocaleString()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Link
-                      href={`/superadmine/transcations/${transaction._id}`}
-                      className="text-indigo-600 hover:text-indigo-900"
-                    >
-                      Edit
-                    </Link>
-                  </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+  <Link
+    href={`/superadmine/transcations/${transaction._id}`}
+    className="inline-flex items-center px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg shadow-sm hover:bg-indigo-700 transition-colors duration-200"
+  >
+    Edit
+  </Link>
+</td>
+
                 </tr>
               ))
             ) : (
@@ -157,46 +158,35 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
         </table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="mt-4 flex justify-between items-center">
-          <div>
-            <p className="text-sm text-gray-700">
-              Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
-              <span className="font-medium">{Math.min(currentPage * itemsPerPage, totalTransactions)}</span> of{' '}
-              <span className="font-medium">{totalTransactions}</span> results
-            </p>
-          </div>
-          <div>
-            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-              <button
-                onClick={() => onPageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-              >
-                Previous
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => onPageChange(page)}
-                  className={`relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium ${
-                    currentPage === page ? 'bg-indigo-50 border-indigo-500 text-indigo-600' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
-              <button
-                onClick={() => onPageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-              >
-                Next
-              </button>
-            </nav>
-          </div>
-        </div>
-      )}
+   {totalPages > 1 && (
+  <div className="flex flex-col md:flex-row justify-between items-center mt-6 p-3 bg-gray-50 rounded-lg gap-2">
+    {/* Previous Button */}
+    <button
+      onClick={() => onPageChange(currentPage - 1)}
+      disabled={currentPage === 1}
+      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full md:w-auto"
+    >
+      Previous
+    </button>
+
+    {/* Page Info */}
+    <span className="text-gray-700 text-center">
+      Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+      {Math.min(currentPage * itemsPerPage, totalTransactions)} of {totalTransactions} results
+    </span>
+
+    {/* Next Button */}
+    <button
+      onClick={() => onPageChange(currentPage + 1)}
+      disabled={currentPage === totalPages}
+      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full md:w-auto"
+    >
+      Next
+    </button>
+  </div>
+)}
+
+
     </div>
   );
 };
