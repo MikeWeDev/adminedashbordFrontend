@@ -187,20 +187,24 @@ export default function SuperAdminUserEditPage() {
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
       {/* Page Header */}
-      <div className="bg-white p-6 rounded-lg shadow-md mb-8 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-extrabold text-gray-800 mb-2">
-            <FaUserEdit className="inline mr-3 text-indigo-600" />
-            Edit User: {user.username}
-          </h1>
-          <p className="text-gray-600 text-lg">Modify user data and audit balance changes.</p>
-        </div>
-        <Link href="/super-admin/users">
-          <button className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg inline-flex items-center gap-2 transition-colors duration-200">
-            <FaArrowLeft /> Back to Users
-          </button>
-        </Link>
-      </div>
+    <div className="bg-white p-6 rounded-lg shadow-md mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
+  <div className="w-full md:w-auto">
+    <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-2 flex items-center flex-wrap gap-2">
+      <FaUserEdit className="text-indigo-600" />
+      Edit User: {user.username}
+    </h1>
+    <p className="text-gray-600 text-sm sm:text-lg">
+      Modify user data and audit balance changes.
+    </p>
+  </div>
+  <Link href="/super-admin/users" className="w-full md:w-auto">
+    <button className="w-full md:w-auto bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg flex justify-center items-center gap-2 transition-colors duration-200">
+      <FaArrowLeft />
+      Back
+    </button>
+  </Link>
+</div>
+
 
       {/* Form Section */}
       <div className="bg-white p-8 rounded-lg shadow-md">

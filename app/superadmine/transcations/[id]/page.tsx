@@ -148,7 +148,7 @@ export default function PaymentEditPage() {
     : ['pending', 'success', 'failed'];
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen ml-64">
+    <div className="p-8 bg-gray-100 min-h-screen ">
       <div className="bg-white p-6 rounded-lg shadow-md mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-extrabold text-gray-800 mb-2">
@@ -159,7 +159,7 @@ export default function PaymentEditPage() {
         </div>
         <Link href="/superadmine/transcations">
           <button className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg flex items-center gap-2">
-            <FaArrowLeft /> Back to Transactions
+            <FaArrowLeft /> Back 
           </button>
         </Link>
       </div>
