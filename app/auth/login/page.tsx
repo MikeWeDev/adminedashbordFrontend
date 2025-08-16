@@ -107,12 +107,11 @@ export default function LoginPage() {
             {message}
           </p>
         )}
-        <div className="text-center text-sm">
-          <a href="/auth/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-            Don’t have an account? Sign up
-          </a>
-        </div>
+       
       </div>
     </div>
   );
 }
+
+
+//href="/auth/register"
