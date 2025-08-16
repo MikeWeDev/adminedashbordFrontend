@@ -30,7 +30,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         className={`fixed top-0 left-0 h-screen bg-gradient-to-br from-gray-900 to-gray-700 text-gray-100 flex flex-col shadow-2xl z-40 transform transition-transform duration-300
           w-3/4 lg:w-64
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0 lg:static lg:flex`}
+          lg:translate-x-0  lg:flex`}
       >
         {/* Header */}
         <div className="flex items-center justify-between h-20 bg-gray-950 border-b border-gray-700 px-4">
