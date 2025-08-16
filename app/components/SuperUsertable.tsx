@@ -69,7 +69,7 @@ export const UserTable: React.FC<UserTableProps> = ({
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md mt-8">
+    <div className="bg-white p-6 rounded-lg shadow-md mt-8 ">
       <h3 className="text-xl font-semibold mb-4 text-gray-800">
         All Registered Users
       </h3>
@@ -93,7 +93,7 @@ export const UserTable: React.FC<UserTableProps> = ({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full table-auto border-collapse">
+        <table className="table-auto border-collapse max-w-[1500px]">
           <thead>
             <tr className="bg-gray-200 text-gray-700 uppercase text-xs leading-normal">
               <th
@@ -115,8 +115,9 @@ export const UserTable: React.FC<UserTableProps> = ({
               >
                 Balance {renderSortIcon('balance')}
               </th>
+              {/* Registered At hidden on small screens */}
               <th
-                className="py-3 px-6 text-left cursor-pointer hover:bg-gray-300 transition-colors duration-150"
+                className="py-3 px-6 text-left cursor-pointer hover:bg-gray-300 transition-colors duration-150 hidden md:table-cell"
                 onClick={() => handleSortClick('registeredAt')}
               >
                 Registered At {renderSortIcon('registeredAt')}
@@ -147,7 +148,8 @@ export const UserTable: React.FC<UserTableProps> = ({
                     })}{' '}
                     Birr
                   </td>
-                  <td className="py-3 px-6 text-left whitespace-nowrap">
+                  {/* Registered At hidden on small screens */}
+                  <td className="py-3 px-6 text-left whitespace-nowrap hidden md:table-cell">
                     {new Date(user.registeredAt).toLocaleDateString()}
                     <span className="block text-xs text-gray-500">
                       {new Date(user.registeredAt).toLocaleTimeString()}
