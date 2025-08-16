@@ -185,7 +185,7 @@ export default function SuperAdminUserEditPage() {
 
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen  ml-64">
+    <div className="p-8 bg-gray-100 min-h-screen">
       {/* Page Header */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-8 flex justify-between items-center">
         <div>
