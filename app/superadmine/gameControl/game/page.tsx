@@ -1,169 +1,256 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaArrowUp, FaArrowDown, FaUsers } from 'react-icons/fa';
-import { AuditTable } from '../../../components/AuditTable'; // new table component
+import { FaGamepad, FaCheckCircle, FaTimesCircle, FaUsers, FaPowerOff } from 'react-icons/fa';
+import GameTable, { GameRow, SortOrder } from '../../../components/GameTable';
 
-function useSessionCheck() {
-  const router = useRouter();
-  useEffect(() => {
-    const username = localStorage.getItem('username');
-    const role = localStorage.getItem('role');
-    const expiry = localStorage.getItem('expiry');
+// 👉 Set your backend base once here:
+const API_BASE = process.env.NEXT_PUBLIC_ADMIN_API_BASE || 'https://adminedashbordbackend.onrender.com/api/admin';
 
-    if (!username || !role || !expiry) router.push('/auth/login');
-
-    const expiryTime = parseInt(expiry || '0', 10);
-    if (new Date().getTime() > expiryTime) {
-      localStorage.removeItem('username');
-      localStorage.removeItem('role');
-      localStorage.removeItem('expiry');
-      router.push('/auth/login');
-    }
-  }, [router]);
-}
-
-// ---------------- Types ----------------
-interface AuditEntry {
-  type: 'Balance Change' | 'Transaction Change';
-  target: string; // username for balance, tx_ref for transaction
-  oldValue: string | number;
-  newValue: string | number;
-  reason: string;
-  timestamp: string;
-}
-
-interface FinanceSummary {
-  totalChanges: number;
-  totalDeposits24h: number;
-  totalWithdrawals24h: number;
-}
-const API_URL = 'https://adminedashbordbackend.onrender.com/api/finance';
-const defaultSummary: FinanceSummary = { totalChanges: 0, totalDeposits24h: 0, totalWithdrawals24h: 0 };
-
-// ---------------- Card Icons ----------------
-const icons = {
-  changes: <FaUsers className="text-2xl sm:text-3xl text-purple-500 flex-shrink-0" />,
-  deposits: <FaArrowUp className="text-2xl sm:text-3xl text-green-500 flex-shrink-0" />,
-  withdrawals: <FaArrowDown className="text-2xl sm:text-3xl text-red-500 flex-shrink-0" />,
+type Summary = {
+  totalGames: number;
+  activeGames: number;
+  inactiveGames: number;
+  activePlayers: number;
 };
 
-// ---------------- Card Component ----------------
-const Card = ({ title, value, icon }: { title: string; value: string | number; icon: keyof typeof icons }) => (
-  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start w-1/2 md:w-full">
-    <div className="mb-2 sm:mb-0 sm:mr-3">{icons[icon]}</div>
-    <div className="text-center sm:text-left">
-      <p className="text-gray-500 text-sm truncate">{title}</p>
-      <h2 className="text-lg font-bold truncate text-black">{value}</h2>
+type GamesResponse = {
+  data: GameRow[];
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
+  summary: Summary;
+};
+
+const icons = {
+  games: <FaGamepad className="text-2xl sm:text-3xl text-purple-500" />,
+  active: <FaCheckCircle className="text-2xl sm:text-3xl text-green-600" />,
+  inactive: <FaTimesCircle className="text-2xl sm:text-3xl text-red-600" />,
+  players: <FaUsers className="text-2xl sm:text-3xl text-blue-600" />,
+};
+
+function Card({
+  title,
+  value,
+  icon,
+}: {
+  title: string;
+  value: string | number;
+  icon: keyof typeof icons;
+}) {
+  return (
+    <div className="bg-white p-4 rounded-lg shadow-md flex items-center gap-3  w-3/4 md:full ">
+      {icons[icon]}
+      <div>
+        <p className="text-gray-500 text-sm">{title}</p>
+        <h2 className="text-lg font-bold text-black">{value}</h2>
+      </div>
     </div>
-  </div>
-);
+  );
+}
 
-// ---------------- Page Component ----------------
-export default function FinanceManagementPage() {
-  useSessionCheck();
+export default function GameManagementPage() {
+  const router = useRouter();
 
-  const [summary, setSummary] = useState<FinanceSummary>(defaultSummary);
-  const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
-  const [totalItems, setTotalItems] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  // table state
+  const [games, setGames] = useState<GameRow[]>([]);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-  const [sortBy, setSortBy] = useState('timestamp');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [totalItems, setTotalItems] = useState(0);
 
+  // sorting (default: createdAt desc)
+  const [sortBy, setSortBy] = useState<keyof GameRow>('createdAt');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+
+  // cards
+  const [summary, setSummary] = useState<Summary>({
+    totalGames: 0,
+    activeGames: 0,
+    inactiveGames: 0,
+    activePlayers: 0,
+  });
+
+  // global toggle
+  const [allowNewGames, setAllowNewGames] = useState<boolean | null>(null);
+  const [toggleLoading, setToggleLoading] = useState(false);
+
+  // load games
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const query = useMemo(() => {
+    const p = new URLSearchParams();
+    p.set('page', String(page));
+    p.set('limit', String(limit));
+    p.set('sortBy', String(sortBy));
+    p.set('sortOrder', sortOrder);
+    return p.toString();
+  }, [page, limit, sortBy, sortOrder]);
 
-        const query = new URLSearchParams({
-          page: currentPage.toString(),
-          limit: itemsPerPage.toString(),
-          sortBy,
-          sortOrder,
-        }).toString();
+  async function fetchGames() {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch(`${API_BASE}/games?${query}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`Failed to fetch games: ${res.statusText}`);
+      const data: GamesResponse = await res.json();
 
-        const res = await fetch(`${API_URL}/changes?${query}`);
-        if (!res.ok) throw new Error(`Failed to fetch finance data: ${res.statusText}`);
-        const data = await res.json();
+      setGames(data.data);
+      setSummary(data.summary);
+      setTotalPages(data.totalPages);
+      setTotalItems(data.totalItems);
+    } catch (e: any) {
+      setError(e?.message || 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
+  }
 
-        setSummary(data.summary || defaultSummary);
-        setAuditEntries(data.data || []);
-        setTotalItems(data.totalItems || 0);
-        setTotalPages(Math.ceil((data.totalItems || 0) / itemsPerPage));
-      } catch (err: unknown) {
-        setError((err as Error).message);
-      } finally {
-        setLoading(false);
+  async function fetchToggleState() {
+    try {
+      const res = await fetch(`${API_BASE}/system/rounds`, { cache: 'no-store' });
+      if (res.ok) {
+        const j = await res.json();
+        setAllowNewGames(!!j.allowNewGames);
       }
-    };
+    } catch {
+      // ignore (UI will just not show toggle state)
+    }
+  }
 
-    fetchData();
-  }, [currentPage, itemsPerPage, sortBy, sortOrder]);
+  useEffect(() => {
+    fetchGames();
+  }, [query]);
 
-  const handlePageChange = (page: number) => page >= 1 && page <= totalPages && setCurrentPage(page);
-  const handleSortChange = (field: string, order: 'asc' | 'desc') => {
-    setSortBy(field);
-    setSortOrder(order);
-    setCurrentPage(1);
+  useEffect(() => {
+    fetchToggleState();
+  }, []);
+
+  // Actions
+  const endGame = async (id: string) => {
+    const confirmEnd = confirm('End this game now? This marks it inactive and stamps endedAt.');
+    if (!confirmEnd) return;
+    const res = await fetch(`${API_BASE}/games/${id}/end`, { method: 'PUT' });
+    if (!res.ok) {
+      const msg = await res.text();
+      alert(`Failed to end game: ${msg}`);
+      return;
+    }
+    await fetchGames();
+  };
+
+  const toggleFutureRounds = async () => {
+    if (allowNewGames === null) return;
+    setToggleLoading(true);
+    try {
+      const path = allowNewGames ? 'disable' : 'enable';
+      const res = await fetch(`${API_BASE}/system/rounds/${path}`, { method: 'PUT' });
+      if (!res.ok) {
+        const msg = await res.text();
+        alert(`Toggle failed: ${msg}`);
+        return;
+      }
+      await fetchToggleState();
+      await fetchGames();
+    } finally {
+      setToggleLoading(false);
+    }
+  };
+
+  // Table handlers
+  const onPageChange = (next: number) => {
+    if (next >= 1 && next <= totalPages) setPage(next);
+  };
+
+  const onSortChange = (field: keyof GameRow) => {
+    if (sortBy === field) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+    setPage(1);
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-center text-lg font-semibold text-gray-700 bg-white p-6 rounded-lg shadow-md">
-          Loading finance data... Please wait.
-        </div>
-      </div>
+      <main className="p-6">
+        <div className="bg-white p-6 rounded-lg shadow text-gray-700">Loading games…</div>
+      </main>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-center text-lg font-semibold text-red-600 bg-white p-6 rounded-lg shadow-md">
-          <p>Error: {error}</p>
-          <p className="text-sm text-gray-500 mt-2">
-            Displaying default values due to a data fetching issue.
-          </p>
+      <main className="p-6">
+        <div className="bg-white p-6 rounded-lg shadow text-red-600">
+          <p className="font-semibold">Error</p>
+          <p className="text-sm text-gray-600 mt-1">{error}</p>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <main className="flex-1 w-[70%] lg:w-full p-4 flex items-start justify-start">
-      <div className="w-[clamp(250px,100%,1000px)] lg:w-full lg:mt-8">
-        <div className="mx-auto flex flex-col gap-6">
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card title="Total Changes" value={summary.totalChanges.toLocaleString()} icon="changes" />
-            <Card title="Deposits (24h)" value={`${summary.totalDeposits24h.toLocaleString()} Birr`} icon="deposits" />
-            <Card title="Withdrawals (24h)" value={`${summary.totalWithdrawals24h.toLocaleString()} Birr`} icon="withdrawals" />
-          </div>
-
-          {/* Audit Table */}
-          <div className="max-w-full mt-4">
-            <AuditTable
-              entries={auditEntries}
-              currentPage={currentPage}
-              itemsPerPage={itemsPerPage}
-              totalItems={totalItems}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-              onSortChange={handleSortChange}
-              currentSortBy={sortBy}
-              currentSortOrder={sortOrder}
-            />
-          </div>
-        </div>
+  <main className="flex-1 w-[70%] lg:w-[90%] p-4 flex items-start justify-start">
+  <div className="w-[clamp(250px,100%,1000px)] lg:w-full lg:mt-8">
+    <div className="mx-auto flex flex-col gap-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card title="Total Games" value={summary.totalGames} icon="games" />
+        <Card title="Active Games" value={summary.activeGames} icon="active" />
+        <Card title="Inactive Games" value={summary.inactiveGames} icon="inactive" />
+        <Card title="Players in Active" value={summary.activePlayers} icon="players" />
       </div>
-    </main>
+
+      {/* Global Toggle */}
+      <div className="bg-white p-4 rounded-lg shadow flex flex-col sm:flex-row sm:items-center sm:justify-between w-3/4 md:w-[90%] gap-4">
+        <div>
+          <p className="text-gray-700 font-semibold text-base sm:text-lg">Future Rounds</p>
+          <p className="text-sm text-gray-500">
+            {allowNewGames === null
+              ? "Loading…"
+              : allowNewGames
+              ? "New rounds are allowed"
+              : "New rounds are disabled"}
+          </p>
+        </div>
+        <button
+          disabled={allowNewGames === null || toggleLoading}
+          onClick={toggleFutureRounds}
+          className={`inline-flex items-center justify-center gap-2 px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm sm:text-base text-white transition ${
+            allowNewGames
+              ? "bg-yellow-600 hover:bg-yellow-700"
+              : "bg-green-600 hover:bg-green-700"
+          } disabled:opacity-50`}
+          aria-disabled={allowNewGames === null || toggleLoading}
+          aria-label={allowNewGames ? "Disable future rounds" : "Enable future rounds"}
+        >
+          <FaPowerOff className="text-lg sm:text-xl" />
+          {allowNewGames ? "Shut Down Future Rounds" : "Enable Future Rounds"}
+        </button>
+      </div>
+
+      {/* Game Table */}
+      <div className=" mt-4 overflow-x-auto bg-white rounded-lg shadow">
+        <GameTable
+          rows={games}
+          page={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          onPageChange={onPageChange}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={onSortChange}
+          onEndGame={endGame}
+        />
+      </div>
+    </div>
+  </div>
+</main>
+
   );
 }
