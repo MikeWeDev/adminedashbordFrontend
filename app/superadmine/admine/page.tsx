@@ -10,7 +10,7 @@ type AdminUser = {
   role: 'admin' | 'superadmin' | string;
 };
 
-const API_BASE = 'http://localhost:5000/api/auth';
+const API_BASE = 'https://adminedashbordbackend.onrender.com/api/auth';
 
 export default function AdminUsersPage() {
   const router = useRouter();
