@@ -54,9 +54,13 @@ export default function AdminUsersPage() {
         return;
       }
       fetchUsers();
-    } catch (err: any) {
-      alert(`Error deleting user: ${err?.message || err}`);
-    }
+    } catch (e: unknown) {
+  if (e instanceof Error) {
+    setError(e.message);
+  } else {
+    setError(String(e) || 'Unknown error');
+  }
+}
   };
 
   if (loading) return <div className="p-4 sm:p-6 text-gray-700">Loading users…</div>;
