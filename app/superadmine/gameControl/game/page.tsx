@@ -102,9 +102,14 @@ export default function GameManagementPage() {
       setSummary(data.summary);
       setTotalPages(data.totalPages);
       setTotalItems(data.totalItems);
-    } catch (e: any) {
-      setError(e?.message || 'Unknown error');
-    } finally {
+    }catch (e: unknown) {
+  if (e instanceof Error) {
+    setError(e.message);
+  } else {
+    setError(String(e) || 'Unknown error');
+  }
+}
+ finally {
       setLoading(false);
     }
   }
