@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { FaUser, FaMoneyBillWave, FaGamepad, FaSignOutAlt, FaThLarge, FaTimes, FaCaretDown, FaCaretUp } from 'react-icons/fa';
+import { FaUser, FaMoneyBillWave, FaGamepad, FaSignOutAlt, FaThLarge, FaTimes, FaCaretDown, FaCaretUp,FaUserShield } from 'react-icons/fa';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -13,6 +13,7 @@ const sidebarLinks = [
   { category: "Dashboard", icon: <FaThLarge />, href: "/superadmine" },
   { category: "User & Account Management", icon: <FaUser />, href: "/superadmine/userMangment" },
   { category: "Transaction & Financial Management", icon: <FaMoneyBillWave />, href: "/superadmine/transcations" },
+  { category: "Admin", icon: <FaUserShield />, href: "/superadmine/admine" },
   {
     category: "Game Monitoring & Control",
     icon: <FaGamepad />,
@@ -22,7 +23,8 @@ const sidebarLinks = [
       { subCategory: "Game", href: "/superadmine/gameControl/game" },
     ],
   },
-  { category: "Logout", icon: <FaSignOutAlt />, href: "/auth/login" },
+  { category: "Logout", icon: <FaSignOutAlt />, href: "/auth/login" }
+
 ];
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
@@ -50,7 +52,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Header */}
         <div className="flex items-center justify-between h-20 bg-gray-950 border-b border-gray-700 px-4">
           <span className="text-3xl font-extrabold text-indigo-400 drop-shadow-lg tracking-wide">
-            SuperAdmin Panel
+            SuperAdmin
           </span>
           <button className="lg:hidden text-gray-300 text-xl" onClick={onClose}>
             <FaTimes />
