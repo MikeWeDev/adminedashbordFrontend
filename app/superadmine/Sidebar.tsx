@@ -15,7 +15,7 @@ const sidebarLinks = [
   { category: "Transaction & Financial Management", icon: <FaMoneyBillWave />, href: "/superadmine/transcations" },
   { category: "Admin", icon: <FaUserShield />, href: "/superadmine/admine" },
   {
-    category: "Game Monitoring & Control",
+    category: "Game Monitoring",
     icon: <FaGamepad />,
     href: "#",
     dropdown: [
