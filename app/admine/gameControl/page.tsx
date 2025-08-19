@@ -146,24 +146,7 @@ export default function GameManagementPage() {
     await fetchGames();
   };
 
-  const toggleFutureRounds = async () => {
-    if (allowNewGames === null) return;
-    setToggleLoading(true);
-    try {
-      const path = allowNewGames ? 'disable' : 'enable';
-      const res = await fetch(`${API_BASE}/system/rounds/${path}`, { method: 'PUT' });
-      if (!res.ok) {
-        const msg = await res.text();
-        alert(`Toggle failed: ${msg}`);
-        return;
-      }
-      await fetchToggleState();
-      await fetchGames();
-    } finally {
-      setToggleLoading(false);
-    }
-  };
-
+ 
   // Table handlers
   const onPageChange = (next: number) => {
     if (next >= 1 && next <= totalPages) setPage(next);
@@ -199,7 +182,7 @@ export default function GameManagementPage() {
   }
 
   return (
-  <main className="flex-1 w-[70%] lg:w-[90%] p-4 flex items-start justify-start">
+  <main className="flex-1 w-[90%] lg:w-[90%] p-4 flex items-start justify-start">
   <div className="w-[clamp(250px,100%,1000px)] lg:w-full lg:mt-8">
     <div className="mx-auto flex flex-col gap-6">
 
@@ -211,7 +194,7 @@ export default function GameManagementPage() {
       </div>
     
       {/* Game Table */}
-      <div className=" mt-4 overflow-x-auto bg-white rounded-lg shadow">
+      <div className="max-w-full">
         <GameTable
           rows={games}
           page={page}
