@@ -180,7 +180,7 @@ export const UserTable: React.FC<UserTableProps> = ({
       </div>
 
      {totalUsers > 0 && (
-  <div className="flex flex-col md:flex-row justify-between items-center mt-6 p-3 bg-gray-50 rounded-lg gap-2">
+  <div className="flex flex-col md:flex-row justify-between items-center mt-6 p-3 bg-gray-50 rounded-lg gap-2 w-1/2 md:w-full">
     <button
       onClick={() => onPageChange(currentPage - 1)}
       disabled={currentPage === 1}

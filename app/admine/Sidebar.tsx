@@ -5,7 +5,7 @@ const sidebarLinks = [
   { category: "Dashboard", icon: <FaThLarge />, href: "/admine" },
   { category: "User & Account Management", icon: <FaUser />, href: "/admine/users" },
   { category: "Transaction & Financial Management", icon: <FaMoneyBillWave />, href: "/admine/transaction" },
-  { category: "Game Monitoring & Control", icon: <FaGamepad />, href: "/admine/gameControl/game" },
+  { category: "Game Monitoring & Control", icon: <FaGamepad />, href: "/admine/gameControl" },
   { category: "Logout", icon: <FaSignOutAlt />, href: "/auth/login" }
 ];
 
@@ -24,7 +24,7 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose:
   <aside
   className={`fixed top-0 left-0 h-screen bg-gradient-to-br from-gray-900 to-gray-700 text-gray-100 flex flex-col shadow-2xl z-40 transform transition-transform duration-300
     ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
-    w-2/3 sm:w-1/2 md:w-1/3 lg:w-64 lg:translate-x-0 lg:static lg:flex`}
+    w-2/3 sm:w-1/2 md:w-1/3 lg:w-64 lg:translate-x-0  lg:flex`}
 >
 
 

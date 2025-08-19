@@ -173,7 +173,7 @@ export default function UserManagementPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ">
           <Card title="Total Registered Users" value={summary.users.toLocaleString()} icon="users" />
           <Card title="Total Games (Overall)" value={`${summary.totalGamesOverall.toLocaleString()} Games`} icon="games" />
-          <Card title="Total Account Balance" value={`${summary.totalAccountBalance.toLocaleString()} Birr`} icon="revenue" />
+          <Card title="Total User Balance" value={`${summary.totalAccountBalance.toLocaleString()} Birr`} icon="revenue" />
         </div>
 
         {/* Users Table */}

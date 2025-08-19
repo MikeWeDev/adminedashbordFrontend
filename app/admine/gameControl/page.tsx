@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaGamepad, FaCheckCircle, FaTimesCircle, FaUsers, FaPowerOff } from 'react-icons/fa';
-import GameTable, { GameRow, SortOrder } from '../../../components/AdmineGame';
+import GameTable, { GameRow, SortOrder } from '../../components/AdmineGame';
 
 // 👉 Set your backend base once here:
 const API_BASE ='https://adminedashbordbackend.onrender.com/api/admin';
@@ -41,7 +41,7 @@ function Card({
   icon: keyof typeof icons;
 }) {
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md flex items-center gap-3  w-3/4 md:full ">
+    <div className="bg-white p-4 rounded-lg shadow-md flex items-center gap-3  w-3/4 md:w-full ">
       {icons[icon]}
       <div>
         <p className="text-gray-500 text-sm">{title}</p>
@@ -202,17 +202,14 @@ export default function GameManagementPage() {
   <main className="flex-1 w-[70%] lg:w-[90%] p-4 flex items-start justify-start">
   <div className="w-[clamp(250px,100%,1000px)] lg:w-full lg:mt-8">
     <div className="mx-auto flex flex-col gap-6">
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card title="Total Games" value={summary.totalGames} icon="games" />
         <Card title="Active Games" value={summary.activeGames} icon="active" />
-        <Card title="Inactive Games" value={summary.inactiveGames} icon="inactive" />
         <Card title="Players in Active" value={summary.activePlayers} icon="players" />
       </div>
-
-     
-       
-
+    
       {/* Game Table */}
       <div className=" mt-4 overflow-x-auto bg-white rounded-lg shadow">
         <GameTable
