@@ -7,6 +7,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState(''); 
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false); // NEW state
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -17,28 +18,28 @@ export default function LoginPage() {
       return;
     }
 
+    setLoading(true); // start loading
+    setMessage('');
+
     try {
       const response = await fetch('https://adminedashbordbackend.onrender.com/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }), // backend expects identifier
+        body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // 6 hours in milliseconds
-        const expiresIn = 6 * 60 * 60 * 1000;
+        const expiresIn = 6 * 60 * 60 * 1000; // 6 hours
         const expiryTime = new Date().getTime() + expiresIn;
 
-        // Store session info in localStorage
         localStorage.setItem('username', username);
         localStorage.setItem('role', data.role);
         localStorage.setItem('expiry', expiryTime.toString());
 
         setMessage(data.message || 'Login successful!');
 
-        // Redirect based on role
         setTimeout(() => {
           if (data.role === 'superadmin') {
             router.push('/superadmine');
@@ -46,13 +47,14 @@ export default function LoginPage() {
             router.push('/admine');
           }
         }, 1000);
-
       } else {
         setMessage(data.message || 'Login failed. Please try again.');
       }
     } catch (error) {
       setMessage('An unexpected error occurred. Please try again later.');
       console.error('Frontend login error:', error);
+    } finally {
+      setLoading(false); // stop loading
     }
   };
 
@@ -96,9 +98,12 @@ export default function LoginPage() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out"
+              disabled={loading} // disable button while logging in
+              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
+                loading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out`}
             >
-              Login
+              {loading ? 'Logging in...' : 'Login'}
             </button>
           </div>
         </form>
@@ -107,11 +112,7 @@ export default function LoginPage() {
             {message}
           </p>
         )}
-       
       </div>
     </div>
   );
 }
-
-
-//href="/auth/register"

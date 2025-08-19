@@ -5,7 +5,7 @@ const sidebarLinks = [
   { category: "Dashboard", icon: <FaThLarge />, href: "/admine" },
   { category: "User & Account Management", icon: <FaUser />, href: "/admine/users" },
   { category: "Transaction & Financial Management", icon: <FaMoneyBillWave />, href: "/admine/transaction" },
-  { category: "Game Monitoring & Control", icon: <FaGamepad />, href: "/admine" },
+  { category: "Game Monitoring & Control", icon: <FaGamepad />, href: "/admine/gameControl/game" },
   { category: "Logout", icon: <FaSignOutAlt />, href: "/auth/login" }
 ];
 
