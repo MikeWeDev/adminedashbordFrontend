@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { FaUser, FaMoneyBillWave, FaGamepad, FaSignOutAlt, FaThLarge, FaTimes, FaCaretDown, FaCaretUp,FaUserShield ,FaMoneyBillTransfer} from 'react-icons/fa';
+import { FaUser, FaMoneyBillWave, FaGamepad, FaSignOutAlt, FaThLarge, FaTimes, FaCaretDown, FaCaretUp,FaUserShield } from 'react-icons/fa';
+import { FaMoneyBillTransfer } from 'react-icons/fa6';
 
 interface SidebarProps {
   isOpen: boolean;
