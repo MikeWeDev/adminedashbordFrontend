@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { FaUser, FaMoneyBillWave, FaGamepad, FaSignOutAlt, FaThLarge, FaTimes, FaCaretDown, FaCaretUp,FaUserShield } from 'react-icons/fa';
+import { FaUser, FaMoneyBillWave, FaGamepad, FaSignOutAlt, FaThLarge, FaTimes, FaCaretDown, FaCaretUp,FaUserShield ,FaMoneyBillTransfer} from 'react-icons/fa';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -14,6 +14,7 @@ const sidebarLinks = [
   { category: "User & Account Management", icon: <FaUser />, href: "/superadmine/userMangment" },
   { category: "Transaction & Financial Management", icon: <FaMoneyBillWave />, href: "/superadmine/transcations" },
   { category: "Admin", icon: <FaUserShield />, href: "/superadmine/admine" },
+  { category: "withdraw", icon: <FaMoneyBillTransfer />, href: "/superadmine/withdraw" },
   {
     category: "Game Monitoring",
     icon: <FaGamepad />,
@@ -38,8 +39,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     <>
       {/* Mobile Overlay */}
       <div
-        className={`fixed inset-0 bg-black bg-opacity-50 z-30 transition-opacity lg:hidden ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-        onClick={onClose}
+        className={`fixed inset-0 bg-black bg-opacity-50 z-30 transition-opacity lg:hidden ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={onClose}
       ></div>
 
       {/* Sidebar */}
