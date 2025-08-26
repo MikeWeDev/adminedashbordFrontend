@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 
+// Define the interface for an announcement to ensure type safety.
 interface Announcement {
     _id: string;
     userId: string;
@@ -10,6 +11,7 @@ interface Announcement {
     sentAt: string;
 }
 
+// Main component for the Broadcast page.
 export default function BroadcastPage() {
     const [message, setMessage] = useState<string>('');
     const [status, setStatus] = useState<string>('');
@@ -21,7 +23,7 @@ export default function BroadcastPage() {
     const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
     const [announcementToDelete, setAnnouncementToDelete] = useState<Announcement | null>(null);
 
-    // Function to fetch and process announcements from the backend
+    // Function to fetch and process announcements from the backend.
     const fetchAnnouncements = async () => {
         setIsLoadingHistory(true);
         setHistoryError(null);
@@ -33,30 +35,34 @@ export default function BroadcastPage() {
             }
             const data: Announcement[] = await response.json();
 
-            // Consolidate announcements by message content
+            // Consolidate announcements by message content to show unique messages.
             const uniqueAnnouncementsMap = new Map<string, Announcement>();
             data.forEach(announcement => {
                 const existing = uniqueAnnouncementsMap.get(announcement.messageContent);
+                // Keep the most recent announcement for each message content.
                 if (!existing || new Date(announcement.sentAt) > new Date(existing.sentAt)) {
                     uniqueAnnouncementsMap.set(announcement.messageContent, announcement);
                 }
             });
             const uniqueAnnouncements = Array.from(uniqueAnnouncementsMap.values());
             
-            // Sort by most recent sentAt date
+            // Sort by most recent sentAt date.
             uniqueAnnouncements.sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
 
             setAnnouncements(uniqueAnnouncements);
-            setCurrentMessageIndex(0); // Reset index when new data is fetched
-        } catch (error: any) {
+            setCurrentMessageIndex(0); // Reset index when new data is fetched.
+        } catch (error: unknown) {
+            // Fix: Changed 'any' to 'unknown' for better type safety.
+            // Safely access the error message.
+            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
             console.error('Error fetching announcements:', error);
-            setHistoryError(error.message);
+            setHistoryError(errorMessage);
         } finally {
             setIsLoadingHistory(false);
         }
     };
 
-    // Use a useEffect hook to fetch announcements when the component first mounts
+    // Use a useEffect hook to fetch announcements when the component first mounts.
     useEffect(() => {
         fetchAnnouncements();
     }, []);
@@ -91,11 +97,13 @@ export default function BroadcastPage() {
             setStatus(`✅ Broadcast successful! Details: ${data.details.sentTo} sent, ${data.details.failedTo} failed.`);
             setMessage(''); 
             
-            // Refresh the announcements list after a successful broadcast
+            // Refresh the announcements list after a successful broadcast.
             fetchAnnouncements();
 
-        } catch (error) {
-            console.error('Network or parsing error:', error);
+        } catch (error: unknown) {
+            // Fix: Changed 'any' to 'unknown' for better type safety.
+            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+            console.error('Network or parsing error:', errorMessage);
             setStatus('❌ Failed to send broadcast due to a network or JSON parsing error. See console for details.');
         } finally {
             setIsSending(false);
@@ -113,6 +121,7 @@ export default function BroadcastPage() {
         // Optimistically remove the item from the UI
         setAnnouncements(announcements.filter(item => item.messageContent !== announcementToDelete.messageContent));
         setShowConfirmModal(false);
+        setStatus('Deleting announcement...'); // Provide feedback to the user
 
         try {
             // New endpoint to delete all instances of a message
@@ -127,20 +136,24 @@ export default function BroadcastPage() {
                 throw new Error(errorText);
             }
 
-            // Re-fetch to ensure the UI is in sync with the server
-            fetchAnnouncements();
-
-        } catch (error: any) {
-            console.error('Error deleting announcement:', error);
-            // If the deletion fails, revert the UI change and show an error
-            setAnnouncements(announcements => [...announcements, announcementToDelete]);
-            alert(`❌ Failed to delete announcement: ${error.message}.`);
+            // Re-fetch to ensure the UI is in sync with the server.
+            await fetchAnnouncements();
+            setStatus('✅ Announcement deleted successfully!');
+        } catch (error: unknown) {
+            // Fix: Changed 'any' to 'unknown' for better type safety.
+            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+            console.error('Error deleting announcement:', errorMessage);
+            
+            // If the deletion fails, revert the UI change and show an error.
+            setAnnouncements(prevAnnouncements => [...prevAnnouncements, announcementToDelete]);
+            setStatus(`❌ Failed to delete announcement: ${errorMessage}`);
         } finally {
             setAnnouncementToDelete(null);
         }
     };
     
-    const currentAnnouncement = announcements[currentMessageIndex];
+    // Check if an announcement exists before trying to access its properties.
+    const currentAnnouncement = announcements.length > 0 ? announcements[currentMessageIndex] : null;
 
     return (
         <div className="container mx-auto p-4 flex flex-col md:flex-row gap-8 font-sans">
@@ -199,9 +212,9 @@ export default function BroadcastPage() {
                     ) : (
                         <>
                             <div className="flex-1 overflow-y-auto">
-                                <p className="text-gray-800 text-lg whitespace-pre-wrap">{currentAnnouncement.messageContent}</p>
+                                <p className="text-gray-800 text-lg whitespace-pre-wrap">{currentAnnouncement?.messageContent}</p>
                                 <div className="text-right text-gray-500 text-sm mt-4">
-                                    <time>{new Date(currentAnnouncement.sentAt).toLocaleString()}</time>
+                                    <time>{new Date(currentAnnouncement?.sentAt || '').toLocaleString()}</time>
                                 </div>
                             </div>
                             <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
@@ -223,7 +236,7 @@ export default function BroadcastPage() {
                                     Next
                                 </button>
                                 <button
-                                    onClick={() => handleDeleteClick(currentAnnouncement)}
+                                    onClick={() => currentAnnouncement && handleDeleteClick(currentAnnouncement)}
                                     className="ml-4 text-red-500 hover:text-red-700 transition duration-200 ease-in-out p-1 rounded-full hover:bg-red-100 focus:outline-none"
                                     aria-label="Delete announcement"
                                 >
