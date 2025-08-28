@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TransactionTable } from '../../components/TransactionTable'; // Table stays external
+import { TransactionTable } from '../../components/TransactionTable';
 import { FaMoneyBill, FaChartLine, FaUsers, FaGamepad } from 'react-icons/fa';
 
 interface TransactionSummaryData {
@@ -42,7 +42,7 @@ const icons = {
 };
 
 const Card = ({ title, value, icon }: { title: string; value: string | number; icon: keyof typeof icons }) => (
-  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start w-[60%] lg:w-full">
+  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start w-[80%] lg:w-full">
     <div className="mb-2 sm:mb-0 sm:mr-3">{icons[icon]}</div>
     <div className="text-center sm:text-left">
       <p className="text-gray-500 text-sm truncate">{title}</p>
@@ -132,50 +132,71 @@ export default function TransactionHistoryPage() {
     setCurrentPage(1);
   };
 
+  /** ---------- EARLY RETURN FORMAT ---------- **/
+
+  if (loadingSummary || loadingTransactions) {
+    return (
+      <main className="p-6">
+        <div className="bg-white p-6 rounded-lg shadow text-gray-700">Loading transactions…</div>
+      </main>
+    );
+  }
+
+  if (errorSummary || errorTransactions) {
+    return (
+      <main className="p-6">
+        <div className="bg-white p-6 rounded-lg shadow text-red-600">
+          <p className="font-semibold">Error</p>
+          <p className="text-sm text-gray-600 mt-1">
+            {errorSummary || errorTransactions}
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  /** ---------- SUCCESS VIEW ---------- **/
+
   return (
-    <main className="flex-1 w-[70%] lg:w-full p-4 flex items-start justify-start">
-      <div className="w-[clamp(250px,100%,800px)] lg:w-full lg:mt-8 mx-auto flex flex-col gap-6">
-        <h1 className="text-3xl font-bold mb-8 text-gray-800">Transaction History</h1>
+    <main className="flex-1 w-[80%] lg:w-full p-4 flex items-start justify-start">
+      <div className="w-[clamp(250px,100%,800px)] lg:w-full lg:mt-8">
+        <div className="mx-auto flex flex-col gap-6">
+          <h1 className="text-3xl font-bold mb-8 text-gray-800">Transaction History</h1>
 
-        {/* Summary Cards */}
-        {loadingSummary ? (
-          <div className="text-center text-gray-600 p-4 rounded-lg bg-white shadow-sm">
-            Loading transaction summary...
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card
+              title="Total Deposits"
+              value={`${summary.totalDepositAmount.toLocaleString()} Birr`}
+              icon="revenue"
+            />
+            <Card
+              title="Total Withdrawals"
+              value={`${summary.totalWithdrawalAmount.toLocaleString()} Birr`}
+              icon="profit"
+            />
+            <Card
+              title="Pending Transactions"
+              value={`${summary.totalPendingTransactions.toLocaleString()} Items`}
+              icon="games"
+            />
           </div>
-        ) : errorSummary ? (
-          <div className="text-center text-red-600 p-4 rounded-lg bg-white shadow-sm">
-            Error fetching transaction summary: {errorSummary}. Displaying defaults.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
-            <Card title="Total Deposits" value={`${summary.totalDepositAmount.toLocaleString()} Birr`} icon="revenue" />
-            <Card title="Total Withdrawals" value={`${summary.totalWithdrawalAmount.toLocaleString()} Birr`} icon="profit" />
-            <Card title="Pending Transactions" value={`${summary.totalPendingTransactions.toLocaleString()} Items`} icon="games" />
-          </div>
-        )}
 
-        {/* Transactions Table */}
-        {loadingTransactions ? (
-          <div className="text-center text-gray-600 mt-8 p-4 rounded-lg bg-white shadow-sm">
-            Loading transactions list...
+          {/* Transactions Table */}
+          <div className="max-w-full">
+            <TransactionTable
+              transactions={transactions}
+              currentPage={currentPage}
+              itemsPerPage={itemsPerPage}
+              totalTransactions={totalTransactions}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              onSortChange={handleSortChange}
+              currentSortBy={sortBy}
+              currentSortOrder={sortOrder}
+            />
           </div>
-        ) : errorTransactions ? (
-          <div className="text-center text-red-600 mt-8 p-4 rounded-lg bg-white shadow-sm">
-            Error fetching transactions: {errorTransactions}.
-          </div>
-        ) : (
-          <TransactionTable
-            transactions={transactions}
-            currentPage={currentPage}
-            itemsPerPage={itemsPerPage}
-            totalTransactions={totalTransactions}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-            onSortChange={handleSortChange}
-            currentSortBy={sortBy}
-            currentSortOrder={sortOrder}
-          />
-        )}
+        </div>
       </div>
     </main>
   );

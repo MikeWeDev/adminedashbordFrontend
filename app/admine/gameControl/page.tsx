@@ -41,7 +41,7 @@ function Card({
   icon: keyof typeof icons;
 }) {
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md flex items-center gap-3  w-3/4 md:w-full ">
+    <div className="bg-white p-4 rounded-lg shadow-md flex items-center gap-3  w-[85%] md:w-full ">
       {icons[icon]}
       <div>
         <p className="text-gray-500 text-sm">{title}</p>
