@@ -39,7 +39,7 @@ interface User {
   registeredAt: string;
 }
 
-const API_URL = 'https://adminedashbordbackend.onrender.com/api/dashboard';
+const API_URL = 'https://adminbackend.bingoogame.com/api/dashboard';
 const defaultSummary: UserSummaryData = { users: 0, totalGamesOverall: 0, totalAccountBalance: 0 };
 
 

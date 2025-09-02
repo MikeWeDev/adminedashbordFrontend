@@ -22,7 +22,7 @@ export default function LoginPage() {
     setMessage('');
 
     try {
-      const response = await fetch('https://adminedashbordbackend.onrender.com/api/auth/login', {
+      const response = await fetch('https://adminbackend.bingoogame.com/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),

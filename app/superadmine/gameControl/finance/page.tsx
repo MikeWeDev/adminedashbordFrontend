@@ -39,7 +39,7 @@ interface FinanceSummary {
   totalDeposits24h: number;
   totalWithdrawals24h: number;
 }
-const API_URL = 'https://adminedashbordbackend.onrender.com/api/finance';
+const API_URL = 'https://adminbackend.bingoogame.com/api/finance';
 const defaultSummary: FinanceSummary = { totalChanges: 0, totalDeposits24h: 0, totalWithdrawals24h: 0 };
 
 // ---------------- Card Icons ----------------

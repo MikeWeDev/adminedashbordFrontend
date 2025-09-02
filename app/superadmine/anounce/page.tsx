@@ -28,7 +28,7 @@ export default function BroadcastPage() {
         setIsLoadingHistory(true);
         setHistoryError(null);
         try {
-            const response = await fetch('https://adminedashbordbackend.onrender.com/api/broadcast/announcements');
+            const response = await fetch('https://adminbackend.bingoogame.com/api/broadcast/announcements');
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`Failed to fetch announcements: ${response.status} ${response.statusText} - ${errorText}`);
@@ -79,7 +79,7 @@ export default function BroadcastPage() {
         setStatus('Sending broadcast...');
 
         try {
-            const response = await fetch('https://adminedashbordbackend.onrender.com/api/broadcast', {
+            const response = await fetch('https://adminbackend.bingoogame.com/api/broadcast', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message }),
@@ -125,7 +125,7 @@ export default function BroadcastPage() {
 
         try {
             // New endpoint to delete all instances of a message
-            const response = await fetch('https://adminedashbordbackend.onrender.com/api/broadcast/delete-all', {
+            const response = await fetch('https://adminbackend.bingoogame.com/api/broadcast/delete-all', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ messageContent: announcementToDelete.messageContent }),

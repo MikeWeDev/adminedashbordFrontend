@@ -22,7 +22,7 @@ export default function AdminDashboard() {
 
   const fetchWithdrawals = async () => {
     try {
-      const response = await fetch('https://adminedashbordbackend.onrender.com/api/withdrawReq/withdrawals/pending');
+      const response = await fetch('https://adminbackend.bingoogame.com/api/withdrawReq/withdrawals/pending');
       if (!response.ok) {
         throw new Error('Failed to fetch data.');
       }
@@ -48,7 +48,7 @@ export default function AdminDashboard() {
   const handleComplete = async (withdrawalId: string) => {
     if (window.confirm('Are you sure you want to complete this withdrawal?')) {
       try {
-        const res = await fetch('https://adminedashbordbackend.onrender.com/api/withdrawReq/withdrawals/complete', {
+        const res = await fetch('https://adminbackend.bingoogame.com/api/withdrawReq/withdrawals/complete', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ export default function AdminDashboard() {
   const handleCancel = async (withdrawalId: string) => {
     if (window.confirm('Are you sure you want to cancel this withdrawal?')) {
       try {
-        const res = await fetch('https://adminedashbordbackend.onrender.com/api/withdrawReq/withdrawals/cancel', {
+        const res = await fetch('https://adminbackend.bingoogame.com/api/withdrawReq/withdrawals/cancel', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -25,8 +25,8 @@ interface Transaction {
   account_number?: string;
 }
 
-const API_URL = 'https://adminedashbordbackend.onrender.com/api/dashboard';
-const TRANSACTIONS_API_URL = 'https://adminedashbordbackend.onrender.com/api/transactions';
+const API_URL = 'https://adminbackend.bingoogame.com/api/dashboard';
+const TRANSACTIONS_API_URL = 'https://adminbackend.bingoogame.com/api/transactions';
 
 const defaultTransactionSummary: TransactionSummaryData = {
   totalDepositAmount: 0,

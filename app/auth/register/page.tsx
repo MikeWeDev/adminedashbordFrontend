@@ -23,7 +23,7 @@ export default function RegisterPage() {
     setMessage('');
 
     try {
-      const response = await fetch('https://adminedashbordbackend.onrender.com/api/auth/register', {
+      const response = await fetch('https://adminbackend.bingoogame.com/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password, role }),

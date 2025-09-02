@@ -19,7 +19,7 @@ interface Transaction {
   phone_number?: string;
 }
 
-const API_URL = 'https://adminedashbordbackend.onrender.com/api/payments';
+const API_URL = 'https://adminbackend.bingoogame.com/api/payments';
 
 export default function PaymentEditPage() {
   const params = useParams();

@@ -44,7 +44,7 @@ interface GameHistoryEntry {
   createdAt: string;
   endedAt: string | null;
 }
-const API_URL = 'https://adminedashbordbackend.onrender.com/api/dashboard';
+const API_URL = 'https://adminbackend.bingoogame.com/api/dashboard';
 const defaultSummary: SummaryData = {
   revenue: 0,
   profit: 0,

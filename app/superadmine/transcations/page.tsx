@@ -22,7 +22,7 @@ interface Transaction {
   account_number?: string;
 }
 
-const API_URL = 'https://adminedashbordbackend.onrender.com/api/payments';
+const API_URL = 'https://adminbackend.bingoogame.com/api/payments';
 const defaultPaymentSummary: PaymentSummaryData = {
   totalAmountProcessed: 0,
   totalTransactions: 0,

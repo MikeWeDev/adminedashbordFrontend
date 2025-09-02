@@ -22,7 +22,7 @@ interface User {
 
 // ⭐ IMPORTANT: Backend API Base URL for Super Admin User Management.
 // Ensure this matches your backend's actual URL.
-const SUPER_ADMIN_API_BASE_URL = 'https://adminedashbordbackend.onrender.com/api/users'; 
+const SUPER_ADMIN_API_BASE_URL = 'https://adminbackend.bingoogame.com/api/users'; 
 
 export default function SuperAdminUserEditPage() {
   const params = useParams();
