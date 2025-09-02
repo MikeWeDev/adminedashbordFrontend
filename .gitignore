@@ -13,16 +13,16 @@
 # testing
 /coverage
 
-# next.js
-/.next/
-/out/
+# # next.js
+# /.next/
+# /out/
 
-# production
-/build
+# # production
+# /build
 
-# misc
-.DS_Store
-*.pem
+# # misc
+# .DS_Store
+# *.pem
 
 # debug
 npm-debug.log*
@@ -33,9 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
-# vercel
-.vercel
+# # vercel
+# .vercel
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# # typescript
+# *.tsbuildinfo
+# next-env.d.ts
