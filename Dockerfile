@@ -1,33 +1,21 @@
 # Step 1: Build the Next.js application
-# Use a Node.js 22 Alpine image for a lightweight build environment.
 FROM node:22-alpine AS build
-
-# Set the working directory inside the container
 WORKDIR /app
-
-# Copy the dependency manifest files
 COPY package.json package-lock.json ./
-
-# Install project dependencies
 RUN npm install
-
-# Copy the rest of the application files
 COPY . .
-
-# Build the Next.js application. 
-# This requires `output: 'standalone'` in your next.config.js
 RUN npm run build
 
 # Step 2: Create the production image
-# Use a fresh, lightweight Node.js 22 Alpine image for the final runtime
 FROM node:22-alpine AS runner
-
-# Set the working directory
 WORKDIR /app
 
-# Copy the standalone output from the build stage
-COPY --from=build /app/public ./public
+# Copy the standalone output from the build stage.
+# The 'public' directory is now included within the standalone output,
+# so you don't need a separate copy command for it.
 COPY --from=build /app/.next/standalone ./
+
+# Copy the 'static' assets to the correct location
 COPY --from=build /app/.next/static ./.next/static
 
 # Set environment variables for the server host and port
