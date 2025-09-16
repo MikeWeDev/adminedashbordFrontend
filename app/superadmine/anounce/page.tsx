@@ -128,16 +128,14 @@ export default function BroadcastPage() {
         setStatus('Deleting announcement...');
 
         try {
-<<<<<<< HEAD
+
             // New endpoint to delete all instances of a message
             const response = await fetch('https://adminbackend.bingoogame.com/api/broadcast/delete-all', {
-=======
-            const response = await fetch('https://adminedashbordbackend.onrender.com/api/broadcast/delete-all', {
->>>>>>> 4eca52ea9d58781e93c4fe2230c1e41cd9093eb8
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ messageContent: announcementToDelete.messageContent }),
             });
+
             if (!response.ok) throw new Error(await response.text());
             await fetchAnnouncements();
             setStatus('✅ Announcement deleted successfully!');
