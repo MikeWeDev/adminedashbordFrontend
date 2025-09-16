@@ -27,7 +27,6 @@ function useSessionCheck() {
 }
 
 interface SummaryData {
-  revenue: number;
   profit: number;
   users: number;
   gamesPlayed: { [key: number]: number };
@@ -46,7 +45,6 @@ interface GameHistoryEntry {
 }
 const API_URL = 'https://adminbackend.bingoogame.com/api/dashboard';
 const defaultSummary: SummaryData = {
-  revenue: 0,
   profit: 0,
   users: 0,
   gamesPlayed: { 10: 0, 20: 0, 30: 0 },
@@ -54,7 +52,6 @@ const defaultSummary: SummaryData = {
 };
 
 const icons = {
-  revenue: <FaMoneyBill className="text-2xl sm:text-3xl text-green-500 flex-shrink-0" />,
   profit: <FaChartLine className="text-2xl sm:text-3xl text-blue-500 flex-shrink-0" />,
   users: <FaUsers className="text-2xl sm:text-3xl text-purple-500 flex-shrink-0" />,
   games: <FaGamepad className="text-2xl sm:text-3xl text-yellow-500 flex-shrink-0" />,
@@ -141,7 +138,6 @@ export default function Home() {
       
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 ">
-        <Card title="Total Revenue" value={`${summary.revenue.toLocaleString()} Birr`} icon="revenue" />
         <Card title="Total Profit" value={`${summary.profit.toLocaleString()} Birr`} icon="profit" />
         <Card title="Total Users" value={summary.users.toLocaleString()} icon="users" />
         <Card title="Games Played Today" value={`${summary.totalGamesToday}`} icon="games" />
