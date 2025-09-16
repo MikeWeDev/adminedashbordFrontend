@@ -139,15 +139,15 @@ export default function BroadcastPage() {
             if (!response.ok) throw new Error(await response.text());
             await fetchAnnouncements();
             setStatus('✅ Announcement deleted successfully!');
-        } catch (error: unknown) {
+         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
             console.error('Error deleting announcement:', errorMessage);
             setAnnouncements(prevAnnouncements => [...prevAnnouncements, announcementToDelete]);
             setStatus(`❌ Failed to delete announcement: ${errorMessage}`);
-        } finally {
+         } finally {
             setAnnouncementToDelete(null);
-        }
-    };
+         }
+     };
     
     const currentAnnouncement = announcements.length > 0 ? announcements[currentMessageIndex] : null;
 
