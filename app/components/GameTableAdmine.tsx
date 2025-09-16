@@ -27,7 +27,6 @@ export default function GameTable({
   sortBy,
   sortOrder,
   onSortChange,
-  onEndGame,
 }: {
   rows: GameRow[];
   page: number;
@@ -37,7 +36,6 @@ export default function GameTable({
   sortBy: keyof GameRow;
   sortOrder: SortOrder;
   onSortChange: (k: keyof GameRow) => void;
-  onEndGame: (id: string) => void;
 }) {
   const sortIcon = (field: keyof GameRow) => {
     if (sortBy !== field) return <FaSort className="inline-block opacity-50" />;
@@ -61,6 +59,12 @@ export default function GameTable({
     </th>
   );
 
+  const formatTime = (isoString: string | undefined | null) => {
+    if (!isoString) return '-';
+    const date = new Date(isoString);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   return (
     <div className="bg-white p-4 rounded-lg shadow">
       <div className="flex items-center justify-between mb-3">
@@ -83,9 +87,6 @@ export default function GameTable({
               {headCell('Status', 'isActive')}
               {headCell('Created', 'createdAt', 'hidden sm:table-cell')}
               {headCell('Ended', 'endedAt', 'hidden sm:table-cell')}
-              <th scope="col" className="py-3 px-4 text-left whitespace-nowrap">
-                Actions
-              </th>
             </tr>
           </thead>
 
@@ -124,19 +125,11 @@ export default function GameTable({
                     </span>
                   </td>
                   <td className="py-3 px-4 whitespace-nowrap hidden sm:table-cell">
-                    {new Date(g.createdAt).toLocaleString()}
+                    {formatTime(g.createdAt)}
                   </td>
                   <td className="py-3 px-4 whitespace-nowrap hidden sm:table-cell">
-                    {g.endedAt ? new Date(g.endedAt).toLocaleString() : '-'}
+                    {formatTime(g.endedAt)}
                   </td>
-                                <td className="py-3 px-4 whitespace-nowrap bg-gray-50 flex items-center justify-center">
-                    <button
-                        onClick={() => onEndGame(g._id)}
-                        className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition"
-                    >
-                        End
-                    </button>
-                          </td>
                 </tr>
               );
             })}
@@ -144,7 +137,6 @@ export default function GameTable({
         </table>
       </div>
 
-      {/* Pagination */}
       <div className="flex flex-col sm:flex-row justify-start items-center gap-3 mt-4 p-3 bg-gray-50 rounded-lg">
         <button
           onClick={() => onPageChange(page - 1)}
