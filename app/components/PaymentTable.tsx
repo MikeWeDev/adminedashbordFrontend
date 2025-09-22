@@ -1,4 +1,3 @@
-import React from 'react';
 import Link from 'next/link';
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 
@@ -79,6 +78,10 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                 Transaction ID
               </th>
+              {/* Added a new column for Telegram ID */}
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                Telegram ID
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Type
               </th>
@@ -109,8 +112,13 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
             {transactions.length > 0 ? (
               transactions.map((transaction) => (
                 <tr key={transaction._id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 hidden md:table-cell">
+                  {/* Added title attribute to show full ID on hover */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 hidden md:table-cell" title={transaction.tx_ref}>
                     {transaction.tx_ref.substring(0, 10)}...
+                  </td>
+                  {/* Added a new cell for Telegram ID */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
+                    {transaction.telegramId}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <span
@@ -136,20 +144,19 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
                     {new Date(transaction.createdAt).toLocaleString()}
                   </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-  <Link
-    href={`/superadmine/transcations/${transaction._id}`}
-    className="inline-flex items-center px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg shadow-sm hover:bg-indigo-700 transition-colors duration-200"
-  >
-    Edit
-  </Link>
-</td>
-
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <Link
+                      href={`/superadmine/transcations/${transaction._id}`}
+                      className="inline-flex items-center px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg shadow-sm hover:bg-indigo-700 transition-colors duration-200"
+                    >
+                      Edit
+                    </Link>
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
                   No transactions found.
                 </td>
               </tr>
@@ -158,35 +165,33 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
         </table>
       </div>
 
-   {totalPages > 1 && (
-  <div className="flex flex-col md:flex-row justify-between items-center mt-6 p-3 bg-gray-50 rounded-lg gap-2">
-    {/* Previous Button */}
-    <button
-      onClick={() => onPageChange(currentPage - 1)}
-      disabled={currentPage === 1}
-      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full md:w-auto"
-    >
-      Previous
-    </button>
+      {totalPages > 1 && (
+        <div className="flex flex-col md:flex-row justify-between items-center mt-6 p-3 bg-gray-50 rounded-lg gap-2">
+          {/* Previous Button */}
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full md:w-auto"
+          >
+            Previous
+          </button>
 
-    {/* Page Info */}
-    <span className="text-gray-700 text-center">
-      Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-      {Math.min(currentPage * itemsPerPage, totalTransactions)} of {totalTransactions} results
-    </span>
+          {/* Page Info */}
+          <span className="text-gray-700 text-center">
+            Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+            {Math.min(currentPage * itemsPerPage, totalTransactions)} of {totalTransactions} results
+          </span>
 
-    {/* Next Button */}
-    <button
-      onClick={() => onPageChange(currentPage + 1)}
-      disabled={currentPage === totalPages}
-      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full md:w-auto"
-    >
-      Next
-    </button>
-  </div>
-)}
-
-
+          {/* Next Button */}
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full md:w-auto"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };

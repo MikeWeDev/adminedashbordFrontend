@@ -23,6 +23,7 @@ interface Transaction {
 }
 
 const API_URL = 'https://adminbackend.bingoogame.com/api/payments';
+
 const defaultPaymentSummary: PaymentSummaryData = {
   totalAmountProcessed: 0,
   totalTransactions: 0,
@@ -59,29 +60,46 @@ export default function PaymentManagementPage() {
   const [errorSummary, setErrorSummary] = useState<string | null>(null);
   const [errorTransactions, setErrorTransactions] = useState<string | null>(null);
 
+  // New state for daily summaries and date filter
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [dailyDeposits, setDailyDeposits] = useState<number | null>(null);
+  const [dailyWithdrawals, setDailyWithdrawals] = useState<number | null>(null);
+
+  // Update useEffect for summary to use the date filter
   useEffect(() => {
     const fetchSummary = async () => {
       try {
         setLoadingSummary(true);
         setErrorSummary(null);
-        const res = await fetch(`${API_URL}/summary`);
+        const res = await fetch(`${API_URL}/summary?date=${selectedDate}`);
         if (!res.ok) throw new Error(`Failed to fetch summary: ${res.status}`);
         const data = await res.json();
+        
+        // Update state with daily data
+        setDailyDeposits(data.totalDeposits || 0);
+        setDailyWithdrawals(data.totalWithdrawals || 0);
+
+        // Fetch pending and total transactions from a separate endpoint if needed, or combine logic
+        const totalRes = await fetch(`${API_URL}/total-summary`);
+        const totalData = await totalRes.json();
         setSummary({
-          totalAmountProcessed: data.totalAmountProcessed || 0,
-          totalTransactions: data.totalTransactions || 0,
-          pendingTransactions: data.pendingTransactions || 0,
+          totalAmountProcessed: totalData.totalAmountProcessed || 0,
+          totalTransactions: totalData.totalTransactions || 0,
+          pendingTransactions: totalData.pendingTransactions || 0,
         });
+
       } catch (err: unknown) {
         console.error('Error fetching payment summary:', err);
         setErrorSummary((err as Error).message);
+        setDailyDeposits(null);
+        setDailyWithdrawals(null);
         setSummary(defaultPaymentSummary);
       } finally {
         setLoadingSummary(false);
       }
     };
     fetchSummary();
-  }, []);
+  }, [selectedDate]);
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -151,48 +169,62 @@ export default function PaymentManagementPage() {
   }
 
   return (
-<main className="flex-1 w-[70%] lg:w-full p-4 flex items-start justify-start">
-  <div className="w-[clamp(250px,100%,800px)] lg:w-full lg:mt-8">
-    <div className="mx-auto flex flex-col gap-6 ">
-  
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">Payment & Withdrawal Management</h1>
+    <main className="flex-1 w-[70%] lg:w-full p-4 flex items-start justify-start">
+      <div className="w-[clamp(250px,100%,800px)] lg:w-full lg:mt-8">
+        <div className="mx-auto flex flex-col gap-6 ">
+          <h1 className="text-3xl font-bold mb-8 text-gray-800">Payment & Withdrawal Management</h1>
+          
+          {/* Date Picker Input */}
+          <div className="mb-4">
+            <label htmlFor="date-filter" className="block text-sm font-medium text-gray-700">Filter Daily Summary by Date:</label>
+            <input 
+              type="date" 
+              id="date-filter"
+              value={selectedDate} 
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="mt-1 block w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 ">
-        <Card
-          title="Total Amount Processed"
-          value={`${summary.totalAmountProcessed.toLocaleString()} Birr`}
-          icon="revenue"
-        />
-        <Card
-          title="Total Transactions"
-          value={summary.totalTransactions.toLocaleString()}
-          icon="games"
-        />
-        <Card
-          title="Pending Transactions"
-          value={summary.pendingTransactions.toLocaleString()}
-          icon="users"
-        />
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 ">
+            <Card
+              title="Daily Deposits"
+              value={dailyDeposits !== null ? `${dailyDeposits.toLocaleString()} Birr` : 'N/A'}
+              icon="revenue"
+            />
+            <Card
+              title="Daily Withdrawals"
+              value={dailyWithdrawals !== null ? `${dailyWithdrawals.toLocaleString()} Birr` : 'N/A'}
+              icon="users"
+            />
+            <Card
+              title="Total Transactions"
+              value={summary.totalTransactions.toLocaleString()}
+              icon="games"
+            />
+            <Card
+              title="Pending Transactions"
+              value={summary.pendingTransactions.toLocaleString()}
+              icon="users"
+            />
+          </div>
+
+          <div className="max-w-full">
+            <PaymentTable
+              transactions={transactions}
+              currentPage={currentPage}
+              itemsPerPage={itemsPerPage}
+              totalTransactions={totalTransactions}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              onSortChange={handleSortChange}
+              currentSortBy={sortBy}
+              currentSortOrder={sortOrder}
+            />
+          </div>
+        </div>
       </div>
-
-      <div className="max-w-full">
-      <PaymentTable
-        transactions={transactions}
-        currentPage={currentPage}
-        itemsPerPage={itemsPerPage}
-        totalTransactions={totalTransactions}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-        onSortChange={handleSortChange}
-        currentSortBy={sortBy}
-        currentSortOrder={sortOrder}
-      />
-      </div>
-            </div>
-
-            </div>
-
     </main>
   );
 }

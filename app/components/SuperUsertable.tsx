@@ -36,19 +36,19 @@ export const UserTable: React.FC<UserTableProps> = ({
   const [usernameQuery, setUsernameQuery] = useState('');
   const [contactQuery, setContactQuery] = useState('');
 
-  // Filter users by both username and phone/telegram ID
-  const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
-      const matchesUsername = user.username
-        .toLowerCase()
-        .includes(usernameQuery.toLowerCase());
-      const matchesContact =
-        user.phoneNumber?.includes(contactQuery) ||
-        user.telegramId?.toString().includes(contactQuery);
-      return matchesUsername && (contactQuery ? matchesContact : true);
-    });
-  }, [users, usernameQuery, contactQuery]);
+ const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      // Add a null check for user.username
+      const matchesUsername = user.username
+        ? user.username.toLowerCase().includes(usernameQuery.toLowerCase())
+        : false; // If username is undefined, it won't match.
 
+      const matchesContact =
+        user.phoneNumber?.includes(contactQuery) ||
+        user.telegramId?.toString().includes(contactQuery);
+      return matchesUsername && (contactQuery ? matchesContact : true);
+    });
+  }, [users, usernameQuery, contactQuery]);
   const handleSortClick = (field: string) => {
     if (currentSortBy === field) {
       onSortChange(field, currentSortOrder === 'asc' ? 'desc' : 'asc');
