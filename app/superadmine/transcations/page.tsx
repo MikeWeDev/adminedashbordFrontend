@@ -170,23 +170,23 @@ export default function PaymentManagementPage() {
         );
     }
 
-    return (
-        <main className="flex-1 w-[70%] lg:w-full p-4 flex items-start justify-start">
-            <div className="w-[clamp(250px,100%,800px)] lg:w-full lg:mt-8">
-                <div className="mx-auto flex flex-col gap-6 ">
-                    <h1 className="text-3xl font-bold mb-8 text-gray-800">Payment & Withdrawal Management</h1>
-
-                    {/* Date Picker Input */}
-                    <div className="mb-4">
-                        <label htmlFor="date-filter" className="block text-sm font-medium text-gray-700">Filter Daily Summary by Date:</label>
-                        <input
-                            type="date"
-                            id="date-filter"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                            className="mt-1 block w-full md:w-1/3 px-3 py-2 border border-gray-300 text-black rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                    </div>
+  return (
+    <main className="flex-1 w-[70%] lg:w-full p-4 flex items-start justify-start">
+      <div className="w-[clamp(250px,100%,800px)] lg:w-full lg:mt-8">
+        <div className="mx-auto flex flex-col gap-6 ">
+          <h1 className="text-3xl font-bold mb-8 text-gray-800">Payment & Withdrawal Management</h1>
+          
+          {/* Date Picker Input */}
+          <div className="mb-4">
+            <label htmlFor="date-filter" className="block text-sm font-medium text-gray-700">Filter Daily Summary by Date:</label>
+            <input 
+              type="date" 
+              id="date-filter"
+              value={selectedDate} 
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="mt-1 block w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
 
                     {/* Summary Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 ">

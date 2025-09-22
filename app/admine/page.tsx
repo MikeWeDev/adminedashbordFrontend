@@ -147,7 +147,7 @@ export default function Home() {
             <div className="w-[clamp(250px,100%,800px)] lg:w-full lg:mt-8">
                 <div className="mx-auto flex flex-col gap-6 ">
                     {/* Calendar Filter */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg shadow-md bg-white">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg shadow-md bg-white w-[80%] md:w-full">
                         <h3 className="text-lg font-semibold text-gray-700">Filter by Date</h3>
                         <DatePicker
                             selected={selectedDate}
