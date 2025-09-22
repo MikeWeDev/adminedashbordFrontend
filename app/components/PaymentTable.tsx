@@ -6,7 +6,7 @@ interface Transaction {
     _id: string;
     tx_ref: string;
     telegramId: string;
-    username?: string; // Add the optional username field
+    username?: string; 
     amount: number;
     status: 'pending' | 'success' | 'failed' | 'processing' | 'paid' | 'rejected' | 'approved' | 'completed';
     createdAt: string;
@@ -84,7 +84,6 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                 throw new Error(errorData.message || 'Failed to update transaction status.');
             }
             alert('Withdrawal marked as paid successfully!');
-            // Reload the page or re-fetch transactions
             window.location.reload();
         } catch (error) {
             console.error('Error marking withdrawal as paid:', error);
@@ -98,7 +97,8 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                 <h2 className="text-2xl font-bold text-gray-800">Transaction History</h2>
                 <span className="text-gray-600">Total: {totalTransactions.toLocaleString()}</span>
             </div>
-
+            
+            {/* The table container is already set up correctly */}
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
@@ -145,7 +145,6 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 hidden md:table-cell" title={transaction.tx_ref}>
                                         {transaction.tx_ref?.substring(0, 10) || 'N/A'}...
                                     </td>
-                                    {/* Changed from transaction.telegramId to transaction.username */}
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
                                         {transaction.username || 'N/A'}
                                     </td>
@@ -162,7 +161,7 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                                         {transaction.amount.toLocaleString()} Birr
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
-                                        {transaction.method || (transaction.type === 'Payment' ? 'Bank' : 'N/A')}
+                                        {transaction.method || 'N/A'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                         <span
@@ -206,10 +205,10 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                     </tbody>
                 </table>
             </div>
-
+            
+            {/* The rest of the component remains the same */}
             {totalPages > 1 && (
                 <div className="flex flex-col md:flex-row justify-between items-center mt-6 p-3 bg-gray-50 rounded-lg gap-2">
-                    {/* Previous Button */}
                     <button
                         onClick={() => onPageChange(currentPage - 1)}
                         disabled={currentPage === 1}
@@ -217,14 +216,10 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                     >
                         Previous
                     </button>
-
-                    {/* Page Info */}
                     <span className="text-gray-700 text-center">
                         Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
                         {Math.min(currentPage * itemsPerPage, totalTransactions)} of {totalTransactions} results
                     </span>
-
-                    {/* Next Button */}
                     <button
                         onClick={() => onPageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
