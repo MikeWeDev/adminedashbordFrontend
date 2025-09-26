@@ -98,7 +98,6 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                 <span className="text-gray-600">Total: {totalTransactions.toLocaleString()}</span>
             </div>
             
-            {/* The table container is already set up correctly */}
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
@@ -128,7 +127,7 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                                 <div className="flex items-center">Status {getSortIcon('status')}</div>
                             </th>
                             <th
-                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hidden md:table-cell"
+                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hidden "
                                 onClick={() => handleSortClick('createdAt')}
                             >
                                 <div className="flex items-center">Date {getSortIcon('createdAt')}</div>
@@ -172,9 +171,9 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                                             {transaction.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
-                                        {new Date(transaction.createdAt).toLocaleString()}
-                                    </td>
+                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden ">
+    {new Date(transaction.createdAt).toLocaleTimeString()}
+</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex items-center justify-end gap-2">
                                             {transaction.type === 'Withdrawal' && transaction.status === 'pending' && (
@@ -206,7 +205,6 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                 </table>
             </div>
             
-            {/* The rest of the component remains the same */}
             {totalPages > 1 && (
                 <div className="flex flex-col md:flex-row justify-between items-center mt-6 p-3 bg-gray-50 rounded-lg gap-2">
                     <button

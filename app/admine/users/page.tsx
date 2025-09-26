@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { UserTable } from '../../components/UserTable';
 import { FaMoneyBill, FaGamepad, FaUsers } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import moment from 'moment';
 
 /* -------------------- Interfaces -------------------- */
 interface UserSummaryData {
@@ -32,18 +35,20 @@ const defaultUserSummary: UserSummaryData = {
 
 /* -------------------- Icons & Card -------------------- */
 const icons = {
-  revenue: <FaMoneyBill className="text-2xl sm:text-3xl text-green-500 flex-shrink-0" />,
-  games: <FaGamepad className="text-2xl sm:text-3xl text-yellow-500 flex-shrink-0" />,
-  users: <FaUsers className="text-2xl sm:text-3xl text-purple-500 flex-shrink-0" />,
+  revenue: <FaMoneyBill className="text-3xl sm:text-4xl text-white flex-shrink-0 drop-shadow-lg" />,
+  games: <FaGamepad className="text-3xl sm:text-4xl text-white flex-shrink-0 drop-shadow-lg" />,
+  users: <FaUsers className="text-3xl sm:text-4xl text-white flex-shrink-0 drop-shadow-lg" />,
 };
 
-
+// Attractive Card component
 const Card = ({ title, value, icon }: { title: string; value: string | number; icon: keyof typeof icons }) => (
-  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start w-2/3">
-    <div className="mb-2 sm:mb-0 sm:mr-3">{icons[icon]}</div>
-    <div className="text-center sm:text-left">
-      <p className="text-gray-500 text-sm truncate">{title}</p>
-      <h2 className="text-lg font-bold truncate text-black">{value}</h2>
+  <div className="bg-white rounded-xl shadow-md p-4 flex items-center gap-4 w-full transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl">
+    <div className="w-14 h-14 flex items-center justify-center rounded-full bg-indigo-500 text-white text-2xl shadow-md">
+      {icons[icon]}
+    </div>
+    <div className="flex flex-col">
+      <p className="text-gray-500 text-sm font-medium">{title}</p>
+      <h2 className="text-lg sm:text-xl font-bold text-gray-900">{value}</h2>
     </div>
   </div>
 );
@@ -84,6 +89,7 @@ export default function UserManagementPage() {
 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
   /* -------- Fetch Summary & Users -------- */
   useEffect(() => {
@@ -92,8 +98,10 @@ export default function UserManagementPage() {
         setLoading(true);
         setError(null);
 
+        const dateParam = selectedDate ? moment(selectedDate).format('YYYY-MM-DD') : '';
+
         // Fetch summary
-        const summaryRes = await fetch(`${API_URL}/summary`);
+        const summaryRes = await fetch(`${API_URL}/summary?date=${dateParam}`);
         if (!summaryRes.ok) throw new Error(`Failed to fetch summary: ${summaryRes.statusText}`);
         const summaryData = await summaryRes.json();
 
@@ -104,7 +112,7 @@ export default function UserManagementPage() {
           sortBy,
           sortOrder,
         }).toString();
-        const usersRes = await fetch(`${API_URL}/users?${queryParams}`);
+        const usersRes = await fetch(`${API_URL}/users?${queryParams}&date=${dateParam}`);
         if (!usersRes.ok) throw new Error(`Failed to fetch users: ${usersRes.statusText}`);
         const usersData = await usersRes.json();
 
@@ -128,7 +136,7 @@ export default function UserManagementPage() {
     };
 
     fetchData();
-  }, [currentPage, itemsPerPage, sortBy, sortOrder]);
+  }, [currentPage, itemsPerPage, sortBy, sortOrder, selectedDate]);
 
   /* -------- Handlers -------- */
   const handlePageChange = (page: number) => {
@@ -143,8 +151,8 @@ export default function UserManagementPage() {
   /* -------- Render -------- */
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-center text-lg font-semibold text-gray-700 bg-white p-6 rounded-lg shadow-md">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100">
+        <div className="text-center text-lg font-semibold text-gray-700 bg-white p-6 rounded-xl shadow-lg animate-pulse">
           Loading dashboard data... Please wait.
         </div>
       </div>
@@ -154,7 +162,7 @@ export default function UserManagementPage() {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-center text-lg font-semibold text-red-600 bg-white p-6 rounded-lg shadow-md">
+        <div className="text-center text-lg font-semibold text-red-600 bg-white p-6 rounded-xl shadow-lg">
           <p>Error: {error}</p>
           <p className="text-sm text-gray-500 mt-2">
             Displaying default values due to a data fetching issue.
@@ -165,19 +173,24 @@ export default function UserManagementPage() {
   }
 
   return (
-<main className="flex-1 w-[70%] lg:w-full p-4 flex items-start justify-start">
-  <div className="w-[clamp(250px,100%,800px)] lg:w-full lg:mt-8">
-  
-    <div className=" mx-auto flex flex-col gap-6">
+    <main className="flex-1 w-[90%] lg:w-full p-4 flex flex-col items-center justify-start bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen transition-all">
+      <div className="w-[clamp(250px,100%,900px)] lg:w-full lg:mt-8 flex flex-col gap-6">
+
+        {/* Calendar Filter */}
+      <div className="flex items-center justify-between gap-4 p-4 rounded-xl shadow-md bg-white hover:shadow-xl transition-shadow duration-300 w-[80%] md:w-full">
+  <h3 className="text-xl font-semibold text-gray-700 tracking-wide">User Management</h3>
+</div>
+
+
         {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 w-full">
           <Card title="Total Registered Users" value={summary.users.toLocaleString()} icon="users" />
           <Card title="Total Games (Overall)" value={`${summary.totalGamesOverall.toLocaleString()} Games`} icon="games" />
           <Card title="Total User Balance" value={`${summary.totalAccountBalance.toLocaleString()} Birr`} icon="revenue" />
         </div>
 
         {/* Users Table */}
-      <div className="max-w-full">
+        <div className="max-w-full mt-6 bg-white rounded-xl shadow-md p-4 hover:shadow-xl transition-shadow duration-300">
           <UserTable
             users={users}
             currentPage={currentPage}
@@ -189,9 +202,6 @@ export default function UserManagementPage() {
             currentSortBy={sortBy}
             currentSortOrder={sortOrder}
           />
-        </div>
-
-
         </div>
 
       </div>

@@ -1,203 +1,235 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { TransactionTable } from '../../components/TransactionTable';
-import { FaMoneyBill, FaChartLine, FaUsers, FaGamepad } from 'react-icons/fa';
+import { FaMoneyBill, FaUsers, FaGamepad, FaSpinner } from 'react-icons/fa';
+import moment from 'moment';
 
-interface TransactionSummaryData {
-  totalDepositAmount: number;
-  totalWithdrawalAmount: number;
-  totalPendingTransactions: number;
+/* ------------------- Session Check Hook ------------------- */
+function useSessionCheck() {
+    const router = useRouter();
+    useEffect(() => {
+        const username = localStorage.getItem('username');
+        const role = localStorage.getItem('role');
+        const expiry = localStorage.getItem('expiry');
+        if (!username || !role || !expiry) {
+            router.push('/auth/login');
+            return;
+        }
+        const expiryTime = parseInt(expiry, 10);
+        if (new Date().getTime() > expiryTime) {
+            localStorage.removeItem('username');
+            localStorage.removeItem('role');
+            localStorage.removeItem('expiry');
+            router.push('/auth/login');
+        }
+    }, [router]);
+}
+
+interface PaymentSummaryData {
+  totalAmountProcessed: number;
+  totalTransactions: number;
+  pendingTransactions: number;
 }
 
 interface Transaction {
   _id: string;
   transactionId: string;
-  type: 'Deposit' | 'Withdrawal';
-  amount: number;
-  status: string;
   telegramId: string;
   username: string;
+  amount: number;
+  status: 'pending' | 'success' | 'failed' | 'processing' | 'paid' | 'rejected' | 'approved' | 'completed';
   date: string;
   currency: string;
+  type: 'Deposit' | 'Withdrawal';
   bank_code?: string;
-  account_name?: string;
   account_number?: string;
+  method?: 'CBE' | 'Telebirr' | 'Other';
 }
 
-const API_URL = 'https://adminbackend.bingoogame.com/api/dashboard';
-const TRANSACTIONS_API_URL = 'https://adminbackend.bingoogame.com/api/transactions';
+const API_URL = 'https://adminbackend.bingoogame.com/api/payments';
 
-const defaultTransactionSummary: TransactionSummaryData = {
-  totalDepositAmount: 0,
-  totalWithdrawalAmount: 0,
-  totalPendingTransactions: 0,
+const defaultSummary: PaymentSummaryData = {
+  totalAmountProcessed: 0,
+  totalTransactions: 0,
+  pendingTransactions: 0,
 };
 
 const icons = {
-  revenue: <FaMoneyBill className="text-2xl sm:text-3xl text-green-500 flex-shrink-0" />,
-  profit: <FaChartLine className="text-2xl sm:text-3xl text-blue-500 flex-shrink-0" />,
-  users: <FaUsers className="text-2xl sm:text-3xl text-purple-500 flex-shrink-0" />,
-  games: <FaGamepad className="text-2xl sm:text-3xl text-yellow-500 flex-shrink-0" />,
+  revenue: <FaMoneyBill />,
+  users: <FaUsers />,
+  games: <FaGamepad />,
+  moneyBill: <FaMoneyBill />,
 };
 
+// Modern Card component
 const Card = ({ title, value, icon }: { title: string; value: string | number; icon: keyof typeof icons }) => (
-  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start w-[80%] lg:w-full">
-    <div className="mb-2 sm:mb-0 sm:mr-3">{icons[icon]}</div>
-    <div className="text-center sm:text-left">
-      <p className="text-gray-500 text-sm truncate">{title}</p>
-      <h2 className="text-lg font-bold truncate text-black">{value}</h2>
+  <div className="bg-white rounded-xl shadow-md p-4 flex items-center gap-4 w-full transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl">
+    <div className="w-14 h-14 flex items-center justify-center rounded-full bg-indigo-500 text-white text-2xl shadow-md">
+      {icons[icon]}
+    </div>
+    <div className="flex flex-col">
+      <p className="text-gray-500 text-sm font-medium">{title}</p>
+      <h2 className="text-lg sm:text-xl font-bold text-gray-900">{value}</h2>
     </div>
   </div>
 );
 
 export default function TransactionHistoryPage() {
-  const [summary, setSummary] = useState<TransactionSummaryData>(defaultTransactionSummary);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [totalTransactions, setTotalTransactions] = useState<number>(0);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 10;
-  const [totalPages, setTotalPages] = useState<number>(1);
+    useSessionCheck();
 
-  const [sortBy, setSortBy] = useState<string>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [summary, setSummary] = useState<PaymentSummaryData>(defaultSummary);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+    const [dailyDeposit, setDailyDeposit] = useState<number>(0);
+    const [dailyWithdrawal, setDailyWithdrawal] = useState<number>(0);
 
-  const [loadingSummary, setLoadingSummary] = useState<boolean>(true);
-  const [loadingTransactions, setLoadingTransactions] = useState<boolean>(true);
-  const [errorSummary, setErrorSummary] = useState<string | null>(null);
-  const [errorTransactions, setErrorTransactions] = useState<string | null>(null);
+    // ✅ Pagination & Sorting states
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [sortBy, setSortBy] = useState("createdAt");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  useEffect(() => {
-    const fetchSummary = async () => {
-      try {
-        setLoadingSummary(true);
-        setErrorSummary(null);
-        const res = await fetch(`${API_URL}/summary`);
-        if (!res.ok) throw new Error(`Failed to fetch summary: ${res.status} ${res.statusText}`);
-        const data = await res.json();
-        setSummary({
-          totalDepositAmount: data.totalDepositAmount || 0,
-          totalWithdrawalAmount: data.totalWithdrawalAmount || 0,
-          totalPendingTransactions: data.totalPendingTransactions || 0,
-        });
-      } catch (err: unknown) {
-        console.error('Error fetching summary:', err);
-        setErrorSummary((err as Error).message);
-        setSummary(defaultTransactionSummary);
-      } finally {
-        setLoadingSummary(false);
-      }
+    // ✅ Sorting handler
+    const handleSortChange = (field: string, order: "asc" | "desc") => {
+        setSortBy(field);
+        setSortOrder(order);
     };
-    fetchSummary();
-  }, []);
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        setLoadingTransactions(true);
-        setErrorTransactions(null);
-        const queryParams = new URLSearchParams({
-          page: currentPage.toString(),
-          limit: itemsPerPage.toString(),
-          sortBy,
-          sortOrder,
-        }).toString();
+    // Fetch data
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
 
-        const res = await fetch(`${TRANSACTIONS_API_URL}?${queryParams}`);
-        if (!res.ok) throw new Error(`Failed to fetch transactions: ${res.status} ${res.statusText}`);
-        const data = await res.json();
-        setTransactions(data.transactions || []);
-        setTotalTransactions(data.totalTransactions || 0);
-        setTotalPages(data.totalPages || 1);
-      } catch (err: unknown) {
-        console.error('Error fetching transactions:', err);
-        setErrorTransactions((err as Error).message);
-        setTransactions([]);
-        setTotalTransactions(0);
-        setTotalPages(1);
-      } finally {
-        setLoadingTransactions(false);
-      }
-    };
-    fetchTransactions();
-  }, [currentPage, itemsPerPage, sortBy, sortOrder]);
+                const dateParam = selectedDate ? moment(selectedDate).format('YYYY-MM-DD') : '';
 
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) setCurrentPage(page);
-  };
+                const [summaryRes, paymentRes, transactionsRes] = await Promise.all([
+                    fetch(`${API_URL}/total-summary`),
+                    fetch(`${API_URL}/summary?date=${dateParam}`),
+                    fetch(`${API_URL}/all?limit=${itemsPerPage}&page=${currentPage}&sortBy=${sortBy}&sortOrder=${sortOrder}`),
+                ]);
 
-  const handleSortChange = (field: string, order: 'asc' | 'desc') => {
-    setSortBy(field);
-    setSortOrder(order);
-    setCurrentPage(1);
-  };
+                if (!summaryRes.ok) throw new Error('Failed to fetch total summary');
+                if (!paymentRes.ok) throw new Error('Failed to fetch daily payment summary');
+                if (!transactionsRes.ok) throw new Error('Failed to fetch transactions');
 
-  /** ---------- EARLY RETURN FORMAT ---------- **/
+                const summaryData = await summaryRes.json();
+                const paymentData = await paymentRes.json();
+                const transactionsData = await transactionsRes.json();
 
-  if (loadingSummary || loadingTransactions) {
+                setSummary({
+                    totalAmountProcessed: summaryData.totalAmountProcessed ?? 0,
+                    totalTransactions: summaryData.totalTransactions ?? 0,
+                    pendingTransactions: summaryData.pendingTransactions ?? 0,
+                });
+
+                setDailyDeposit(paymentData.totalDeposits ?? 0);
+                setDailyWithdrawal(paymentData.totalWithdrawals ?? 0);
+
+                const mappedTransactions: Transaction[] = (transactionsData.transactions || []).map((t: any) => ({
+                    _id: t._id?.toString() || '',
+                    transactionId: t.tx_ref?.toString() || '',
+                    telegramId: t.telegramId?.toString() || '',
+                    username: t.username?.toString() || 'Unknown',
+                    amount: Number(t.amount) || 0,
+                    status: t.status?.toString(),
+                    date: t.createdAt?.toString() || '',
+                    currency: 'ETB',
+                    type: t.type === 'Payment' ? 'Deposit' : 'Withdrawal',
+                    bank_code: t.bank_code?.toString(),
+                    account_number: t.account_number?.toString(),
+                    method: t.method?.toString(),
+                }));
+
+                setTransactions(mappedTransactions);
+            } catch (err: unknown) {
+                console.error(err);
+                setError((err as Error).message);
+                setSummary(defaultSummary);
+                setTransactions([]);
+                setDailyDeposit(0);
+                setDailyWithdrawal(0);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, [selectedDate, currentPage, itemsPerPage, sortBy, sortOrder]);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100">
+                <div className="text-center text-lg font-semibold text-gray-700 bg-white p-6 rounded-xl shadow-lg animate-pulse">
+                    <FaSpinner className="animate-spin mr-2 inline-block" />
+                    Loading dashboard data... Please wait.
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-100">
+                <div className="text-center text-lg font-semibold text-red-600 bg-white p-6 rounded-xl shadow-lg">
+                    <p>Error: {error}</p>
+                    <p className="text-sm text-gray-500 mt-2">
+                        Displaying default values due to a data fetching issue.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     return (
-      <main className="p-6">
-        <div className="bg-white p-6 rounded-lg shadow text-gray-700">Loading transactions…</div>
-      </main>
+        <main className="flex-1 w-[80%] md:w-[90%] lg:w-full p-4 flex flex-col items-center justify-start bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen transition-all">
+            <div className="w-[clamp(250px,100%,900px)] lg:w-full lg:mt-8 flex flex-col gap-6">
+
+                {/* Calendar Filter */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl shadow-md bg-white hover:shadow-xl transition-shadow duration-300 w-[70%] md:w-full">
+                    <h3 className="text-lg font-semibold text-gray-700 tracking-wide">Filter by Date</h3>
+                    <DatePicker
+                        selected={selectedDate}
+                        onChange={(date: Date | null) => setSelectedDate(date)}
+                        dateFormat="yyyy/MM/dd"
+                        placeholderText="Select a date"
+                        className="cursor-pointer p-3 sm:px-5 sm:py-3 text-gray-900 font-semibold shadow-lg rounded-full
+                                   bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
+                                   hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-300"
+                    />
+                </div>
+
+                {/* Summary Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:w-full w-[70%]">
+                    <Card title="Daily Deposit" value={`${dailyDeposit.toLocaleString()} Birr`} icon="moneyBill" />
+                    <Card title="Daily Withdrawal" value={`${dailyWithdrawal.toLocaleString()} Birr`} icon="users" />
+                    <Card title="Total Transactions" value={summary.totalTransactions.toLocaleString()} icon="games" />
+                    <Card title="Pending Transactions" value={summary.pendingTransactions.toLocaleString()} icon="users" />
+                    <Card title="Total Amount Processed" value={`${summary.totalAmountProcessed.toLocaleString()} Birr`} icon="revenue" />
+                </div>
+
+                {/* Transactions Table */}
+                <div className="max-w-full mt-6 bg-white rounded-xl shadow-md p-4 hover:shadow-xl transition-shadow duration-300">
+                    <TransactionTable
+                        transactions={transactions}
+                        currentPage={currentPage}
+                        itemsPerPage={itemsPerPage}
+                        totalTransactions={summary.totalTransactions}
+                        totalPages={Math.ceil(summary.totalTransactions / itemsPerPage)}
+                        onPageChange={setCurrentPage}
+                        onSortChange={handleSortChange}
+                        currentSortBy={sortBy}
+                        currentSortOrder={sortOrder}
+                    />
+                </div>
+
+            </div>
+        </main>
     );
-  }
-
-  if (errorSummary || errorTransactions) {
-    return (
-      <main className="p-6">
-        <div className="bg-white p-6 rounded-lg shadow text-red-600">
-          <p className="font-semibold">Error</p>
-          <p className="text-sm text-gray-600 mt-1">
-            {errorSummary || errorTransactions}
-          </p>
-        </div>
-      </main>
-    );
-  }
-
-  /** ---------- SUCCESS VIEW ---------- **/
-
-  return (
-    <main className="flex-1 w-[80%] lg:w-full p-4 flex items-start justify-start">
-      <div className="w-[clamp(250px,100%,800px)] lg:w-full lg:mt-8">
-        <div className="mx-auto flex flex-col gap-6">
-          <h1 className="text-3xl font-bold mb-8 text-gray-800">Transaction History</h1>
-
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card
-              title="Total Deposits"
-              value={`${summary.totalDepositAmount.toLocaleString()} Birr`}
-              icon="revenue"
-            />
-            <Card
-              title="Total Withdrawals"
-              value={`${summary.totalWithdrawalAmount.toLocaleString()} Birr`}
-              icon="profit"
-            />
-            <Card
-              title="Pending Transactions"
-              value={`${summary.totalPendingTransactions.toLocaleString()} Items`}
-              icon="games"
-            />
-          </div>
-
-          {/* Transactions Table */}
-          <div className="max-w-full">
-            <TransactionTable
-              transactions={transactions}
-              currentPage={currentPage}
-              itemsPerPage={itemsPerPage}
-              totalTransactions={totalTransactions}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-              onSortChange={handleSortChange}
-              currentSortBy={sortBy}
-              currentSortOrder={sortOrder}
-            />
-          </div>
-        </div>
-      </div>
-    </main>
-  );
 }
