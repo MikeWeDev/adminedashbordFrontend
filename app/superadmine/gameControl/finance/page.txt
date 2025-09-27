@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaArrowUp, FaArrowDown, FaUsers } from 'react-icons/fa';
-import { AuditTable } from '../../../components/AuditTable'; // new table component
+import { AuditTable } from '../../../components/AuditTable';
 
+// ---------------- Session Check ----------------
 function useSessionCheck() {
   const router = useRouter();
   useEffect(() => {
@@ -27,7 +28,7 @@ function useSessionCheck() {
 // ---------------- Types ----------------
 interface AuditEntry {
   type: 'Balance Change' | 'Transaction Change';
-  target: string; // username for balance, tx_ref for transaction
+  target: string;
   oldValue: string | number;
   newValue: string | number;
   reason: string;
@@ -39,23 +40,24 @@ interface FinanceSummary {
   totalDeposits24h: number;
   totalWithdrawals24h: number;
 }
+
 const API_URL = 'https://adminbackend.bingoogame.com/api/finance';
 const defaultSummary: FinanceSummary = { totalChanges: 0, totalDeposits24h: 0, totalWithdrawals24h: 0 };
 
 // ---------------- Card Icons ----------------
 const icons = {
-  changes: <FaUsers className="text-2xl sm:text-3xl text-purple-500 flex-shrink-0" />,
-  deposits: <FaArrowUp className="text-2xl sm:text-3xl text-green-500 flex-shrink-0" />,
-  withdrawals: <FaArrowDown className="text-2xl sm:text-3xl text-red-500 flex-shrink-0" />,
+  changes: <FaUsers className="text-3xl text-purple-500 flex-shrink-0" />,
+  deposits: <FaArrowUp className="text-3xl text-green-500 flex-shrink-0" />,
+  withdrawals: <FaArrowDown className="text-3xl text-red-500 flex-shrink-0" />,
 };
 
 // ---------------- Card Component ----------------
 const Card = ({ title, value, icon }: { title: string; value: string | number; icon: keyof typeof icons }) => (
-  <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start w-1/2 md:w-full">
-    <div className="mb-2 sm:mb-0 sm:mr-3">{icons[icon]}</div>
+  <div className="bg-white p-6 rounded-2xl shadow-lg flex flex-col items-center sm:flex-row sm:items-start hover:shadow-xl transition-all duration-300">
+    <div className="mb-2 sm:mb-0 sm:mr-4">{icons[icon]}</div>
     <div className="text-center sm:text-left">
       <p className="text-gray-500 text-sm truncate">{title}</p>
-      <h2 className="text-lg font-bold truncate text-black">{value}</h2>
+      <h2 className="text-xl font-bold text-black truncate">{value}</h2>
     </div>
   </div>
 );
@@ -72,7 +74,6 @@ export default function FinanceManagementPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [sortBy, setSortBy] = useState('timestamp');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,7 +82,6 @@ export default function FinanceManagementPage() {
       try {
         setLoading(true);
         setError(null);
-
         const query = new URLSearchParams({
           page: currentPage.toString(),
           limit: itemsPerPage.toString(),
@@ -103,7 +103,6 @@ export default function FinanceManagementPage() {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [currentPage, itemsPerPage, sortBy, sortOrder]);
 
@@ -117,7 +116,7 @@ export default function FinanceManagementPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-center text-lg font-semibold text-gray-700 bg-white p-6 rounded-lg shadow-md">
+        <div className="text-center text-lg font-semibold text-gray-700 bg-white p-6 rounded-2xl shadow-lg">
           Loading finance data... Please wait.
         </div>
       </div>
@@ -127,7 +126,7 @@ export default function FinanceManagementPage() {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-center text-lg font-semibold text-red-600 bg-white p-6 rounded-lg shadow-md">
+        <div className="text-center text-lg font-semibold text-red-600 bg-white p-6 rounded-2xl shadow-lg">
           <p>Error: {error}</p>
           <p className="text-sm text-gray-500 mt-2">
             Displaying default values due to a data fetching issue.
@@ -138,30 +137,28 @@ export default function FinanceManagementPage() {
   }
 
   return (
-    <main className="flex-1 w-[70%] lg:w-full p-4 flex items-start justify-start">
-      <div className="w-[clamp(250px,100%,1000px)] lg:w-full lg:mt-8">
-        <div className="mx-auto flex flex-col gap-6">
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card title="Total Changes" value={summary.totalChanges.toLocaleString()} icon="changes" />
-            <Card title="Deposits (24h)" value={`${summary.totalDeposits24h.toLocaleString()} Birr`} icon="deposits" />
-            <Card title="Withdrawals (24h)" value={`${summary.totalWithdrawals24h.toLocaleString()} Birr`} icon="withdrawals" />
-          </div>
+    <main className="flex-1 w-full p-4 flex flex-col items-center justify-start">
+      <div className="w-[clamp(300px,100%,1200px)] flex flex-col gap-6">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <Card title="Total Changes" value={summary.totalChanges.toLocaleString()} icon="changes" />
+          <Card title="Deposits (24h)" value={`${summary.totalDeposits24h.toLocaleString()} Birr`} icon="deposits" />
+          <Card title="Withdrawals (24h)" value={`${summary.totalWithdrawals24h.toLocaleString()} Birr`} icon="withdrawals" />
+        </div>
 
-          {/* Audit Table */}
-          <div className="max-w-full mt-4">
-            <AuditTable
-              entries={auditEntries}
-              currentPage={currentPage}
-              itemsPerPage={itemsPerPage}
-              totalItems={totalItems}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-              onSortChange={handleSortChange}
-              currentSortBy={sortBy}
-              currentSortOrder={sortOrder}
-            />
-          </div>
+        {/* Audit Table */}
+        <div className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 mt-4 w-full">
+          <AuditTable
+            entries={auditEntries}
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={totalItems}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            onSortChange={handleSortChange}
+            currentSortBy={sortBy}
+            currentSortOrder={sortOrder}
+          />
         </div>
       </div>
     </main>

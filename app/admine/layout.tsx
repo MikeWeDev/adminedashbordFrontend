@@ -14,7 +14,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main content area */}
       <div className="flex-1 flex flex-col">
         {/* Mobile top bar */}
-        <div className="p-4 bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg lg:hidden flex items-center rounded-b-2xl">
+        <div className="p-4 bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg lg:hidden flex items-center ">
           <button
             onClick={() => setSidebarOpen(true)}
             aria-label="Open sidebar"

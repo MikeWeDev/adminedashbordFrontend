@@ -4,6 +4,26 @@ import { useState, useEffect } from 'react';
 import { PaymentTable } from '../../components/PaymentTable';
 import { FaMoneyBill, FaUsers, FaGamepad, FaSpinner } from 'react-icons/fa';
 
+/* ------------------- Icons & Card ------------------- */
+const icons = {
+    revenue: <FaMoneyBill />,
+    users: <FaUsers />,
+    games: <FaGamepad />,
+    moneyBill: <FaMoneyBill />,
+};
+
+const Card = ({ title, value, icon }: { title: string; value: string | number; icon: keyof typeof icons }) => (
+    <div className="bg-white rounded-xl shadow-md p-4 flex items-center gap-4 w-full transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl">
+        <div className="w-14 h-14 flex items-center justify-center rounded-full bg-indigo-500 text-white text-2xl shadow-md">
+            {icons[icon]}
+        </div>
+        <div className="flex flex-col">
+            <p className="text-gray-500 text-sm font-medium">{title}</p>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">{value}</h2>
+        </div>
+    </div>
+);
+
 interface PaymentSummaryData {
     totalAmountProcessed: number;
     totalTransactions: number;
@@ -14,7 +34,7 @@ interface Transaction {
     _id: string;
     tx_ref: string;
     telegramId: string;
-    username?: string; // Add the optional username field
+    username?: string;
     amount: number;
     status: 'pending' | 'success' | 'failed' | 'processing' | 'paid' | 'rejected' | 'approved' | 'completed';
     createdAt: string;
@@ -25,27 +45,11 @@ interface Transaction {
 }
 
 const API_URL = 'https://adminbackend.bingoogame.com/api/payments';
-
 const defaultPaymentSummary: PaymentSummaryData = {
     totalAmountProcessed: 0,
     totalTransactions: 0,
     pendingTransactions: 0,
 };
-const icons = {
-    revenue: <FaMoneyBill className="text-2xl sm:text-3xl text-green-500 flex-shrink-0" />,
-    users: <FaUsers className="text-2xl sm:text-3xl text-purple-500 flex-shrink-0" />,
-    games: <FaGamepad className="text-2xl sm:text-3xl text-yellow-500 flex-shrink-0" />,
-};
-
-const Card = ({ title, value, icon }: { title: string; value: string | number; icon: keyof typeof icons }) => (
-    <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center sm:flex-row sm:items-start w-[80%] md:w-full">
-        <div className="mb-2 sm:mb-0 sm:mr-3">{icons[icon]}</div>
-        <div className="text-center sm:text-left">
-            <p className="text-gray-500 text-sm truncate">{title}</p>
-            <h2 className="text-lg font-bold truncate text-black">{value}</h2>
-        </div>
-    </div>
-);
 
 export default function PaymentManagementPage() {
     const [summary, setSummary] = useState<PaymentSummaryData>(defaultPaymentSummary);
@@ -62,12 +66,10 @@ export default function PaymentManagementPage() {
     const [errorSummary, setErrorSummary] = useState<string | null>(null);
     const [errorTransactions, setErrorTransactions] = useState<string | null>(null);
 
-    // New state for daily summaries and date filter
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [dailyDeposits, setDailyDeposits] = useState<number | null>(null);
     const [dailyWithdrawals, setDailyWithdrawals] = useState<number | null>(null);
 
-    // Update useEffect for summary to use the date filter
     useEffect(() => {
         const fetchSummary = async () => {
             try {
@@ -76,12 +78,9 @@ export default function PaymentManagementPage() {
                 const res = await fetch(`${API_URL}/summary?date=${selectedDate}`);
                 if (!res.ok) throw new Error(`Failed to fetch summary: ${res.status}`);
                 const data = await res.json();
-
-                // Update state with daily data
                 setDailyDeposits(data.totalDeposits || 0);
                 setDailyWithdrawals(data.totalWithdrawals || 0);
 
-                // Fetch pending and total transactions from a separate endpoint if needed, or combine logic
                 const totalRes = await fetch(`${API_URL}/total-summary`);
                 const totalData = await totalRes.json();
                 setSummary({
@@ -144,11 +143,10 @@ export default function PaymentManagementPage() {
         setCurrentPage(1);
     };
 
-    // Full-page loading
     if (loadingSummary || loadingTransactions) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-100">
-                <div className="text-center text-lg font-semibold text-gray-700 bg-white p-6 rounded-lg shadow-md">
+            <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100">
+                <div className="text-center text-lg font-semibold text-gray-700 bg-white p-6 rounded-xl shadow-lg animate-pulse">
                     <FaSpinner className="animate-spin mr-2 inline-block" />
                     Loading dashboard data... Please wait.
                 </div>
@@ -156,11 +154,10 @@ export default function PaymentManagementPage() {
         );
     }
 
-    // Full-page error
     if (errorSummary || errorTransactions) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gray-100">
-                <div className="text-center text-lg font-semibold text-red-600 bg-white p-6 rounded-lg shadow-md">
+                <div className="text-center text-lg font-semibold text-red-600 bg-white p-6 rounded-xl shadow-lg">
                     <p>Error: {errorSummary || errorTransactions}</p>
                     <p className="text-sm text-gray-500 mt-2">
                         Displaying default values due to a data fetching issue.
@@ -170,62 +167,47 @@ export default function PaymentManagementPage() {
         );
     }
 
-  return (
-    <main className="flex-1 w-[70%] lg:w-full p-4 flex items-start justify-start">
-      <div className="w-[clamp(250px,100%,800px)] lg:w-full lg:mt-8">
-        <div className="mx-auto flex flex-col gap-6 ">
-          <h1 className="text-3xl font-bold mb-8 text-gray-800">Payment & Withdrawal Management</h1>
-          
-          {/* Date Picker Input */}
-          <div className="mb-4">
-            <label htmlFor="date-filter" className="block text-sm font-medium text-gray-700">Filter Daily Summary by Date:</label>
-            <input 
-              type="date" 
-              id="date-filter"
-              value={selectedDate} 
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="mt-1 block w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            />
-          </div>
+    return (
+        <main className="flex-1 w-[80%] md:w-[90%] lg:w-full p-4 flex flex-col items-center justify-start bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen transition-all">
+            <div className="w-[clamp(250px,100%,900px)] lg:w-full lg:mt-8 flex flex-col gap-6">
 
-                    {/* Summary Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 ">
-                        <Card
-                            title="Daily Deposits"
-                            value={dailyDeposits !== null ? `${dailyDeposits.toLocaleString()} Birr` : 'N/A'}
-                            icon="revenue"
-                        />
-                        <Card
-                            title="Daily Withdrawals"
-                            value={dailyWithdrawals !== null ? `${dailyWithdrawals.toLocaleString()} Birr` : 'N/A'}
-                            icon="users"
-                        />
-                        <Card
-                            title="Total Transactions"
-                            value={summary.totalTransactions.toLocaleString()}
-                            icon="games"
-                        />
-                        <Card
-                            title="Pending Transactions"
-                            value={summary.pendingTransactions.toLocaleString()}
-                            icon="users"
-                        />
-                    </div>
-
-                    <div className="max-w-full">
-                        <PaymentTable
-                            transactions={transactions}
-                            currentPage={currentPage}
-                            itemsPerPage={itemsPerPage}
-                            totalTransactions={totalTransactions}
-                            totalPages={totalPages}
-                            onPageChange={handlePageChange}
-                            onSortChange={handleSortChange}
-                            currentSortBy={sortBy}
-                            currentSortOrder={sortOrder}
-                        />
-                    </div>
+                {/* Date Picker */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl shadow-md bg-white hover:shadow-xl transition-shadow duration-300 w-[70%] md:w-full">
+                    <h3 className="text-lg font-semibold text-gray-700 tracking-wide">Filter by Date</h3>
+                    <input
+                        type="date"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="cursor-pointer p-3 sm:px-5 sm:py-3 text-gray-900 font-semibold shadow-lg rounded-full
+                                   bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
+                                   hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-300"
+                    />
                 </div>
+
+                {/* Summary Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:w-full w-[70%]">
+                    <Card title="Daily Deposit" value={`${dailyDeposits?.toLocaleString()} Birr`} icon="moneyBill" />
+                    <Card title="Daily Withdrawal" value={`${dailyWithdrawals?.toLocaleString()} Birr`} icon="users" />
+                    <Card title="Total Transactions" value={summary.totalTransactions.toLocaleString()} icon="games" />
+                    <Card title="Pending Transactions" value={summary.pendingTransactions.toLocaleString()} icon="users" />
+                    <Card title="Total Amount Processed" value={`${summary.totalAmountProcessed.toLocaleString()} Birr`} icon="revenue" />
+                </div>
+
+                {/* Transactions Table */}
+                <div className="max-w-full mt-6 bg-white rounded-xl shadow-md p-4 hover:shadow-xl transition-shadow duration-300">
+                    <PaymentTable
+                        transactions={transactions}
+                        currentPage={currentPage}
+                        itemsPerPage={itemsPerPage}
+                        totalTransactions={totalTransactions}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                        onSortChange={handleSortChange}
+                        currentSortBy={sortBy}
+                        currentSortOrder={sortOrder}
+                    />
+                </div>
+
             </div>
         </main>
     );

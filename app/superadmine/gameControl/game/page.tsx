@@ -25,12 +25,13 @@ type GamesResponse = {
 };
 
 const icons = {
-  games: <FaGamepad className="text-2xl sm:text-3xl text-purple-500" />,
-  active: <FaCheckCircle className="text-2xl sm:text-3xl text-green-600" />,
-  inactive: <FaTimesCircle className="text-2xl sm:text-3xl text-red-600" />,
-  players: <FaUsers className="text-2xl sm:text-3xl text-blue-600" />,
+  games: <FaGamepad />,
+  active: <FaCheckCircle />,
+  inactive: <FaTimesCircle />,
+  players: <FaUsers />,
 };
 
+// 🔹 Updated Card UI
 function Card({
   title,
   value,
@@ -41,11 +42,13 @@ function Card({
   icon: keyof typeof icons;
 }) {
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md flex items-center gap-3  w-3/4 md:full ">
-      {icons[icon]}
-      <div>
-        <p className="text-gray-500 text-sm">{title}</p>
-        <h2 className="text-lg font-bold text-black">{value}</h2>
+    <div className="bg-white rounded-xl shadow-md p-4 flex items-center gap-4 w-full transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl">
+      <div className="w-14 h-14 flex items-center justify-center rounded-full bg-indigo-500 text-white text-2xl shadow-md">
+        {icons[icon]}
+      </div>
+      <div className="flex flex-col">
+        <p className="text-gray-500 text-sm font-medium">{title}</p>
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900">{value}</h2>
       </div>
     </div>
   );
@@ -103,13 +106,12 @@ export default function GameManagementPage() {
       setTotalPages(data.totalPages);
       setTotalItems(data.totalItems);
     }catch (e: unknown) {
-  if (e instanceof Error) {
-    setError(e.message);
-  } else {
-    setError(String(e) || 'Unknown error');
-  }
-}
- finally {
+      if (e instanceof Error) {
+        setError(e.message);
+      } else {
+        setError(String(e) || 'Unknown error');
+      }
+    } finally {
       setLoading(false);
     }
   }
@@ -200,62 +202,57 @@ export default function GameManagementPage() {
   }
 
   return (
-  <main className="flex-1 w-[70%] lg:w-[90%] p-4 flex items-start justify-start">
-  <div className="w-[clamp(250px,100%,1000px)] lg:w-full lg:mt-8">
-    <div className="mx-auto flex flex-col gap-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card title="Total Games" value={summary.totalGames} icon="games" />
-        <Card title="Active Games" value={summary.activeGames} icon="active" />
-        <Card title="Inactive Games" value={summary.inactiveGames} icon="inactive" />
-        <Card title="Players in Active" value={summary.activePlayers} icon="players" />
-      </div>
-
-      {/* Global Toggle */}
-      <div className="bg-white p-4 rounded-lg shadow flex flex-col sm:flex-row sm:items-center sm:justify-between w-3/4 md:w-[90%] gap-4">
-        <div>
-          <p className="text-gray-700 font-semibold text-base sm:text-lg">Future Rounds</p>
-          <p className="text-sm text-gray-500">
-            {allowNewGames === null
-              ? "Loading…"
-              : allowNewGames
-              ? "New rounds are allowed"
-              : "New rounds are disabled"}
-          </p>
+    <main className="flex-1 w-full p-6 bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen">
+      <div className="max-w-5xl mx-auto flex flex-col gap-6">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 w-[70%] md:w-full">
+          <Card title="Total Games" value={summary.totalGames} icon="games" />
+          <Card title="Active Games" value={summary.activeGames} icon="active" />
+          <Card title="Inactive Games" value={summary.inactiveGames} icon="inactive" />
+          <Card title="Players in Active" value={summary.activePlayers} icon="players" />
         </div>
-        <button
-          disabled={allowNewGames === null || toggleLoading}
-          onClick={toggleFutureRounds}
-          className={`inline-flex items-center justify-center gap-2 px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm sm:text-base text-white transition ${
-            allowNewGames
-              ? "bg-yellow-600 hover:bg-yellow-700"
-              : "bg-green-600 hover:bg-green-700"
-          } disabled:opacity-50`}
-          aria-disabled={allowNewGames === null || toggleLoading}
-          aria-label={allowNewGames ? "Disable future rounds" : "Enable future rounds"}
-        >
-          <FaPowerOff className="text-lg sm:text-xl" />
-          {allowNewGames ? "Shut Down Future Rounds" : "Enable Future Rounds"}
-        </button>
-      </div>
 
-      {/* Game Table */}
-      <div className=" mt-4 overflow-x-auto bg-white rounded-lg shadow">
-        <GameTable
-          rows={games}
-          page={page}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          onPageChange={onPageChange}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          onSortChange={onSortChange}
-          onEndGame={endGame}
-        />
-      </div>
-    </div>
-  </div>
-</main>
+        {/* Global Toggle */}
+        <div className="bg-white rounded-xl shadow-md p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-[70%] md:w-full  transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl">
+          <div>
+            <p className="text-gray-700 font-semibold text-base sm:text-lg">Future Rounds</p>
+            <p className="text-sm text-gray-500">
+              {allowNewGames === null
+                ? "Loading…"
+                : allowNewGames
+                ? "New rounds are allowed"
+                : "New rounds are disabled"}
+            </p>
+          </div>
+          <button
+            disabled={allowNewGames === null || toggleLoading}
+            onClick={toggleFutureRounds}
+            className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm sm:text-base text-white transition ${
+              allowNewGames
+                ? "bg-yellow-600 hover:bg-yellow-700"
+                : "bg-green-600 hover:bg-green-700"
+            } disabled:opacity-50`}
+          >
+            <FaPowerOff className="text-lg sm:text-xl" />
+            {allowNewGames ? "Shut Down Future Rounds" : "Enable Future Rounds"}
+          </button>
+        </div>
 
+        {/* Game Table */}
+        <div className="mt-4 overflow-x-auto bg-white rounded-xl shadow-md p-4 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl">
+          <GameTable
+            rows={games}
+            page={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            onPageChange={onPageChange}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSortChange={onSortChange}
+            onEndGame={endGame}
+          />
+        </div>
+      </div>
+    </main>
   );
 }
