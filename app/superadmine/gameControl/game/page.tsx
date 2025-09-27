@@ -202,7 +202,7 @@ export default function GameManagementPage() {
   }
 
   return (
-    <main className="flex-1 w-full p-6 bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen">
+    <main className="flex-1 w-[80%] lg:w-full p-6 bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen">
       <div className="max-w-5xl mx-auto flex flex-col gap-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 w-[70%] md:w-full">
@@ -239,7 +239,7 @@ export default function GameManagementPage() {
         </div>
 
         {/* Game Table */}
-        <div className="mt-4 overflow-x-auto bg-white rounded-xl shadow-md p-4 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl">
+        <div className="mt-4 overflow-x-auto bg-white rounded-xl shadow-md p-4 hover:shadow-xl transition-shadow duration-300">
           <GameTable
             rows={games}
             page={page}

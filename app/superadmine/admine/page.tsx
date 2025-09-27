@@ -120,8 +120,8 @@ export default function AdminUsersPage() {
                   key={u._id}
                   className="bg-white rounded-xl border border-gray-200 hover:bg-gray-50 transition-all duration-200"
                 >
-                  <td className="py-3 px-3 sm:px-4">{u.username}</td>
-                  <td className="py-3 px-3 sm:px-4">{u.role}</td>
+                  <td className="py-3 px-3 sm:px-4 text-black">{u.username}</td>
+                  <td className="py-3 px-3 sm:px-4 text-black">{u.role}</td>
                   <td className="py-3 px-3 sm:px-4 flex flex-col sm:flex-row gap-2">
                     <button
                       onClick={() => deleteUser(u._id)}

@@ -217,7 +217,7 @@ export default function UserManagementPage() {
       <div className="w-[clamp(250px,100%,900px)] lg:w-full lg:mt-8 flex flex-col gap-6">
 
         {/* Calendar Filter */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl shadow-md bg-white hover:shadow-xl transition-shadow duration-300 md:w-full w-[70%]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl shadow-md bg-white hover:shadow-xl transition-shadow duration-300 md:w-full w-[80%]">
           <h3 className="text-lg font-semibold text-gray-700 tracking-wide">Filter by Date</h3>
           <DatePicker
             selected={selectedDate}
@@ -232,7 +232,7 @@ export default function UserManagementPage() {
 
         {/* Summary Cards */}
        {/* Summary Cards */}
-<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:w-full w-[70%]">
+<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:w-full w-[80%]">
   <Card
     title="Daily Deposit"
     value={`${Number(dailyDeposit || 0).toLocaleString()} Birr`}
