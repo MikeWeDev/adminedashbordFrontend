@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
+import { PlusCircle, Trash2, Zap, Link } from 'lucide-react';
 
+// --- Button Editor Utilities and Interfaces ---
 interface Announcement {
     _id: string;
     userId: string;
@@ -10,6 +12,128 @@ interface Announcement {
     sentAt: string;
 }
 
+interface Button {
+    id: string;
+    text: string;
+    data: string;
+}
+
+// Utility function to check if the data is a URL
+const isURL = (data: string) => data.startsWith('http://') || data.startsWith('https://');
+
+// Internal structure for managing buttons
+const parseButtonsString = (buttonsString: string): Button[] => {
+    if (!buttonsString) return [];
+    return buttonsString.split(',').map((button, index) => {
+        const [text = '', data = ''] = button.split('|');
+        return {
+            // Use a simple index key for initial parsing for stability
+            id: `btn-init-${index}`, 
+            text: text.trim(),
+            data: data.trim(),
+        };
+    });
+};
+
+/**
+ * Converts the structured array back into the required comma/pipe string format.
+ */
+const serializeButtons = (buttonArray: Button[]): string => {
+    return buttonArray
+        .map(btn => {
+            // Ensure there's both text and data before including the button
+            if (btn.text.trim() && btn.data.trim()) {
+                return `${btn.text.trim()}|${btn.data.trim()}`;
+            }
+            return ''; // Return an empty string for buttons to be filtered out
+        })
+        .filter(str => str !== '') // Filter out empty strings
+        .join(',');
+};
+
+const INITIAL_BUTTON_STRING = 'Acknowledge|ACK_YES,View Details|DETAILS_BTN';
+
+
+// --- MEMOIZED BUTTON INPUT COMPONENT (The Definitive Fix) ---
+interface ButtonInputItemProps {
+    btn: Button;
+    isSending: boolean;
+    onButtonChange: (id: string, field: keyof Button, value: string) => void;
+    onDeleteButton: (id: string) => void;
+}
+
+// Custom comparison function for React.memo
+const arePropsEqual = (prevProps: ButtonInputItemProps, nextProps: ButtonInputItemProps) => {
+    // We only re-render if the core data for THIS button, or the sending state, changes.
+    // The handler functions (onButtonChange, onDeleteButton) are stable due to useCallback, so they aren't checked.
+    return (
+        prevProps.btn.id === nextProps.btn.id &&
+        prevProps.btn.text === nextProps.btn.text &&
+        prevProps.btn.data === nextProps.btn.data &&
+        prevProps.isSending === nextProps.isSending
+    );
+};
+
+const ButtonInputItem = memo(
+    ({ btn, isSending, onButtonChange, onDeleteButton }: ButtonInputItemProps) => {
+        return (
+            <div className="flex flex-col sm:flex-row gap-3 p-3 border border-indigo-300 rounded-lg bg-white shadow-sm items-center">
+                
+                {/* Button Text Input */}
+                <div className="flex-1 w-full">
+                    <label className="text-xs font-medium text-gray-500 block mb-1">Button Text</label>
+                    <input
+                        type="text"
+                        value={btn.text}
+                        // KEY FIX: This input is controlled by btn.text
+                        onChange={(e) => onButtonChange(btn.id, 'text', e.target.value)}
+                        placeholder="e.g., Start Deposit"
+                        className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        disabled={isSending}
+                    />
+                </div>
+
+                {/* Separator Icon */}
+                <div className="hidden sm:block text-2xl font-bold text-gray-400">|</div>
+                
+                {/* Data/URL Input */}
+                <div className="flex-1 w-full relative">
+                    <label className="text-xs font-medium text-gray-500 block mb-1 flex items-center">
+                        {isURL(btn.data) ? <Link className="w-4 h-4 mr-1 text-green-500" /> : <Zap className="w-4 h-4 mr-1 text-purple-500" />}
+                        {isURL(btn.data) ? 'URL (Link)' : 'Callback Data (Action)'}
+                    </label>
+                    <input
+                        type="text"
+                        value={btn.data}
+                        // KEY FIX: This input is controlled by btn.data
+                        onChange={(e) => onButtonChange(btn.id, 'data', e.target.value)}
+                        placeholder={isURL(btn.data) ? "https://your.website.com" : "e.g., DEPOSIT_NOW_ACTION"}
+                        className={`w-full p-2 border rounded-md text-sm transition duration-150 focus:ring-indigo-500 focus:border-indigo-500 ${isURL(btn.data) ? 'border-green-300' : 'border-purple-300'}`}
+                        disabled={isSending}
+                    />
+                </div>
+
+                {/* Delete Button */}
+                <button
+                    type="button"
+                    onClick={() => onDeleteButton(btn.id)}
+                    className="p-2 text-red-500 hover:bg-red-100 rounded-full transition duration-150 self-end sm:self-center shrink-0 disabled:opacity-50"
+                    aria-label="Delete button"
+                    disabled={isSending}
+                >
+                    <Trash2 className="w-5 h-5" />
+                </button>
+            </div>
+        );
+    },
+    arePropsEqual // Apply the custom comparison here
+);
+
+ButtonInputItem.displayName = 'ButtonInputItem';
+// --- END MEMOIZED BUTTON INPUT COMPONENT ---
+
+
+// --- Main Component ---
 export default function BroadcastPage() {
     const [message, setMessage] = useState<string>('');
     const [image, setImage] = useState<File | null>(null);
@@ -21,8 +145,42 @@ export default function BroadcastPage() {
     const [currentMessageIndex, setCurrentMessageIndex] = useState<number>(0);
     const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
     const [announcementToDelete, setAnnouncementToDelete] = useState<Announcement | null>(null);
+    
+    // Structured array for editor and final string for backend
+    const [structuredButtons, setStructuredButtons] = useState<Button[]>(parseButtonsString(INITIAL_BUTTON_STRING));
+    const [callbackButtonsString, setCallbackButtonsString] = useState<string>(INITIAL_BUTTON_STRING);
 
     const API_BASE_URL = 'https://adminbackend.bingoogame.com/api/broadcast';
+
+    // Effect to serialize the structured array into the final string
+    useEffect(() => {
+        const serialized = serializeButtons(structuredButtons);
+        setCallbackButtonsString(serialized);
+    }, [structuredButtons]);
+
+
+    // --- Button Editor Handlers (wrapped in useCallback for memoized child) ---
+    const handleAddButton = useCallback(() => {
+        setStructuredButtons(prev => [
+            ...prev,
+            // Use a reliably unique ID here
+            { id: `btn-new-${Date.now()}`, text: '', data: '' } 
+        ]);
+    }, []);
+
+    const handleButtonChange = useCallback((id: string, field: keyof Button, value: string) => {
+        // Correct immutability ensures object references are only updated for the changed button
+        setStructuredButtons(prev => 
+            prev.map(btn => 
+                btn.id === id ? { ...btn, [field]: value } : btn
+            )
+        );
+    }, []);
+
+    const handleDeleteButton = useCallback((id: string) => {
+        setStructuredButtons(prev => prev.filter(btn => btn.id !== id));
+    }, []);
+    // --- End Button Editor Handlers ---
 
     const fetchAnnouncements = async () => {
         setIsLoadingHistory(true);
@@ -72,12 +230,17 @@ export default function BroadcastPage() {
             setStatus('Please enter a message to send.');
             return;
         }
+        
         setIsSending(true);
         setStatus('Sending broadcast...');
         const formData = new FormData();
         formData.append('message', message);
+        
+        formData.append('callbackButtons', callbackButtonsString); 
+        
         if (image) formData.append('image', image);
 
+        
         try {
             const response = await fetch(API_BASE_URL, { method: 'POST', body: formData });
             if (!response.ok) {
@@ -89,6 +252,8 @@ export default function BroadcastPage() {
             setStatus(`✅ Broadcast successful! Details: ${data.details.sentTo} sent, ${data.details.failedTo} failed.`);
             setMessage('');
             setImage(null);
+            // After successful send, reset the editor to a clean state
+            setStructuredButtons([{ id: `btn-${Date.now()}`, text: '', data: '' }]);
             fetchAnnouncements();
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
@@ -121,7 +286,8 @@ export default function BroadcastPage() {
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
             console.error('Error deleting announcement:', errorMessage);
-            setAnnouncements(prev => [...prev, announcementToDelete]);
+            // Re-add the deleted item if the API call fails
+            setAnnouncements(prev => [...prev, announcementToDelete]); 
             setStatus(`❌ Failed to delete announcement: ${errorMessage}`);
         } finally {
             setAnnouncementToDelete(null);
@@ -129,6 +295,53 @@ export default function BroadcastPage() {
     };
 
     const currentAnnouncement = announcements.length > 0 ? announcements[currentMessageIndex] : null;
+
+    // --- Button Editor Component (Inline for Single File) ---
+    const ButtonEditor = () => (
+        <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/50">
+            <h3 className="text-md font-semibold text-blue-800 mb-3 flex items-center">
+                <Zap className="w-4 h-4 mr-2 text-blue-500" />
+                Inline Callback Buttons
+            </h3>
+            <p className="text-xs text-gray-600 mb-4">
+                Add buttons below your message. Use **Callback** for bot actions or **URL** for external links.
+            </p>
+
+            <div className="space-y-3">
+                {structuredButtons.map((btn) => (
+                    // The unique key combined with the custom memoization should stabilize the inputs
+                    <ButtonInputItem 
+                        key={btn.id}
+                        btn={btn}
+                        isSending={isSending}
+                        onButtonChange={handleButtonChange}
+                        onDeleteButton={handleDeleteButton}
+                    />
+                ))}
+            </div>
+
+            {/* Add Button */}
+            <button
+                type="button"
+                onClick={handleAddButton}
+                className="mt-4 flex items-center justify-center w-full py-2 px-4 border border-dashed border-blue-400 text-blue-700 rounded-lg hover:bg-blue-100 transition duration-150 disabled:opacity-50"
+                disabled={isSending}
+            >
+                <PlusCircle className="w-5 h-5 mr-2" />
+                Add New Button
+            </button>
+            
+            {/* Backend Output Preview (For confirmation) */}
+            <div className="mt-4 pt-3 border-t border-blue-200">
+                <label className="text-xs font-medium text-gray-500 block mb-1">Backend Payload String:</label>
+                <div className="p-2 bg-gray-100 rounded text-xs font-mono break-all border border-gray-300">
+                    {callbackButtonsString || "No buttons defined"}
+                </div>
+            </div>
+        </div>
+    );
+    // --- End Button Editor Component ---
+
 
     return (
         <div className="container mx-auto p-4 flex flex-col md:flex-row gap-8 font-sans">
@@ -149,6 +362,11 @@ export default function BroadcastPage() {
                                 disabled={isSending}
                             />
                         </div>
+                        
+                        <div className="mb-6">
+                            <ButtonEditor />
+                        </div>
+                        
                         <div className="mb-4">
                             <label htmlFor="image" className="block text-gray-700 font-semibold mb-2">Attach Image (Optional)</label>
                             <input
