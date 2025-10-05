@@ -51,7 +51,11 @@ const serializeButtons = (buttonArray: Button[]): string => {
         .join(',');
 };
 
-const INITIAL_BUTTON_STRING = 'Acknowledge|ACK_YES,View Details|DETAILS_BTN';
+// =========================================================================
+// 1. CHANGE: Set the default text ('Play') and callback ('PLAY_ACTION')
+// Original: 'Acknowledge|ACK_YES,View Details|DETAILS_BTN'
+const INITIAL_BUTTON_STRING = 'Play|Play';
+// =========================================================================
 
 
 // --- MEMOIZED BUTTON INPUT COMPONENT (The Definitive Fix) ---
@@ -135,7 +139,12 @@ ButtonInputItem.displayName = 'ButtonInputItem';
 
 // --- Main Component ---
 export default function BroadcastPage() {
-    const [message, setMessage] = useState<string>('');
+    // =========================================================================
+    // 2. CHANGE: Set the default message text
+    // Original: const [message, setMessage] = useState<string>('');
+    const DEFAULT_MESSAGE = 'players Are Active ባለ 10 ብር bingo አሁን ይጫወቱ 🎮🎮';
+    const [message, setMessage] = useState<string>(DEFAULT_MESSAGE);
+    // =========================================================================
     const [image, setImage] = useState<File | null>(null);
     const [status, setStatus] = useState<string>('');
     const [isSending, setIsSending] = useState<boolean>(false);
@@ -250,10 +259,10 @@ export default function BroadcastPage() {
             }
             const data = await response.json();
             setStatus(`✅ Broadcast successful! Details: ${data.details.sentTo} sent, ${data.details.failedTo} failed.`);
-            setMessage('');
+            setMessage(DEFAULT_MESSAGE); // Reset message to default after successful send
             setImage(null);
             // After successful send, reset the editor to a clean state
-            setStructuredButtons([{ id: `btn-${Date.now()}`, text: '', data: '' }]);
+            setStructuredButtons(parseButtonsString(INITIAL_BUTTON_STRING));
             fetchAnnouncements();
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';

@@ -172,7 +172,7 @@ export default function PaymentManagementPage() {
             <div className="w-[clamp(250px,100%,900px)] lg:w-full lg:mt-8 flex flex-col gap-6">
 
                 {/* Date Picker */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl shadow-md bg-white hover:shadow-xl transition-shadow duration-300 w-[80%] md:w-full">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl shadow-md bg-white hover:shadow-xl transition-shadow duration-300 w-[80%] ">
                     <h3 className="text-lg font-semibold text-gray-700 tracking-wide">Filter by Date</h3>
                     <input
                         type="date"

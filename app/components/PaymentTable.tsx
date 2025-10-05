@@ -28,6 +28,32 @@ interface PaymentTableProps {
     currentSortOrder: 'asc' | 'desc';
 }
 
+// ---------------------------------------------------------------------
+// 💡 SOLVED PROBLEM HERE: Changed hour12: false to hour12: true
+// ---------------------------------------------------------------------
+// Helper function to format the timestamp clearly
+const formatTimestamp = (isoString: string) => {
+    if (!isoString) return 'N/A';
+    try {
+        const date = new Date(isoString);
+        
+        // Format: MM/DD/YYYY, HH:MM:SS AM/PM
+        return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            // 🚨 THIS IS THE KEY CHANGE FOR 12-HOUR FORMAT
+            hour12: true, 
+        });
+    } catch (e) {
+        return 'Invalid Date';
+    }
+};
+// ---------------------------------------------------------------------
+
 export const PaymentTable: React.FC<PaymentTableProps> = ({
     transactions,
     currentPage,
@@ -102,11 +128,22 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                                 Transaction ID
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                                Username
+                            {/* 1. NEW USERNAME HEADER */}
+                            <th 
+                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell cursor-pointer"
+                                onClick={() => handleSortClick('username')}
+                            >
+                                <div className="flex items-center">Username {getSortIcon('username')}</div>
+                            </th>
+                            {/* 2. NEW DATE/TIME HEADER (made visible and sortable) */}
+                            <th
+                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                                onClick={() => handleSortClick('createdAt')}
+                            >
+                                <div className="flex items-center">Date/Time {getSortIcon('createdAt')}</div>
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Type
@@ -126,12 +163,6 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                             >
                                 <div className="flex items-center">Status {getSortIcon('status')}</div>
                             </th>
-                            <th
-                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hidden "
-                                onClick={() => handleSortClick('createdAt')}
-                            >
-                                <div className="flex items-center">Date {getSortIcon('createdAt')}</div>
-                            </th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Actions
                             </th>
@@ -141,11 +172,16 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                         {transactions.length > 0 ? (
                             transactions.map((transaction) => (
                                 <tr key={transaction._id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 hidden md:table-cell" title={transaction.tx_ref}>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 hidden lg:table-cell" title={transaction.tx_ref}>
                                         {transaction.tx_ref?.substring(0, 10) || 'N/A'}...
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
-                                        {transaction.username || 'N/A'}
+                                    {/* 1. NEW USERNAME CELL */}
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 hidden md:table-cell">
+                                        @{transaction.username || 'N/A'}
+                                    </td>
+                                    {/* 2. NEW DATE/TIME CELL (Clear Timestamp) */}
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {formatTimestamp(transaction.createdAt)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         <span
@@ -156,7 +192,7 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                                             {displayType(transaction.type)}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-semibold">
                                         {transaction.amount.toLocaleString()} Birr
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
@@ -171,9 +207,6 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                                             {transaction.status}
                                         </span>
                                     </td>
-                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden ">
-    {new Date(transaction.createdAt).toLocaleTimeString()}
-</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex items-center justify-end gap-2">
                                             {transaction.type === 'Withdrawal' && transaction.status === 'pending' && (

@@ -35,6 +35,7 @@ interface User {
   phoneNumber: string;
   balance: number;
   registeredAt: string;
+  bonus_balance?: number;
 }
 
 interface SummaryData {
@@ -43,6 +44,7 @@ interface SummaryData {
   users: number;
   gamesPlayed: { [key: number]: number };
   totalGamesToday: number;
+   totalBonusBalance: number; 
 }
 
 interface GameHistoryEntry {
@@ -66,6 +68,7 @@ const defaultSummary: SummaryData = {
   users: 0,
   gamesPlayed: { 10: 0, 20: 0, 30: 0 },
   totalGamesToday: 0,
+  totalBonusBalance: 0, 
 };
 
 const icons = {
@@ -96,6 +99,7 @@ export default function UserManagementPage() {
   const [dailyDeposit, setDailyDeposit] = useState<number>(0);
   const [dailyWithdrawal, setDailyWithdrawal] = useState<number>(0);
   const [winnerAmount, setWinnerAmount] = useState<number>(0);
+  const [totalBonusBalance, setTotalBonusBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -139,6 +143,8 @@ export default function UserManagementPage() {
         setGames(gamesData);
         setDailyDeposit(paymentData.totalDeposits ?? 0);
         setDailyWithdrawal(paymentData.totalWithdrawals ?? 0);
+         setTotalBonusBalance(summaryData.totalBonusBalance ?? 0); 
+
 
         const totalStakes = gamesData.reduce((acc: number, game: GameHistoryEntry) => {
           if (game.endedAt && game.playersCount > 0) return acc + game.stakeAmount * game.playersCount;
@@ -248,6 +254,7 @@ export default function UserManagementPage() {
     value={`${Number(winnerAmount || 0).toLocaleString()} Birr`}
     icon="moneyBill"
   />
+ 
   <Card
     title="Daily Profit"
     value={`${Number(summary.dailyProfit || 0).toLocaleString()} Birr`}
@@ -267,6 +274,11 @@ export default function UserManagementPage() {
     title="Games Played Today"
     value={`${Number(finishedGamesCount || 0)}`}
     icon="games"
+  />
+    <Card
+    title="Total Bonus Balance"
+    value={`${Number(totalBonusBalance || 0).toLocaleString()} Birr`}
+    icon="moneyBill" // Use the money icon
   />
 </div>
 
