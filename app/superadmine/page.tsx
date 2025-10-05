@@ -44,7 +44,7 @@ interface SummaryData {
   users: number;
   gamesPlayed: { [key: number]: number };
   totalGamesToday: number;
-   totalBonusBalance: number; 
+  totalBonusBalance: number; 
 }
 
 interface GameHistoryEntry {
@@ -138,12 +138,15 @@ export default function UserManagementPage() {
         const summaryData = await summaryRes.json();
         const gamesData = await gamesRes.json();
         const paymentData = await paymentRes.json();
+        
+        // --- LOG 1: Check summary data for totalBonusBalance ---
+        // -----------------------------------------------------
 
         setSummary({ ...defaultSummary, ...summaryData, gamesPlayed: { ...defaultSummary.gamesPlayed, ...summaryData.gamesPlayed } });
         setGames(gamesData);
         setDailyDeposit(paymentData.totalDeposits ?? 0);
         setDailyWithdrawal(paymentData.totalWithdrawals ?? 0);
-         setTotalBonusBalance(summaryData.totalBonusBalance ?? 0); 
+        setTotalBonusBalance(summaryData.totalBonusBalance ?? 0); 
 
 
         const totalStakes = gamesData.reduce((acc: number, game: GameHistoryEntry) => {
@@ -180,6 +183,10 @@ export default function UserManagementPage() {
         const res = await fetch(`${DASHBOARD_API_URL}/users?${query}`);
         if (!res.ok) throw new Error(`Failed to fetch users: ${res.statusText}`);
         const data = await res.json();
+        
+        // --- LOG 2: Check individual user bonus_balance here ---
+        // -----------------------------------------------------
+
         setUsers(data.users || []);
         setTotalUsers(data.totalUsers || 0);
         setTotalPages(data.totalPages || 1);
@@ -231,71 +238,70 @@ export default function UserManagementPage() {
             dateFormat="yyyy/MM/dd"
             placeholderText="Select a date"
             className="cursor-pointer p-3 sm:px-5 sm:py-3 text-gray-900 font-semibold shadow-lg rounded-full
-                       bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
-                       hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-300"
+                         bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
+                         hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-300"
           />
         </div>
 
         {/* Summary Cards */}
-       {/* Summary Cards */}
-<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:w-full w-[80%]">
-  <Card
-    title="Daily Deposit"
-    value={`${Number(dailyDeposit || 0).toLocaleString()} Birr`}
-    icon="moneyBill"
-  />
-  <Card
-    title="Daily Withdrawal"
-    value={`${Number(dailyWithdrawal || 0).toLocaleString()} Birr`}
-    icon="moneyBill"
-  />
-  <Card
-    title="Winner Amount"
-    value={`${Number(winnerAmount || 0).toLocaleString()} Birr`}
-    icon="moneyBill"
-  />
- 
-  <Card
-    title="Daily Profit"
-    value={`${Number(summary.dailyProfit || 0).toLocaleString()} Birr`}
-    icon="profit"
-  />
-  <Card
-    title="Total Profit"
-    value={`${Number(summary.profit || 0).toLocaleString()} Birr`}
-    icon="profit"
-  />
-  <Card
-    title="Total Users"
-    value={`${Number(summary.users || 0).toLocaleString()}`}
-    icon="users"
-  />
-  <Card
-    title="Games Played Today"
-    value={`${Number(finishedGamesCount || 0)}`}
-    icon="games"
-  />
-    <Card
-    title="Total Bonus Balance"
-    value={`${Number(totalBonusBalance || 0).toLocaleString()} Birr`}
-    icon="moneyBill" // Use the money icon
-  />
-</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:w-full w-[80%]">
+          <Card
+            title="Daily Deposit"
+            value={`${Number(dailyDeposit || 0).toLocaleString()} Birr`}
+            icon="moneyBill"
+          />
+          <Card
+            title="Daily Withdrawal"
+            value={`${Number(dailyWithdrawal || 0).toLocaleString()} Birr`}
+            icon="moneyBill"
+          />
+          <Card
+            title="Winner Amount"
+            value={`${Number(winnerAmount || 0).toLocaleString()} Birr`}
+            icon="moneyBill"
+          />
+          
+          <Card
+            title="Daily Profit"
+            value={`${Number(summary.dailyProfit || 0).toLocaleString()} Birr`}
+            icon="profit"
+          />
+          <Card
+            title="Total Profit"
+            value={`${Number(summary.profit || 0).toLocaleString()} Birr`}
+            icon="profit"
+          />
+          <Card
+            title="Total Users"
+            value={`${Number(summary.users || 0).toLocaleString()}`}
+            icon="users"
+          />
+          <Card
+            title="Games Played Today"
+            value={`${Number(finishedGamesCount || 0)}`}
+            icon="games"
+          />
+            <Card
+            title="Total Bonus Balance"
+            value={`${Number(totalBonusBalance || 0).toLocaleString()} Birr`}
+            icon="moneyBill" // Use the money icon
+          />
+        </div>
 
         {/* Users Table (unchanged) */}
        <div className="max-w-full">
-              <UserTable
-                users={users}
-                currentPage={currentPage}
-                itemsPerPage={itemsPerPage}
-                totalUsers={totalUsers}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-                onSortChange={handleSortChange}
-                currentSortBy={sortBy}
-                currentSortOrder={sortOrder}
-              />
-              </div>
+             <UserTable
+               users={users}
+               currentPage={currentPage}
+               itemsPerPage={itemsPerPage}
+               totalUsers={totalUsers}
+               totalPages={totalPages}
+               onPageChange={handlePageChange}
+               onSortChange={handleSortChange}
+               currentSortBy={sortBy}
+               currentSortOrder={sortOrder}
+             />
+             </div>
       </div>
     </main>
   );

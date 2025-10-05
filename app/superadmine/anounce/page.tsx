@@ -52,7 +52,7 @@ const serializeButtons = (buttonArray: Button[]): string => {
 };
 
 // =========================================================================
-// 1. CHANGE: Set the default text ('Play') and callback ('PLAY_ACTION')
+// 1. CHANGE: Set the default text ('Play') and callback ('PLAY')
 // Original: 'Acknowledge|ACK_YES,View Details|DETAILS_BTN'
 const INITIAL_BUTTON_STRING = 'Play|Play';
 // =========================================================================
