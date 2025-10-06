@@ -228,7 +228,7 @@ export default function UserManagementPage() {
   }
 
   return (
-    <main className="flex-1 w-[80%] lg:w-full p-4 flex flex-col items-start md:items-center justify-start bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen transition-all">
+    <main className="flex-1 w-full p-4 flex flex-col items-start md:items-center justify-start bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen transition-all">
       <div className="w-[70%] md:w-[90%] lg:mt-8 flex flex-col gap-6">
 
         {/* Calendar Filter */}
