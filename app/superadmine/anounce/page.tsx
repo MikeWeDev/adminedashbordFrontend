@@ -198,6 +198,7 @@ export default function BroadcastPage() {
             const response = await fetch(`${API_BASE_URL}/announcements`);
             if (!response.ok) {
                 const errorText = await response.text();
+                console.error('Fetch Announcements failed with status:', response.status, 'Body:', errorText); // 💡 ADDED CONSOLE LOG FOR BAD STATUS
                 throw new Error(`Failed to fetch announcements: ${response.status} ${response.statusText} - ${errorText}`);
             }
             const data: Announcement[] = await response.json();

@@ -39,12 +39,13 @@ interface User {
 }
 
 interface SummaryData {
-  profit: number;
-  dailyProfit: number;
-  users: number;
-  gamesPlayed: { [key: number]: number };
-  totalGamesToday: number;
-  totalBonusBalance: number; 
+  profit: number;
+  dailyProfit: number;
+  users: number;
+  gamesPlayed: { [key: number]: number };
+  totalGamesToday: number;
+  totalBonusBalance: number;
+  dailyWinningsPaid: number; // ⭐ ADD THIS NEW FIELD
 }
 
 interface GameHistoryEntry {
@@ -63,14 +64,14 @@ const DASHBOARD_API_URL = 'https://adminbackend.bingoogame.com/api/dashboard';
 const PAYMENT_API_URL = 'https://adminbackend.bingoogame.com/api/payments';
 
 const defaultSummary: SummaryData = {
-  profit: 0,
-  dailyProfit: 0,
-  users: 0,
-  gamesPlayed: { 10: 0, 20: 0, 30: 0 },
-  totalGamesToday: 0,
-  totalBonusBalance: 0, 
+  profit: 0,
+  dailyProfit: 0,
+  users: 0,
+  gamesPlayed: { 10: 0, 20: 0, 30: 0 },
+  totalGamesToday: 0,
+  totalBonusBalance: 0,
+  dailyWinningsPaid: 0, // ⭐ ADD INITIALIZATION
 };
-
 const icons = {
   profit: <FaChartLine />,
   users: <FaUsers />,
@@ -117,60 +118,60 @@ export default function UserManagementPageA() {
 
   const finishedGamesCount = useMemo(() => games.filter(game => game.endedAt && game.playersCount > 0).length, [games]);
 
-  // Fetch summary, games, and payments
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setError(null);
-        setLoading(true);
-        const dateParam = selectedDate ? moment(selectedDate).format('YYYY-MM-DD') : '';
+// Fetch summary, games, and payments
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setError(null);
+        setLoading(true);
+        const dateParam = selectedDate ? moment(selectedDate).format('YYYY-MM-DD') : '';
 
-        const [summaryRes, gamesRes, paymentRes] = await Promise.all([
-          fetch(`${DASHBOARD_API_URL}/summary?date=${dateParam}`),
-          fetch(`${DASHBOARD_API_URL}/games-by-date?date=${dateParam}`),
-          fetch(`${PAYMENT_API_URL}/summary?date=${dateParam}`),
-        ]);
+        const [summaryRes, gamesRes, paymentRes] = await Promise.all([
+          fetch(`${DASHBOARD_API_URL}/summary?date=${dateParam}`),
+          fetch(`${DASHBOARD_API_URL}/games-by-date?date=${dateParam}`),
+          fetch(`${PAYMENT_API_URL}/summary?date=${dateParam}`),
+        ]);
 
-        if (!summaryRes.ok) throw new Error(`Failed to fetch summary: ${summaryRes.status}`);
-        if (!gamesRes.ok) throw new Error(`Failed to fetch games: ${gamesRes.status}`);
-        if (!paymentRes.ok) throw new Error(`Failed to fetch payments: ${paymentRes.status}`);
+        if (!summaryRes.ok) throw new Error(`Failed to fetch summary: ${summaryRes.status}`);
+        if (!gamesRes.ok) throw new Error(`Failed to fetch games: ${gamesRes.status}`);
+        if (!paymentRes.ok) throw new Error(`Failed to fetch payments: ${paymentRes.status}`);
 
-        const summaryData = await summaryRes.json();
-        const gamesData = await gamesRes.json();
-        const paymentData = await paymentRes.json();
-        
-        // --- LOG 1: Check summary data for totalBonusBalance ---
-        // -----------------------------------------------------
+        const summaryData = await summaryRes.json();
+        const gamesData = await gamesRes.json();
+        const paymentData = await paymentRes.json();
+        
+        // Update summary state, including the new dailyWinningsPaid field
+        setSummary({ 
+            ...defaultSummary, 
+            ...summaryData, 
+            gamesPlayed: { ...defaultSummary.gamesPlayed, ...summaryData.gamesPlayed } 
+        });
+        
+        setGames(gamesData);
+        setDailyDeposit(paymentData.totalDeposits ?? 0);
+        setDailyWithdrawal(paymentData.totalWithdrawals ?? 0);
+        setTotalBonusBalance(summaryData.totalBonusBalance ?? 0); 
 
-        setSummary({ ...defaultSummary, ...summaryData, gamesPlayed: { ...defaultSummary.gamesPlayed, ...summaryData.gamesPlayed } });
-        setGames(gamesData);
-        setDailyDeposit(paymentData.totalDeposits ?? 0);
-        setDailyWithdrawal(paymentData.totalWithdrawals ?? 0);
-        setTotalBonusBalance(summaryData.totalBonusBalance ?? 0); 
+        // ⭐ FIX: Set Winner Amount directly from the backend (dailyWinningsPaid)
+        const actualWinnerAmount = summaryData.dailyWinningsPaid ?? 0;
+        setWinnerAmount(actualWinnerAmount);
+        
+      } catch (err: unknown) {
+        console.error(err);
+        setError((err as Error).message);
+        setSummary(defaultSummary);
+        setGames([]);
+        setDailyDeposit(0);
+        setDailyWithdrawal(0);
+        setWinnerAmount(0); // Reset winner amount on error
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [selectedDate]); // Add selectedDate as dependency
 
 
-        const totalStakes = gamesData.reduce((acc: number, game: GameHistoryEntry) => {
-          if (game.endedAt && game.playersCount > 0) return acc + game.stakeAmount * game.playersCount;
-          return acc;
-        }, 0);
-
-        setWinnerAmount(totalStakes - (summaryData.dailyProfit ?? 0));
-      } catch (err: unknown) {
-        console.error(err);
-        setError((err as Error).message);
-        setSummary(defaultSummary);
-        setGames([]);
-        setDailyDeposit(0);
-        setDailyWithdrawal(0);
-        setWinnerAmount(0);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [selectedDate]);
-
-  // Fetch users table (keep original logic)
   useEffect(() => {
     const fetchUsers = async () => {
       try {
