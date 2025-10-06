@@ -202,10 +202,10 @@ export default function GameManagementPage() {
   }
 
   return (
-    <main className="flex-1 w-[80%] lg:w-full p-6 bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen">
-      <div className="max-w-5xl mx-auto flex flex-col gap-6">
+    <main className="flex-1 w-full p-6 bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen">
+      <div className="w-[60%] lg:w-[80%] flex flex-col gap-6">
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 w-[70%] md:w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
           <Card title="Total Games" value={summary.totalGames} icon="games" />
           <Card title="Active Games" value={summary.activeGames} icon="active" />
           <Card title="Inactive Games" value={summary.inactiveGames} icon="inactive" />
@@ -213,7 +213,7 @@ export default function GameManagementPage() {
         </div>
 
         {/* Global Toggle */}
-        <div className="bg-white rounded-xl shadow-md p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-[70%] md:w-full  transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl">
+        <div className="bg-white rounded-xl shadow-md p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-full  transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl">
           <div>
             <p className="text-gray-700 font-semibold text-base sm:text-lg">Future Rounds</p>
             <p className="text-sm text-gray-500">

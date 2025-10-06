@@ -239,7 +239,7 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
             </div>
             
             {totalPages > 1 && (
-                <div className="flex flex-col md:flex-row justify-between items-center mt-6 p-3 bg-gray-50 rounded-lg gap-2">
+                <div className="flex flex-col md:flex-row justify-between items-center mt-6 p-3 bg-gray-50 rounded-lg gap-2 w-[80%] md:w-full">
                     <button
                         onClick={() => onPageChange(currentPage - 1)}
                         disabled={currentPage === 1}

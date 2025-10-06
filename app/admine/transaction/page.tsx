@@ -202,11 +202,11 @@ export default function TransactionHistoryPage() {
   }
 
   return (
-    <main className="flex-1 w-[80%] md:w-[90%] lg:w-full p-4 flex flex-col items-center justify-start bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen transition-all">
-      <div className="w-[clamp(250px,100%,900px)] lg:w-full lg:mt-8 flex flex-col gap-6">
+    <main className="flex-1 w-full p-4 flex flex-col md:items-center items-start justify-start bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen transition-all">
+      <div className="w-[60%] md:w-full lg:mt-8 flex flex-col gap-6">
 
         {/* Calendar Filter */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl shadow-md bg-white hover:shadow-xl transition-shadow duration-300 w-[70%] md:w-full">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl shadow-md bg-white hover:shadow-xl transition-shadow duration-300 w-full">
           <h3 className="text-lg font-semibold text-gray-700 tracking-wide">Filter by Date</h3>
           <DatePicker
             selected={selectedDate}
@@ -220,7 +220,7 @@ export default function TransactionHistoryPage() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:w-full w-[70%]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 w-full">
           <Card title="Daily Deposit" value={`${dailyDeposit.toLocaleString()} Birr`} icon="moneyBill" />
           <Card title="Daily Withdrawal" value={`${dailyWithdrawal.toLocaleString()} Birr`} icon="users" />
           <Card title="Total Transactions" value={summary.totalTransactions.toLocaleString()} icon="games" />
@@ -229,7 +229,7 @@ export default function TransactionHistoryPage() {
         </div>
 
         {/* Transactions Table */}
-        <div className="max-w-full mt-6 bg-white rounded-xl shadow-md p-4 hover:shadow-xl transition-shadow duration-300">
+        <div className="max-w-full mt-6 bg-white rounded-xl shadow-md p-4 hover:shadow-xl transition-shadow duration-300 overflow-x-auto">
           <TransactionTable
             transactions={transactions}
             currentPage={currentPage}

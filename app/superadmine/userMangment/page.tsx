@@ -143,7 +143,7 @@ export default function UserManagementPage() {
   // Page content
   return (
 <main className="flex-1 w-[70%] lg:w-full p-4 flex items-start justify-start">
-  <div className="w-[clamp(250px,100%,800px)] lg:w-full lg:mt-8">
+  <div className="w-[80%] lg:w-[90%] lg:mt-8">
 
 
       <div className="max-w-full">

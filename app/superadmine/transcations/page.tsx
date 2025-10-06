@@ -168,8 +168,8 @@ export default function PaymentManagementPage() {
     }
 
     return (
-        <main className="flex-1 w-[80%] md:w-[90%] lg:w-full p-4 flex flex-col items-center justify-start bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen transition-all">
-            <div className="w-[clamp(250px,100%,900px)] lg:w-full lg:mt-8 flex flex-col gap-6">
+        <main className="flex-1 w-[100%] md:w-[90%] lg:w-full p-4 flex flex-col items-start justify-start bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen transition-all">
+            <div className="w-[60%] lg:w-[90%] lg:mt-8 flex flex-col gap-6 ">
 
                 {/* Date Picker */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl shadow-md bg-white hover:shadow-xl transition-shadow duration-300 w-[80%] ">
@@ -194,7 +194,7 @@ export default function PaymentManagementPage() {
                 </div>
 
                 {/* Transactions Table */}
-                <div className="max-w-full mt-6 bg-white rounded-xl shadow-md p-4 hover:shadow-xl transition-shadow duration-300">
+                <div className="max-w-full mt-6 bg-white rounded-xl shadow-md p-4 hover:shadow-xl transition-shadow duration-300 ">
                     <PaymentTable
                         transactions={transactions}
                         currentPage={currentPage}

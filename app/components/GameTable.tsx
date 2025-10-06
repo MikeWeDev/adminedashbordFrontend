@@ -129,7 +129,7 @@ export default function GameTable({
                   <td className="py-3 px-4 whitespace-nowrap hidden sm:table-cell">
                     {g.endedAt ? new Date(g.endedAt).toLocaleString() : '-'}
                   </td>
-                                <td className="py-3 px-4 whitespace-nowrap bg-gray-50 flex items-center justify-center">
+                 <td className="py-3 px-4 mt-4 whitespace-nowrap bg-gray-50 flex items-center justify-end">
                     <button
                         onClick={() => onEndGame(g._id)}
                         className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition"
@@ -145,7 +145,7 @@ export default function GameTable({
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-col sm:flex-row justify-start items-center gap-3 mt-4 p-3 bg-gray-50 rounded-lg">
+      <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mt-4 p-3 bg-gray-50 rounded-lg">
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page === 1}
