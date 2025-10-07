@@ -115,8 +115,7 @@ export default function UserManagementPage() {
   // Calendar state
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
-  const finishedGamesCount = useMemo(() => games.filter(game => game.endedAt && game.playersCount > 0).length, [games]);
-
+const finishedGamesCount = useMemo(() => games.filter(game => game.endedAt).length, [games]);
   // Fetch summary, games, and payments
   useEffect(() => {
     const fetchData = async () => {
@@ -136,8 +135,11 @@ export default function UserManagementPage() {
         if (!paymentRes.ok) throw new Error(`Failed to fetch payments: ${paymentRes.status}`);
 
         const summaryData = await summaryRes.json();
+console.log('gamesRes.ok:', gamesRes.ok);
         const gamesData = await gamesRes.json();
+console.log('Fetched gamesData:', gamesData);
         const paymentData = await paymentRes.json();
+
         
         // --- LOG 1: Check summary data for totalBonusBalance ---
         // -----------------------------------------------------
