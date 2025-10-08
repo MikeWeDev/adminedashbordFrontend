@@ -160,7 +160,7 @@ export default function BroadcastPage() {
     const [callbackButtonsString, setCallbackButtonsString] = useState<string>(INITIAL_BUTTON_STRING);
 
     const API_BASE_URL = 'https://adminbackend.bingoogame.com/api/broadcast';
-
+   
     // Effect to serialize the structured array into the final string
     useEffect(() => {
         const serialized = serializeButtons(structuredButtons);
