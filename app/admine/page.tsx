@@ -116,7 +116,8 @@ export default function UserManagementPageA() {
   // Calendar state
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
-  const finishedGamesCount = useMemo(() => games.filter(game => game.endedAt && game.playersCount > 0).length, [games]);
+  const finishedGamesCount = useMemo(() => games.filter(game => game.endedAt).length, [games]);
+  
 
 // Fetch summary, games, and payments
   useEffect(() => {
