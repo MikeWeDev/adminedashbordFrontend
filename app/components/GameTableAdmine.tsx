@@ -68,7 +68,7 @@ export default function GameTable({
   return (
     <div className="bg-white p-4 rounded-lg shadow">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-semibold">Game Sessions</h3>
+        <h3 className="text-lg font-semibold  text-black">Game Sessions</h3>
         <p className="text-sm text-gray-600">
           {totalItems} total {totalItems === 1 ? 'session' : 'sessions'}
         </p>

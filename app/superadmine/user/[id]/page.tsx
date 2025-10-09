@@ -185,20 +185,20 @@ export default function SuperAdminUserEditPage() {
 
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen">
+    <div className="p-8 bg-gray-100 min-h-screen text-black">
       {/* Page Header */}
     <div className="bg-white p-6 rounded-lg shadow-md mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
   <div className="w-full md:w-auto">
-    <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-2 flex items-center flex-wrap gap-2">
+    <h1 className="text-2xl sm:text-3xl font-extrabold  mb-2 flex items-center flex-wrap gap-2">
       <FaUserEdit className="text-indigo-600" />
       Edit User: {user.username}
     </h1>
-    <p className="text-gray-600 text-sm sm:text-lg">
+    <p className=" text-sm sm:text-lg">
       Modify user data and audit balance changes.
     </p>
   </div>
   <Link href="/superadmine/userMangment" className="w-full md:w-auto">
-    <button className="w-full md:w-auto bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg flex justify-center items-center gap-2 transition-colors duration-200">
+    <button className="w-full md:w-auto bg-gray-300 hover:bg-gray-400  font-bold py-2 px-4 rounded-lg flex justify-center items-center gap-2 transition-colors duration-200">
       <FaArrowLeft />
       Back
     </button>
@@ -210,13 +210,13 @@ export default function SuperAdminUserEditPage() {
       <div className="bg-white p-8 rounded-lg shadow-md">
         {/* Success/Error Messages */}
         {successMessage && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <div className="bg-green-100 border border-green-400  px-4 py-3 rounded relative mb-4" role="alert">
             <strong className="font-bold">Success!</strong>
             <span className="block sm:inline ml-2">{successMessage}</span>
           </div>
         )}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <div className="bg-red-100 border border-red-400 px-4 py-3 rounded relative mb-4" role="alert">
             <strong className="font-bold">Error!</strong>
             <span className="block sm:inline ml-2">{error}</span>
           </div>
@@ -225,14 +225,14 @@ export default function SuperAdminUserEditPage() {
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Username */}
           <div>
-            <label htmlFor="username" className="block text-gray-700 text-sm font-bold mb-2">Username:</label>
+            <label htmlFor="username" className="block  text-sm font-bold mb-2">Username:</label>
             <input
               type="text"
               id="username"
               name="username"
               value={formData.username || ''}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500"
+              className="shadow appearance-none border rounded w-full py-2 px-3  leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500"
               required
             />
           </div>
@@ -241,14 +241,14 @@ export default function SuperAdminUserEditPage() {
 
           {/* Phone Number */}
           <div>
-            <label htmlFor="phoneNumber" className="block text-gray-700 text-sm font-bold mb-2">Phone Number:</label>
+            <label htmlFor="phoneNumber" className="block text-sm font-bold mb-2">Phone Number:</label>
             <input
               type="text"
               id="phoneNumber"
               name="phoneNumber"
               value={formData.phoneNumber || ''}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500"
+              className="shadow appearance-none border rounded w-full py-2 px-3  leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -261,39 +261,39 @@ export default function SuperAdminUserEditPage() {
               name="balance"
               value={typeof formData.balance === 'number' ? formData.balance : ''}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500"
+              className="shadow appearance-none border rounded w-full py-2 px-3  leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500"
               step="0.01" // Allow decimal values
               required
             />
             {/* Display original balance for comparison if it exists */}
             {user.balance !== undefined && (
-              <p className="text-xs text-gray-500 mt-1">Current: {user.balance.toFixed(2)} Birr</p>
+              <p className="text-xs  mt-1">Current: {user.balance.toFixed(2)} Birr</p>
             )}
           </div>
           
           {/* Telegram ID (Display Only - Not Editable) */}
           <div>
-            <label htmlFor="telegramId" className="block text-gray-700 text-sm font-bold mb-2">Telegram ID:</label>
+            <label htmlFor="telegramId" className="block  text-sm font-bold mb-2">Telegram ID:</label>
             <input
               type="text"
               id="telegramId"
               name="telegramId"
               value={user.telegramId || 'N/A'}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight bg-gray-100 cursor-not-allowed"
+              className="shadow appearance-none border rounded w-full py-2 px-3  leading-tight bg-gray-100 cursor-not-allowed"
               readOnly // Make it read-only
             />
-            <p className="text-xs text-gray-500 mt-1">Telegram ID cannot be changed.</p>
+            <p className="text-xs mt-1">Telegram ID cannot be changed.</p>
           </div>
 
           {/* Registered At (Display Only) */}
           <div>
-            <label htmlFor="registeredAt" className="block text-gray-700 text-sm font-bold mb-2">Registered At:</label>
+            <label htmlFor="registeredAt" className="block  text-sm font-bold mb-2">Registered At:</label>
             <input
               type="text"
               id="registeredAt"
               name="registeredAt"
               value={new Date(user.registeredAt).toLocaleString()}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight bg-gray-100 cursor-not-allowed"
+              className="shadow appearance-none border rounded w-full py-2 px-3  leading-tight bg-gray-100 cursor-not-allowed"
               readOnly
             />
           </div>

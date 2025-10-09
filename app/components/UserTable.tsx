@@ -48,7 +48,7 @@ export const UserTable: React.FC<UserTableProps> = ({
 
   return (
     <div className="bg-white p-4 rounded-lg shadow mt-4 " >
-      <h3 className="text-lg font-semibold mb-3">All Registered Users</h3>
+      <h3 className="text-lg  text-black  font-semibold mb-3">All Registered Users</h3>
 
       {/* Scrollable table wrapper */}
       <div className="overflow-x-auto">

@@ -1,26 +1,28 @@
 import { useState, useMemo } from 'react';
+import Link from 'next/link'; // <-- Next.js Link is correctly imported here
 
 // --- Dependency Replacements (Mandatory for single-file environment) ---
-
-// Defining types for CustomLink props
+// Defining types for CustomLink props (Removed as we use next/link now)
+/*
 interface CustomLinkProps {
-  href: string;
-  className: string;
-  children: React.ReactNode;
+  href: string;
+  className: string;
+  children: React.ReactNode;
 }
 const CustomLink: React.FC<CustomLinkProps> = ({ href, className, children }) => (
-  <a 
-    href={href} 
-    className={className} 
-    onClick={(e) => {
-      // Prevent actual navigation if you want to keep the demonstration local
-      e.preventDefault(); 
-      console.log(`Navigating to: ${href}`);
-    }}
-  >
-    {children}
-  </a>
+  <a 
+    href={href} 
+    className={className} 
+    onClick={(e) => {
+      // Prevent actual navigation if you want to keep the demonstration local
+      e.preventDefault(); 
+      console.log(`Navigating to: ${href}`);
+    }}
+  >
+    {children}
+  </a>
 );
+*/
 
 // Replaces 'react-icons/fa/FaEdit' (No props, definition is fine)
 const FaEdit = () => (
@@ -40,230 +42,231 @@ const FaSortAlphaUp: React.FC<IconProps> = ({ className }) => <span className={c
 
 // --- Interfaces ---
 interface User {
-  _id: string;
-  telegramId?: number;
-  username: string;
-  phoneNumber?: string;
-  balance: number;
-  // EDITED: Made bonus_balance optional to match potential external data structure (error 2719)
-  bonus_balance?: number; 
-  registeredAt: string;
+    _id: string;
+    telegramId?: number;
+    username: string;
+    phoneNumber?: string;
+    balance: number;
+    // EDITED: Made bonus_balance optional to match potential external data structure (error 2719)
+    bonus_balance?: number; 
+    registeredAt: string;
 }
 
 interface UserTableProps {
-  users: User[];
-  currentPage: number;
-  itemsPerPage: number;
-  totalUsers: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  onSortChange: (field: string, order: 'asc' | 'desc') => void;
-  currentSortBy: string;
-  currentSortOrder: 'asc' | 'desc';
+    users: User[];
+    currentPage: number;
+    itemsPerPage: number;
+    totalUsers: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+    onSortChange: (field: string, order: 'asc' | 'desc') => void;
+    currentSortBy: string;
+    currentSortOrder: 'asc' | 'desc';
 }
 
 // --- Component Definition ---
 export const UserTable: React.FC<UserTableProps> = ({
-  users,
-  currentPage,
-  totalUsers,
-  totalPages,
-  onPageChange,
-  onSortChange,
-  currentSortBy,
-  currentSortOrder,
+    users,
+    currentPage,
+    totalUsers,
+    totalPages,
+    onPageChange,
+    onSortChange,
+    currentSortBy,
+    currentSortOrder,
 }) => {
-  const [usernameQuery, setUsernameQuery] = useState('');
-  const [contactQuery, setContactQuery] = useState('');
+    const [usernameQuery, setUsernameQuery] = useState('');
+    const [contactQuery, setContactQuery] = useState('');
 
-  const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
-      // Add a null check for user.username
-      const matchesUsername = user.username
-        ? user.username.toLowerCase().includes(usernameQuery.toLowerCase())
-        : false; // If username is undefined, it won't match.
+    const filteredUsers = useMemo(() => {
+        return users.filter((user) => {
+            // Add a null check for user.username
+            const matchesUsername = user.username
+                ? user.username.toLowerCase().includes(usernameQuery.toLowerCase())
+                : false; // If username is undefined, it won't match.
 
-      const matchesContact =
-        user.phoneNumber?.includes(contactQuery) ||
-        user.telegramId?.toString().includes(contactQuery);
-      return matchesUsername && (contactQuery ? matchesContact : true);
-    });
-  }, [users, usernameQuery, contactQuery]);
+            const matchesContact =
+                user.phoneNumber?.includes(contactQuery) ||
+                user.telegramId?.toString().includes(contactQuery);
+            return matchesUsername && (contactQuery ? matchesContact : true);
+        });
+    }, [users, usernameQuery, contactQuery]);
 
-  const handleSortClick = (field: string) => {
-    if (currentSortBy === field) {
-      onSortChange(field, currentSortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      onSortChange(field, 'asc');
-    }
-  };
+    const handleSortClick = (field: string) => {
+        if (currentSortBy === field) {
+            onSortChange(field, currentSortOrder === 'asc' ? 'desc' : 'asc');
+        } else {
+            onSortChange(field, 'asc');
+        }
+    };
 
-  const renderSortIcon = (field: string) => {
-    if (currentSortBy === field) {
-      return currentSortOrder === 'asc' ? (
-        <FaSortAlphaUp className="inline ml-1" />
-      ) : (
-        <FaSortAlphaDown className="inline ml-1" />
-      );
-    }
-    return null;
-  };
+    const renderSortIcon = (field: string) => {
+        if (currentSortBy === field) {
+            return currentSortOrder === 'asc' ? (
+                <FaSortAlphaUp className="inline ml-1" />
+            ) : (
+                <FaSortAlphaDown className="inline ml-1" />
+            );
+        }
+        return null;
+    };
 
-  // Total columns are now 7 (Username, Telegram ID, Phone, Balance, Bonus Balance, Registered At, Actions)
-  const COL_SPAN = 7; 
+    // Total columns are now 7 (Username, Telegram ID, Phone, Balance, Bonus Balance, Registered At, Actions)
+    const COL_SPAN = 7; 
 
-  return (
-    <div className="bg-white p-6 rounded-lg shadow-md mt-8 ">
-      <h3 className="text-xl font-semibold mb-4 text-gray-800">
-        All Registered Users
-      </h3>
+    return (
+        <div className="bg-white p-6 rounded-lg shadow-md mt-8 ">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800">
+                All Registered Users
+            </h3>
 
-      {/* Search Boxes */}
-      <div className="flex flex-col md:flex-row gap-4 mb-4">
-        <input
-          type="text"
-          placeholder="Search by username..."
-          value={usernameQuery}
-          onChange={(e) => setUsernameQuery(e.target.value)}
-          className="w-full md:w-1/3 px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-        <input
-          type="text"
-          placeholder="Search by phone number or Telegram ID..."
-          value={contactQuery}
-          onChange={(e) => setContactQuery(e.target.value)}
-          className="w-full md:w-1/3 px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-      </div>
+            {/* Search Boxes */}
+            <div className="flex flex-col md:flex-row gap-4 mb-4">
+                <input
+                    type="text"
+                    placeholder="Search by username..."
+                    value={usernameQuery}
+                    onChange={(e) => setUsernameQuery(e.target.value)}
+                    className="w-full md:w-1/3 px-4 py-2 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <input
+                    type="text"
+                    placeholder="Search by phone number or Telegram ID..."
+                    value={contactQuery}
+                    onChange={(e) => setContactQuery(e.target.value)}
+                    className="w-full md:w-1/3 px-4 py-2 border rounded-lg shadow-sm  text-black focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+            </div>
 
-      <div className="overflow-x-auto">
-        {/* CRITICAL FIX: Removed whitespace/newlines for hydration */}
-        <table className="table-auto border-collapse w-full "><thead>
-          <tr className="bg-gray-200 text-gray-700 uppercase text-xs leading-normal">
-            <th
-              className="py-3 px-6 text-left cursor-pointer hover:bg-gray-300 transition-colors duration-150 rounded-tl-lg whitespace-nowrap"
-              onClick={() => handleSortClick('username')}
-            >
-              Username {renderSortIcon('username')}
-            </th>
-            <th
-              className="py-3 px-6 text-left cursor-pointer hover:bg-gray-300 transition-colors duration-150 hidden md:table-cell whitespace-nowrap"
-              onClick={() => handleSortClick('telegramId')}
-            >
-              Telegram ID {renderSortIcon('telegramId')}
-            </th>
-            <th className="py-3 px-6 text-left whitespace-nowrap">Phone Number</th>
-            <th
-              className="py-3 px-6 text-left cursor-pointer hover:bg-gray-300 transition-colors duration-150 whitespace-nowrap"
-              onClick={() => handleSortClick('balance')}
-            >
-              Balance {renderSortIcon('balance')}
-            </th>
-            {/* START: NEW COLUMN FOR BONUS BALANCE */}
-            <th
-              className="py-3 px-6 text-left cursor-pointer hover:bg-gray-300 transition-colors duration-150 whitespace-nowrap"
-              onClick={() => handleSortClick('bonus_balance')}
-            >
-              Bonus Balance {renderSortIcon('bonus_balance')}
-            </th>
-            {/* END: NEW COLUMN FOR BONUS BALANCE */}
-            {/* Registered At hidden on small screens */}
-            <th
-              className="py-3 px-6 text-left cursor-pointer hover:bg-gray-300 transition-colors duration-150 hidden md:table-cell whitespace-nowrap"
-              onClick={() => handleSortClick('registeredAt')}
-            >
-              Registered At {renderSortIcon('registeredAt')}
-            </th>
-            <th className="py-3 px-6 text-left rounded-tr-lg whitespace-nowrap">Actions</th>
-          </tr>
-        </thead><tbody className="text-gray-700 text-sm font-light">
-          {filteredUsers.length > 0 ? (
-            filteredUsers.map((user) => (
-              <tr
-                key={user._id}
-                className="border-b border-gray-200 hover:bg-gray-100 transition-colors duration-150"
-              >
-                <td className="py-3 px-6 text-left whitespace-nowrap">
-                  {user.username}
-                </td>
-                <td className="py-3 px-6 text-left hidden md:table-cell">
-                  {user.telegramId || 'N/A'}
-                </td>
-                <td className="py-3 px-6 text-left">
-                  {user.phoneNumber || 'N/A'}
-                </td>
-                <td className="py-3 px-6 text-left whitespace-nowrap">
-                  {user.balance.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{' '}
-                  Birr
-                </td>
-                {/* START: NEW DATA CELL FOR BONUS BALANCE */}
-                <td className="py-3 px-6 text-left whitespace-nowrap">
-                  {(user.bonus_balance || 0).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{' '}
-                  Birr
-                </td>
-                {/* END: NEW DATA CELL FOR BONUS BALANCE */}
-                {/* Registered At hidden on small screens */}
-                <td className="py-3 px-6 text-left whitespace-nowrap hidden md:table-cell">
-                  {new Date(user.registeredAt).toLocaleDateString()}
-                  <span className="block text-xs text-gray-500">
-                    {new Date(user.registeredAt).toLocaleTimeString()}
-                  </span>
-                </td>
-                <td className="py-3 px-6 text-left">
-                  <CustomLink // Replaced Link with CustomLink
-                    href={`/superadmine/user/${user._id}`}
-                    className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center gap-1 transition-colors duration-200 text-sm"
-                  >
-                    <FaEdit /> Edit
-                  </CustomLink>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td
-                colSpan={COL_SPAN} // Using COL_SPAN which is 7
-                className="py-4 text-center text-gray-500"
-              >
-                No users found.
-              </td>
-            </tr>
-          )}
-        </tbody></table>
-      </div>
+            <div className="overflow-x-auto">
+                {/* CRITICAL FIX: Removed whitespace/newlines for hydration */}
+                <table className="table-auto border-collapse w-full "><thead>
+                    <tr className="bg-gray-200 text-gray-700 uppercase text-xs leading-normal">
+                        <th
+                            className="py-3 px-6 text-left cursor-pointer hover:bg-gray-300 transition-colors duration-150 rounded-tl-lg whitespace-nowrap"
+                            onClick={() => handleSortClick('username')}
+                        >
+                            Username {renderSortIcon('username')}
+                        </th>
+                        <th
+                            className="py-3 px-6 text-left cursor-pointer hover:bg-gray-300 transition-colors duration-150 hidden md:table-cell whitespace-nowrap"
+                            onClick={() => handleSortClick('telegramId')}
+                        >
+                            Telegram ID {renderSortIcon('telegramId')}
+                        </th>
+                        <th className="py-3 px-6 text-left whitespace-nowrap">Phone Number</th>
+                        <th
+                            className="py-3 px-6 text-left cursor-pointer hover:bg-gray-300 transition-colors duration-150 whitespace-nowrap"
+                            onClick={() => handleSortClick('balance')}
+                        >
+                            Balance {renderSortIcon('balance')}
+                        </th>
+                        {/* START: NEW COLUMN FOR BONUS BALANCE */}
+                        <th
+                            className="py-3 px-6 text-left cursor-pointer hover:bg-gray-300 transition-colors duration-150 whitespace-nowrap"
+                            onClick={() => handleSortClick('bonus_balance')}
+                        >
+                            Bonus Balance {renderSortIcon('bonus_balance')}
+                        </th>
+                        {/* END: NEW COLUMN FOR BONUS BALANCE */}
+                        {/* Registered At hidden on small screens */}
+                        <th
+                            className="py-3 px-6 text-left cursor-pointer hover:bg-gray-300 transition-colors duration-150 hidden md:table-cell whitespace-nowrap"
+                            onClick={() => handleSortClick('registeredAt')}
+                        >
+                            Registered At {renderSortIcon('registeredAt')}
+                        </th>
+                        <th className="py-3 px-6 text-left rounded-tr-lg whitespace-nowrap">Actions</th>
+                    </tr>
+                </thead><tbody className="text-gray-700 text-sm font-light">
+                    {filteredUsers.length > 0 ? (
+                        filteredUsers.map((user) => (
+                            <tr
+                                key={user._id}
+                                className="border-b border-gray-200 hover:bg-gray-100 transition-colors duration-150"
+                            >
+                                <td className="py-3 px-6 text-left whitespace-nowrap">
+                                    {user.username}
+                                </td>
+                                <td className="py-3 px-6 text-left hidden md:table-cell">
+                                    {user.telegramId || 'N/A'}
+                                </td>
+                                <td className="py-3 px-6 text-left">
+                                    {user.phoneNumber || 'N/A'}
+                                </td>
+                                <td className="py-3 px-6 text-left whitespace-nowrap">
+                                    {user.balance.toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}{' '}
+                                    Birr
+                                </td>
+                                {/* START: NEW DATA CELL FOR BONUS BALANCE */}
+                                <td className="py-3 px-6 text-left whitespace-nowrap">
+                                    {(user.bonus_balance || 0).toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}{' '}
+                                    Birr
+                                </td>
+                                {/* END: NEW DATA CELL FOR BONUS BALANCE */}
+                                {/* Registered At hidden on small screens */}
+                                <td className="py-3 px-6 text-left whitespace-nowrap hidden md:table-cell">
+                                    {new Date(user.registeredAt).toLocaleDateString()}
+                                    <span className="block text-xs text-gray-500">
+                                        {new Date(user.registeredAt).toLocaleTimeString()}
+                                    </span>
+                                </td>
+                                <td className="py-3 px-6 text-left">
+                                    {/* Link for navigation is now correctly implemented */}
+                                    <Link
+                                        href={`/superadmine/user/${user._id}`}
+                                        className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center gap-1 transition-colors duration-200 text-sm"
+                                    >
+                                        <FaEdit /> Edit
+                                    </Link>
+                                </td>
+                            </tr>
+                        ))
+                    ) : (
+                        <tr>
+                            <td
+                                colSpan={COL_SPAN} // Using COL_SPAN which is 7
+                                className="py-4 text-center text-gray-500"
+                            >
+                                No users found.
+                            </td>
+                        </tr>
+                    )}
+                </tbody></table>
+            </div>
 
-     {totalUsers > 0 && (
-      <div className="flex flex-col md:flex-row justify-between items-center mt-6 p-3 bg-gray-50 rounded-lg gap-2 w-full">
-        <button
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full md:w-auto"
-        >
-          Previous
-        </button>
+           {totalUsers > 0 && (
+            <div className="flex flex-col md:flex-row justify-between items-center mt-6 p-3 bg-gray-50 rounded-lg gap-2 w-full">
+                <button
+                    onClick={() => onPageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full md:w-auto"
+                >
+                    Previous
+                </button>
 
-        <span className="text-gray-700 text-center">
-          Page {currentPage} of {totalPages} ({totalUsers} users)
-        </span>
+                <span className="text-gray-700 text-center">
+                    Page {currentPage} of {totalPages} ({totalUsers} users)
+                </span>
 
-        <button
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full md:w-auto"
-        >
-          Next
-        </button>
-      </div>
-    )}
+                <button
+                    onClick={() => onPageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full md:w-auto"
+                >
+                    Next
+                </button>
+            </div>
+        )}
 
-    </div>
-  );
+        </div>
+    );
 };
 
 // --- Mock App for Preview ---
@@ -288,23 +291,24 @@ const App = () => {
     const totalPages = Math.ceil(totalUsers / itemsPerPage);
 
     const sortUsers = (users: User[]) => {
-      const sortableUsers = [...users];
-      return sortableUsers.sort((a, b) => {
-        const valA = a[sortBy as keyof User] ?? (sortBy === 'username' ? '' : -Infinity);
-        const valB = b[sortBy as keyof User] ?? (sortBy === 'username' ? '' : -Infinity);
+        const sortableUsers = [...users];
+        return sortableUsers.sort((a, b) => {
+            const valA = a[sortBy as keyof User] ?? (sortBy === 'username' ? '' : -Infinity);
+            const valB = b[sortBy as keyof User] ?? (sortBy === 'username' ? '' : -Infinity);
 
-        if (typeof valA === 'string' && typeof valB === 'string') {
-          return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
-        }
-        if (typeof valA === 'number' && typeof valB === 'number') {
-            return sortOrder === 'asc' ? valA - valB : valB - valA;
-        }
-        // Fallback for dates (registeredAt)
-        const dateA = new Date(a.registeredAt).getTime();
-        const dateB = new Date(b.registeredAt).getTime();
-        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+            if (typeof valA === 'string' && typeof valB === 'string') {
+                return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            }
+            if (typeof valA === 'number' && typeof valB === 'number') {
+                // FIX: Replaced 'a' with 'valA' to ensure arithmetic operation is between numbers
+                return sortOrder === 'asc' ? valA - valB : valB - valA; 
+            }
+            // Fallback for dates (registeredAt)
+            const dateA = new Date(a.registeredAt).getTime();
+            const dateB = new Date(b.registeredAt).getTime();
+            return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
 
-      });
+        });
     };
 
     const sortedUsers = useMemo(() => sortUsers(mockUsers), [mockUsers, sortBy, sortOrder]);

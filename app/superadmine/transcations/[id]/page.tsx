@@ -173,19 +173,19 @@ export default function PaymentEditPage() {
           {/* Read-only fields */}
           <div>
             <label className="block text-gray-700 text-sm font-bold mb-2">Transaction Type:</label>
-            <input type="text" value={transaction.type} className="shadow border rounded w-full py-2 px-3 bg-gray-100" readOnly />
+            <input type="text" value={transaction.type} className="shadow border text-black rounded w-full py-2 px-3 bg-gray-100" readOnly />
           </div>
           <div>
             <label className="block text-gray-700 text-sm font-bold mb-2">Telegram ID:</label>
-            <input type="text" value={transaction.telegramId} className="shadow border rounded w-full py-2 px-3 bg-gray-100" readOnly />
+            <input type="text" value={transaction.telegramId} className="shadow border rounded w-full  text-black  py-2 px-3 bg-gray-100" readOnly />
           </div>
           <div>
             <label className="block text-gray-700 text-sm font-bold mb-2">Transaction Ref:</label>
-            <input type="text" value={transaction.tx_ref} className="shadow border rounded w-full py-2 px-3 bg-gray-100" readOnly />
+            <input type="text" value={transaction.tx_ref} className="shadow border rounded w-full  text-black  py-2 px-3 bg-gray-100" readOnly />
           </div>
           <div>
             <label className="block text-gray-700 text-sm font-bold mb-2">Created At:</label>
-            <input type="text" value={new Date(transaction.createdAt).toLocaleString()} className="shadow border rounded w-full py-2 px-3 bg-gray-100" readOnly />
+            <input type="text" value={new Date(transaction.createdAt).toLocaleString()} className="shadow border  text-black rounded w-full py-2 px-3 bg-gray-100" readOnly />
           </div>
 
           {/* Editable fields */}
@@ -197,7 +197,7 @@ export default function PaymentEditPage() {
               name="amount"
               value={formData.amount ?? ''}
               onChange={handleChange}
-              className="shadow border rounded w-full py-2 px-3"
+              className="shadow border rounded w-full py-2 px-3  text-black"
               step="0.01"
               required
             />
@@ -209,7 +209,7 @@ export default function PaymentEditPage() {
               name="status"
               value={formData.status || ''}
               onChange={handleChange}
-              className="shadow border rounded w-full py-2 px-3"
+              className="shadow border rounded w-full py-2 px-3  text-black"
               required
             >
               {statusOptions.map(s => (
