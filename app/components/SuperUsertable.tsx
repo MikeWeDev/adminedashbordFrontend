@@ -134,7 +134,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                     placeholder="Search by phone number or Telegram ID..."
                     value={contactQuery}
                     onChange={(e) => setContactQuery(e.target.value)}
-                    className="w-full md:w-1/3 px-4 py-2 border rounded-lg shadow-sm  text-black focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full md:w-1/3 px-4 py-2 border rounded-lg shadow-sm text-black   focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
             </div>
 

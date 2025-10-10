@@ -142,7 +142,7 @@ export default function BroadcastPage() {
     // =========================================================================
     // 2. CHANGE: Set the default message text
     // Original: const [message, setMessage] = useState<string>('');
-    const DEFAULT_MESSAGE = 'players Are Active ባለ 10 ብር bingo አሁን ይጫወቱ 🎮🎮';
+    const DEFAULT_MESSAGE = '🔥 Players Are Active 🔥 ባለ 10 ብር Bingo አሁን ይጫወቱ 🎮💵';
     const [message, setMessage] = useState<string>(DEFAULT_MESSAGE);
     // =========================================================================
     const [image, setImage] = useState<File | null>(null);
