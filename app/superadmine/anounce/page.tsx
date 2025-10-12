@@ -234,7 +234,9 @@ export default function BroadcastPage() {
         }
     };
 
-    const handleBroadcast = async (e: React.FormEvent) => {
+
+
+   const handleBroadcast = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!message.trim()) {
             setStatus('Please enter a message to send.');
@@ -253,26 +255,40 @@ export default function BroadcastPage() {
         
         try {
             const response = await fetch(API_BASE_URL, { method: 'POST', body: formData });
-            if (!response.ok) {
+            
+            // --- 💡 CRITICAL FIX AND LOGIC CHANGE ---
+            // The fetch API's response.ok is false for status 202.
+            // We check for all 2xx success codes, specifically including 202.
+            if (response.status < 200 || response.status >= 300) {
                 const errorText = await response.text();
+                // Keep the error message clear if the status is truly bad (e.g., 400, 500)
                 setStatus(`❌ Server error: ${response.status} ${response.statusText}.`);
                 return;
             }
+            
             const data = await response.json();
-            setStatus(`✅ Broadcast successful! Details: ${data.details.sentTo} sent, ${data.details.failedTo} failed.`);
+            
+            // --- NEW STATUS MESSAGE ---
+            // Show a specific message for asynchronous job acceptance
+            setStatus(`✅ Broadcast job accepted: ${data.message || 'Running in the background.'}`);
+            
             setMessage(DEFAULT_MESSAGE); // Reset message to default after successful send
             setImage(null);
             // After successful send, reset the editor to a clean state
             setStructuredButtons(parseButtonsString(INITIAL_BUTTON_STRING));
             fetchAnnouncements();
+            
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
             console.error('Network or parsing error:', errorMessage);
+            // This now only catches true network/parsing errors, not the 202 status code
             setStatus('❌ Failed to send broadcast due to a network or parsing error.');
         } finally {
             setIsSending(false);
         }
     };
+
+
 
     const handleDeleteClick = (announcement: Announcement) => {
         setAnnouncementToDelete(announcement);
@@ -292,7 +308,7 @@ export default function BroadcastPage() {
             });
             if (!response.ok) throw new Error(await response.text());
             await fetchAnnouncements();
-            setStatus('✅ Announcement deleted successfully!');
+            setStatus('✅ Deletion Job Started!** The message removal is running in the background. The history will be updated and cleared on the next page refresh');
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
             console.error('Error deleting announcement:', errorMessage);

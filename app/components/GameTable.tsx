@@ -76,13 +76,13 @@ export default function GameTable({
             <tr className="bg-gray-200 text-gray-700 uppercase leading-normal text-xs">
               {headCell('Session ID', 'GameSessionId')}
               {headCell('Game', 'gameId')}
-              {headCell('Stake', 'stakeAmount', 'hidden sm:table-cell')}
+              {headCell('Stake', 'stakeAmount', 'table-cell')}
               {headCell('Prize', 'prizeAmount')}
-              {headCell('Cards', 'totalCards', 'hidden sm:table-cell')}
-              {headCell('Players', 'playersCount', 'hidden sm:table-cell')}
+              {headCell('Cards', 'totalCards', 'table-cell')}
+              {headCell('Players', 'playersCount', 'table-cell')}
               {headCell('Status', 'isActive')}
-              {headCell('Created', 'createdAt', 'hidden sm:table-cell')}
-              {headCell('Ended', 'endedAt', 'hidden sm:table-cell')}
+              {headCell('Created', 'createdAt', 'table-cell')}
+              {headCell('Ended', 'endedAt', 'table-cell')}
               <th scope="col" className="py-3 px-4 text-left whitespace-nowrap">
                 Actions
               </th>
@@ -110,10 +110,10 @@ export default function GameTable({
                 <tr key={g._id} className="border-b border-gray-200 hover:bg-gray-50">
                   <td className="py-3 px-4 font-mono">{g.GameSessionId}</td>
                   <td className="py-3 px-4">{g.gameId}</td>
-                  <td className="py-3 px-4 hidden sm:table-cell">{g.stakeAmount}</td>
+                  <td className="py-3 px-4 table-cell">{g.stakeAmount}</td>
                   <td className="py-3 px-4">{g.prizeAmount}</td>
-                  <td className="py-3 px-4 hidden sm:table-cell">{g.totalCards}</td>
-                  <td className="py-3 px-4 hidden sm:table-cell">{playersCount}</td>
+                  <td className="py-3 px-4 table-cell">{g.totalCards}</td>
+                  <td className="py-3 px-4 table-cell">{playersCount}</td>
                   <td className="py-3 px-4">
                     <span
                       className={`px-2 py-1 rounded text-xs font-semibold ${
@@ -123,10 +123,10 @@ export default function GameTable({
                       {g.isActive ? 'Active' : 'Ended'}
                     </span>
                   </td>
-                  <td className="py-3 px-4 whitespace-nowrap hidden sm:table-cell">
+                  <td className="py-3 px-4 whitespace-nowrap table-cell">
                     {new Date(g.createdAt).toLocaleString()}
                   </td>
-                  <td className="py-3 px-4 whitespace-nowrap hidden sm:table-cell">
+                  <td className="py-3 px-4 whitespace-nowrap table-cell">
                     {g.endedAt ? new Date(g.endedAt).toLocaleString() : '-'}
                   </td>
                  <td className="py-3 px-4 mt-4 whitespace-nowrap bg-gray-50 flex items-center justify-end">
