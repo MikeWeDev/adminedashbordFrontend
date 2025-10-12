@@ -203,7 +203,7 @@ export default function GameManagementPage() {
 
   return (
     <main className="flex-1 w-full p-6 bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen">
-      <div className="w-[50%] lg:w-[80%] flex flex-col gap-6">
+      <div className="w-[60%] lg:w-[80%] flex flex-col gap-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
           <Card title="Total Games" value={summary.totalGames} icon="games" />
