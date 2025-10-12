@@ -46,10 +46,10 @@ interface SummaryData {
   totalGamesToday: number;
   totalBonusBalance: number;
   dailyWinningsPaid: number; // ⭐ ADD THIS NEW FIELD
+ totalAccountBalance?: number;
 }
 
 interface GameHistoryEntry {
-  _id: string;
   GameSessionId: string;
   gameId: string;
   playersCount: number;
@@ -71,6 +71,8 @@ const defaultSummary: SummaryData = {
   totalGamesToday: 0,
   totalBonusBalance: 0,
   dailyWinningsPaid: 0, // ⭐ ADD INITIALIZATION
+  totalAccountBalance: 0
+
 };
 const icons = {
   profit: <FaChartLine />,
@@ -145,7 +147,8 @@ export default function UserManagementPageA() {
         setSummary({ 
             ...defaultSummary, 
             ...summaryData, 
-            gamesPlayed: { ...defaultSummary.gamesPlayed, ...summaryData.gamesPlayed } 
+            gamesPlayed: { ...defaultSummary.gamesPlayed, ...summaryData.gamesPlayed } ,
+            totalAccountBalance: summaryData.totalAccountBalance ?? 0,
         });
         
         setGames(gamesData);
@@ -288,6 +291,11 @@ export default function UserManagementPageA() {
             value={`${Number(totalBonusBalance || 0).toLocaleString()} Birr`}
             icon="moneyBill" // Use the money icon
           />
+           <Card
+           title="Total Real Balance"
+            value={`${Number(summary.totalAccountBalance || 0).toLocaleString()} Birr`}
+            icon="moneyBill" 
+          />
         </div>
 
         {/* Users Table (unchanged) */}
