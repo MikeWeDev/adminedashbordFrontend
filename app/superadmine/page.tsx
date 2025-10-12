@@ -45,6 +45,7 @@ interface SummaryData {
   gamesPlayed: { [key: number]: number };
   totalGamesToday: number;
   totalBonusBalance: number; 
+   totalAccountBalance?: number;
 }
 
 interface GameHistoryEntry {
@@ -69,6 +70,7 @@ const defaultSummary: SummaryData = {
   gamesPlayed: { 10: 0, 20: 0, 30: 0 },
   totalGamesToday: 0,
   totalBonusBalance: 0, 
+  totalAccountBalance: 0,
 };
 
 const icons = {
@@ -147,7 +149,8 @@ console.log('Fetched gamesData:', gamesData);
         setSummary({ 
             ...defaultSummary, 
             ...summaryData, 
-            gamesPlayed: { ...defaultSummary.gamesPlayed, ...summaryData.gamesPlayed } 
+            gamesPlayed: { ...defaultSummary.gamesPlayed, ...summaryData.gamesPlayed } ,
+            totalAccountBalance: summaryData.totalAccountBalance ?? 0,
         });
         setGames(gamesData);
         setDailyDeposit(paymentData.totalDeposits ?? 0);
@@ -240,6 +243,7 @@ console.log('Fetched gamesData:', gamesData);
             selected={selectedDate}
             onChange={(date: Date | null) => setSelectedDate(date)}
             dateFormat="yyyy/MM/dd"
+
             placeholderText="Select a date"
             className="cursor-pointer p-3 sm:px-5 sm:py-3 text-gray-900 font-semibold shadow-lg rounded-full
                          bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
@@ -290,6 +294,11 @@ console.log('Fetched gamesData:', gamesData);
             value={`${Number(totalBonusBalance || 0).toLocaleString()} Birr`}
             icon="moneyBill" // Use the money icon
           />
+           <Card
+            title="Total Real Balance"
+            value={`${Number(summary.totalAccountBalance || 0).toLocaleString()} Birr`}
+            icon="moneyBill" 
+          />
         </div>
 
         {/* Users Table (unchanged) */}

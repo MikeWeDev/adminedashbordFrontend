@@ -145,7 +145,7 @@ export default function GameTable({
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mt-4 p-3 bg-gray-50 rounded-lg">
+      <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mt-4 p-3 bg-gray-50 rounded-lg  w-[80%] md:w-full">
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page === 1}
