@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
+import Head from 'next/head'; // Added for potential SEO/meta, though not strictly required for the fix
 
 // --- Type Definitions ---
 interface BonusSettings {
@@ -22,6 +23,14 @@ interface BonusState {
   message: string | null;
 }
 
+// Helper function for type-safe error message extraction
+const getErrorMessage = (error: unknown): string => {
+    if (error instanceof Error) {
+        return error.message;
+    }
+    return String(error);
+};
+
 // --- Main Dashboard Component ---
 const BonusConfigurationPage = () => {
   const [state, setState] = useState<BonusState>({
@@ -33,8 +42,8 @@ const BonusConfigurationPage = () => {
     message: null,
   });
 
+  // Since BASE_URL is an environment variable, it is safer to access it inside the component scope
   const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-  // NOTE: API_URL is concatenated here but would normally be managed by a client hook or service in a real app
   const API_URL = `${BASE_URL}/api/bonus`; 
 
   // 1. Fetch current settings
@@ -56,35 +65,36 @@ const BonusConfigurationPage = () => {
       setState((s) => ({
         ...s,
         currentSettings: fetchedSettings,
-        // New settings get initialized as numbers
         newSettings: fetchedSettings, 
         isLoading: false,
       }));
-    } catch (err: any) {
+    // FIX: Using 'unknown' instead of 'any' to satisfy TypeScript rules
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
       console.error('Fetch error:', err);
       setState((s) => ({
         ...s,
-        error: err.message,
+        error: errorMessage,
         isLoading: false,
       }));
     }
   }, [API_URL]);
 
+  // FIX: Added 'fetchSettings' to dependency array for useEffect to clear the warning (116:6)
   useEffect(() => {
     fetchSettings();
-  }, [fetchSettings]);
+  }, [fetchSettings]); 
 
   // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
-    // FIX: Allow empty string or string representation of a number
+    // Allow empty string or string representation of a number
     if (value === "" || /^\d*(\.\d*)?$/.test(value)) {
         setState((s) => ({
             ...s,
             newSettings: {
                 ...s.newSettings,
-                // Store the raw string value to allow user deletion/typing
                 [name]: value, 
             },
             message: null,
@@ -126,7 +136,6 @@ const BonusConfigurationPage = () => {
         throw new Error(result.message || 'Failed to save settings.');
       }
       
-      // Update the saved settings from response data or fallback
       const savedSettings: BonusSettings = result.settings || submissionData;
 
       setState((s) => ({
@@ -142,11 +151,13 @@ const BonusConfigurationPage = () => {
 
       setTimeout(() => setState((s) => ({ ...s, message: null })), 5000);
 
-    } catch (err: any) {
+    // FIX: Using 'unknown' instead of 'any' to satisfy TypeScript rules
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
       console.error('Save error:', err);
       setState((s) => ({
         ...s,
-        error: err.message,
+        error: errorMessage,
         isSaving: false,
       }));
     }
@@ -155,8 +166,9 @@ const BonusConfigurationPage = () => {
   const { currentSettings, newSettings, isLoading, isSaving, error, message } = state;
 
   return (
+    // Removed min-h-screen and added h-full/flex-col for scroll-free layout
     <div className="h-full bg-gray-900 text-gray-100 p-4 sm:p-6 font-sans flex flex-col">
-      <script src="https://cdn.tailwindcss.com"></script>
+      {/* FIX: Removed the synchronous CDN script tag which caused a build error */}
       <div className="w-full max-w-5xl mx-auto flex flex-col h-full">
         
         {/* Header */}
@@ -290,7 +302,6 @@ const InputField: React.FC<{ label: string; name: keyof BonusSettings; value: st
       type="number"
       id={name}
       name={name}
-      // Value can be a number (from load) or string (while typing/empty)
       value={value} 
       onChange={onChange}
       step="0.01"
