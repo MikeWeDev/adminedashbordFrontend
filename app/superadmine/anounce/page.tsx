@@ -158,8 +158,9 @@ export default function BroadcastPage() {
     // Structured array for editor and final string for backend
     const [structuredButtons, setStructuredButtons] = useState<Button[]>(parseButtonsString(INITIAL_BUTTON_STRING));
     const [callbackButtonsString, setCallbackButtonsString] = useState<string>(INITIAL_BUTTON_STRING);
-
-    const API_BASE_URL = 'https://adminbackend.bingoogame.com/api/broadcast';
+    
+    const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const API_BASE_URL = `${BASE_URL}/api/broadcast`;
    
     // Effect to serialize the structured array into the final string
     useEffect(() => {

@@ -10,6 +10,8 @@ export default function RegisterPage() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false); // NEW state for loading
   const router = useRouter();
+  const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -23,7 +25,7 @@ export default function RegisterPage() {
     setMessage('');
 
     try {
-      const response = await fetch('https://adminbackend.bingoogame.com/api/auth/register', {
+      const response = await fetch(`${BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password, role }),

@@ -26,7 +26,8 @@ interface User {
 }
 
 /* -------------------- Constants -------------------- */
-const API_URL = 'https://adminbackend.bingoogame.com/api/dashboard';
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_URL = `${BASE_URL}/api/dashboard`;
 const defaultUserSummary: UserSummaryData = {
   users: 0,
   totalGamesOverall: 0,

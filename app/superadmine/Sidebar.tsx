@@ -9,7 +9,7 @@ import {
   FaThLarge,
   FaTimes,
   FaUserShield,
-  FaCog,
+  FaGift,
   FaBullhorn
 } from 'react-icons/fa';
 import { FaMoneyBillTransfer } from 'react-icons/fa6';
@@ -24,7 +24,9 @@ const sidebarLinks = [
     category: 'Main',
     links: [
       { name: 'Dashboard', icon: <FaThLarge />, href: '/superadmine' },
-      { name: 'Announcements', icon: <FaBullhorn />, href: '/superadmine/anounce' }
+      { name: 'Announcements', icon: <FaBullhorn />, href: '/superadmine/anounce' },
+      { name: 'Bonus system', icon: <FaGift />, href: '/superadmine/bonus' }
+
     ]
   },
   {

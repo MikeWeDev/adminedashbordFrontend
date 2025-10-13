@@ -9,8 +9,8 @@ type AdminUser = {
   username: string;
   role: 'admin' | 'superadmin' | string;
 };
-
-const API_BASE = 'https://adminbackend.bingoogame.com/api/auth';
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE = `${BASE_URL}/api/auth`;
 
 export default function AdminUsersPage() {
   const router = useRouter();

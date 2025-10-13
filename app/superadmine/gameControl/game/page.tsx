@@ -6,7 +6,8 @@ import { FaGamepad, FaCheckCircle, FaTimesCircle, FaUsers, FaPowerOff } from 're
 import GameTable, { GameRow, SortOrder } from '../../../components/GameTable';
 
 // 👉 Set your backend base once here:
-const API_BASE ='https://adminbackend.bingoogame.com/api/admin';
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE =`${BASE_URL}/api/admin`;
 
 type Summary = {
   totalGames: number;

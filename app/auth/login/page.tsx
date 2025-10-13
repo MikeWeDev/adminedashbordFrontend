@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false); // NEW state
   const router = useRouter();
+ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -22,7 +23,7 @@ export default function LoginPage() {
     setMessage('');
 
     try {
-      const response = await fetch('https://adminbackend.bingoogame.com/api/auth/login', {
+      const response = await fetch(`${BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),

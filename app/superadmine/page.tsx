@@ -59,9 +59,10 @@ interface GameHistoryEntry {
   createdAt: string;
   endedAt: string | null;
 }
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-const DASHBOARD_API_URL = 'https://adminbackend.bingoogame.com/api/dashboard';
-const PAYMENT_API_URL = 'https://adminbackend.bingoogame.com/api/payments';
+const DASHBOARD_API_URL = `${BASE_URL}/api/dashboard`;
+const PAYMENT_API_URL = `${BASE_URL}/api/payments`;
 
 const defaultSummary: SummaryData = {
   profit: 0,

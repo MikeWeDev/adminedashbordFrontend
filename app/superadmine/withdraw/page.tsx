@@ -19,10 +19,11 @@ export default function AdminDashboard() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const fetchWithdrawals = async () => {
     try {
-      const response = await fetch('https://adminbackend.bingoogame.com/api/withdrawReq/withdrawals/pending');
+      const response = await fetch(`${BASE_URL}/api/withdrawReq/withdrawals/pending`);
       if (!response.ok) {
         throw new Error('Failed to fetch data.');
       }

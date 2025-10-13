@@ -22,7 +22,8 @@ interface User {
 
 // ⭐ IMPORTANT: Backend API Base URL for Super Admin User Management.
 // Ensure this matches your backend's actual URL.
-const SUPER_ADMIN_API_BASE_URL = 'https://adminbackend.bingoogame.com/api/users'; 
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const SUPER_ADMIN_API_BASE_URL = `${BASE_URL}/api/users`; 
 
 export default function SuperAdminUserEditPage() {
   const params = useParams();

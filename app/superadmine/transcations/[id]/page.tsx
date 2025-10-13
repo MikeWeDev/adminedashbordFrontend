@@ -19,7 +19,8 @@ interface Transaction {
   phone_number?: string;
 }
 
-const API_URL = 'https://adminbackend.bingoogame.com/api/payments';
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_URL = `${BASE_URL}/api/payments`;
 
 export default function PaymentEditPage() {
   const params = useParams();
