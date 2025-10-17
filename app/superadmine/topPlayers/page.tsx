@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, Zap, Trophy, DollarSign, Loader2, AlertTriangle } from 'lucide-react';
 
-// --- Type Definitions for the Data ---
+// --- Type Definitions for the Data 
 interface DailyPayout {
     _id: string;
     telegramId: string;
