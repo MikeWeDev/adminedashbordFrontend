@@ -20,7 +20,7 @@ interface WeeklyWinner {
     username: string;
     totalWins: number;
     payoutDate?: string; 
-    rewardAmount: number; // Used in admin view
+    rewardAmount: number;
 }
 
 interface WeeklyHistoryGroup {
@@ -30,32 +30,44 @@ interface WeeklyHistoryGroup {
 
 type PayoutType = 'daily' | 'weekly-history' | 'weekly-admin';
 
-// Replicate utility function here for client-side use
+// --- Utility Function ---
 const getCurrentWeekNumber = () => {
     const now = new Date();
     const startOfYear = new Date(now.getFullYear(), 0, 1);
-    // Add 1 day (86400000 ms) to account for time zones/day start issues, then find week number.
     const diff = (now.getTime() - startOfYear.getTime() + 86400000) / (1000 * 60 * 60 * 24); 
     return Math.ceil(diff / 7);
 };
 
-// --- API Helper ---
-// Explicitly define successful and error response types for 'weekly-admin'
+// --- API Helper Types ---
 type WeeklyAdminSuccess = { error?: false; message?: string; data: WeeklyWinner[]; week: number };
 type WeeklyAdminError = { error: true; message: string; week?: number };
 type WeeklyAdminResponse = WeeklyAdminSuccess | WeeklyAdminError;
 
-async function fetchHistory<T extends PayoutType>(
-    type: T,
+// Type for a successful daily/weekly history fetch - REMOVED: No longer needed with strong overloads
+
+// Function Overloads for Type Safety (Keep these)
+async function fetchHistory(type: 'daily'): Promise<DailyPayout[]>;
+async function fetchHistory(type: 'weekly-history'): Promise<WeeklyHistoryGroup[]>;
+async function fetchHistory(type: 'weekly-admin', week?: number): Promise<WeeklyAdminResponse>;
+
+// **CORRECTED IMPLEMENTATION** - The union return type satisfies all overloads
+async function fetchHistory(
+    type: PayoutType, // Use the union type here
     week?: number
-): Promise<
-    T extends 'daily'
-        ? DailyPayout[]
-        : T extends 'weekly-history'
-        ? WeeklyHistoryGroup[]
-        : WeeklyAdminResponse
-> {
-    const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+): Promise<DailyPayout[] | WeeklyHistoryGroup[] | WeeklyAdminResponse> {
+    const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+    if (!BASE_URL) {
+        const message = 'API base URL is not configured (NEXT_PUBLIC_API_BASE_URL is missing).';
+        console.error(message);
+        if (type === 'weekly-admin') {
+            // Return WeeklyAdminError
+            return { error: true, message: message }; 
+        }
+        // Return empty array for other types
+        return [];
+    }
+    
     let endpoint = '';
 
     if (type === 'daily') {
@@ -77,18 +89,24 @@ async function fetchHistory<T extends PayoutType>(
                     error: true,
                     message: errorResult.message,
                     week: errorResult.week,
-                } as WeeklyAdminResponse as any; // Safe cast since it matches WeeklyAdminError
+                }; 
             }
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const result = await response.json();
-        if (!result.success) {
+        if (result.success === false) { 
             throw new Error(result.message || 'API call failed');
         }
 
-        // Return data. The type checker relies on the generic T for the exact shape.
-        return (result.data || result) as any; 
+        if (type === 'weekly-admin') {
+            // Return WeeklyAdminSuccess
+            return { error: false, message: result.message, data: result.data ?? [], week: result.week };
+        }
+
+        // Return DailyPayout[] or WeeklyHistoryGroup[]
+        return (result.data || result); 
+
     } catch (error) {
         console.error(`Error fetching ${type} history from API:`, error);
 
@@ -97,23 +115,27 @@ async function fetchHistory<T extends PayoutType>(
                 ? error.message
                 : 'A network or unknown error occurred.';
 
-        // **FIX**: Cleanly return the failure state for each type without 'as any' where possible.
         if (type === 'weekly-admin') {
-            return { error: true, message: errorMessage } as WeeklyAdminResponse as any;
+            // Return WeeklyAdminError
+            return { error: true, message: errorMessage };
         }
-        // For 'daily' or 'weekly-history', return an empty array on failure
-        return [] as any; 
+        // Return empty array
+        return []; 
     }
 }
 
 const executePayoutRequest = async (week: number, winners: WeeklyWinner[]) => {
-    const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+    if (!BASE_URL) {
+        throw new Error('API base URL is not configured (NEXT_PUBLIC_API_BASE_URL is missing).');
+    }
+
     const apiUrl = `${BASE_URL}/api/admin/weekly/payout`;
 
     try {
         const response = await fetch(apiUrl, {
             method: 'POST',
-            // NOTE: Must add Authorization header in a real app
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ week, winners }),
         });
@@ -126,21 +148,20 @@ const executePayoutRequest = async (week: number, winners: WeeklyWinner[]) => {
             }
             throw new Error(result.message || `Payout failed with status ${response.status}`);
         }
-        return result;
+        return result as { success: boolean, count: number, message: string };
     } catch (error) {
         console.error("Payout execution error:", error);
         throw error;
     }
 };
 
-const BonusHistoey: React.FC = () => {
+const BonusHistory: React.FC = () => {
     // --- State Declarations ---
     const [dailyHistory, setDailyHistory] = useState<DailyPayout[]>([]);
     const [weeklyHistory, setWeeklyHistory] = useState<WeeklyHistoryGroup[]>([]);
     const [adminWinners, setAdminWinners] = useState<WeeklyWinner[]>([]);
     
     const currentWeek = getCurrentWeekNumber();
-    // Default to the previous week for admin review (the one that just finished)
     const defaultPayoutWeek = currentWeek === 1 ? 52 : currentWeek - 1; 
     const [payoutWeek, setPayoutWeek] = useState<number>(defaultPayoutWeek);
 
@@ -150,22 +171,23 @@ const BonusHistoey: React.FC = () => {
     const [isPayoutLoading, setIsPayoutLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<PayoutType>('weekly-admin');
 
-    // --- Memoized Handlers (useCallback to fix useEffect dependencies) ---
+    // --- Memoized Handlers ---
 
     const fetchAdminWinners = useCallback(async (week: number) => {
         setAdminWinners([]);
         setAdminMessage(null);
-        // Use a local loading state to only spin the admin table, not the whole component
-        // Since this is called from useEffect, we still set global loading true/false
         setIsLoading(true);
 
         try {
-            const result = await fetchHistory('weekly-admin', week);
+            // TypeScript now correctly infers the return type as WeeklyAdminResponse
+            const result = await fetchHistory('weekly-admin', week); 
             
+            // Check the error property to narrow the type
             if (result.error) {
                 setAdminMessage(`❌ ${result.message}`);
             } else {
-                const winners = (result as WeeklyAdminSuccess).data ?? [];
+                // If no error, result is WeeklyAdminSuccess
+                const winners = result.data ?? [];
 
                 setAdminWinners(winners);
 
@@ -176,20 +198,22 @@ const BonusHistoey: React.FC = () => {
                 );
             }
         } catch (error) {
-            setAdminMessage('Failed to fetch winners for admin review.');
+            setAdminMessage('Failed to fetch winners for admin review due to an unexpected error.');
         } finally {
             setIsLoading(false);
         }
-    }, [setAdminWinners, setAdminMessage, setIsLoading]); // Dependencies are stable setters
+    }, []); 
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
-            // These calls don't need 'as any' since the component state types are the source of truth
-            const dailyData = await fetchHistory('daily') as DailyPayout[];
+            // TypeScript correctly infers the return types based on literal arguments
+            const [dailyData, weeklyData] = await Promise.all([
+                fetchHistory('daily'), // Inferred as DailyPayout[]
+                fetchHistory('weekly-history') // Inferred as WeeklyHistoryGroup[]
+            ]);
+            
             setDailyHistory(dailyData);
-
-            const weeklyData = await fetchHistory('weekly-history') as WeeklyHistoryGroup[];
             setWeeklyHistory(weeklyData);
 
         } catch (error) {
@@ -197,22 +221,19 @@ const BonusHistoey: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [setDailyHistory, setWeeklyHistory, setIsLoading]); // Dependencies are stable setters
+    }, []); 
 
+    // --- Effects ---
 
-    // --- Effects (Now clean) ---
-
-    // 1. Fetch initial history data (only runs once on mount)
     useEffect(() => {
         fetchData();
-    }, [fetchData]); // Dependency added: fetchData (now stable)
+    }, [fetchData]); 
 
-    // 2. Fetch admin winners when the tab or week changes
     useEffect(() => {
         if (activeTab === 'weekly-admin') {
             fetchAdminWinners(payoutWeek);
         }
-    }, [activeTab, payoutWeek, fetchAdminWinners]); // Dependency added: fetchAdminWinners (now stable)
+    }, [activeTab, payoutWeek, fetchAdminWinners]); 
 
     // --- Handlers ---
 
@@ -232,24 +253,22 @@ const BonusHistoey: React.FC = () => {
         setIsPayoutLoading(true);
         setAdminMessage('Executing payout...');
         try {
-            // You might want to get the result.count from here, but the result is implicitly used.
             const result = await executePayoutRequest(payoutWeek, adminWinners); 
             setAdminMessage(`✅ Success! ${result.count} winner(s) paid for Week ${payoutWeek}. Payout recorded.`);
             setAdminWinners([]); 
-            fetchData(); // Refresh history tab data
+            fetchData(); 
 
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
             setAdminMessage(`❌ Payout failed: ${errorMessage}`);
         } finally {
             setIsPayoutLoading(false);
-            // Force re-fetch the admin list to check if the week is now "paid"
             fetchAdminWinners(payoutWeek); 
         }
     };
 
 
-    // --- Helper Components (No changes needed) ---
+    // --- Helper Components ---
 
     const Card = ({ title, icon, children }: { title: string, icon: React.ReactNode, children: React.ReactNode }) => (
         <div className="bg-gray-800 p-6 rounded-xl shadow-2xl h-full border border-green-700/50">
@@ -262,8 +281,13 @@ const BonusHistoey: React.FC = () => {
     );
 
     const formatPayoutDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString();
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return 'Invalid Date';
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString();
+        } catch {
+            return 'Invalid Date';
+        }
     };
     
     const DailyHistoryTable = () => (
@@ -317,7 +341,7 @@ const BonusHistoey: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-bold text-green-400">{winner.amount} ETB</p>
+                                    <p className="font-bold text-green-400">{winner.amount || 'N/A'} ETB</p>
                                     <p className="text-xs text-gray-400">Wins: {winner.totalWins}</p>
                                 </div>
                             </div>
@@ -338,11 +362,10 @@ const BonusHistoey: React.FC = () => {
                     <select
                         id="week-select"
                         value={payoutWeek}
-                        onChange={(e) => setPayoutWeek(parseInt(e.target.value))}
+                        onChange={(e) => setPayoutWeek(parseInt(e.target.value, 10))}
                         className="p-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-yellow-500 focus:border-yellow-500"
                         disabled={isLoading || isPayoutLoading}
                     >
-                        {/* Generates options for the current week and previous 4 weeks */}
                         {Array.from({ length: 5 }, (_, i) => currentWeek - i).filter(w => w > 0).map(week => (
                             <option key={week} value={week}>Week {week}</option>
                         ))}
@@ -418,7 +441,7 @@ const BonusHistoey: React.FC = () => {
                             )}
                         </button>
                     </>
-                ) : adminMessage && (adminMessage.includes('already been executed') || adminMessage.includes('No winners found')) ? (
+                ) : adminMessage && (adminMessage.includes('already been executed') || adminMessage.includes('No winners found') || adminMessage.includes('API base URL')) ? (
                     <div className="text-center p-4">
                         <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
                         <p className="text-red-400">{adminMessage}</p>
@@ -508,4 +531,4 @@ const BonusHistoey: React.FC = () => {
     );
 };
 
-export default BonusHistoey;
+export default BonusHistory;
