@@ -10,7 +10,8 @@ import {
   FaTimes,
   FaUserShield,
   FaGift,
-  FaBullhorn
+  FaBullhorn,
+  FaTrophy
 } from 'react-icons/fa';
 import { FaMoneyBillTransfer } from 'react-icons/fa6';
 
@@ -33,7 +34,8 @@ const sidebarLinks = [
     category: 'Management',
     links: [
       { name: 'User & Accounts', icon: <FaUser />, href: '/superadmine/userMangment' },
-      { name: 'Admins', icon: <FaUserShield />, href: '/superadmine/admine' }
+      { name: 'Admins', icon: <FaUserShield />, href: '/superadmine/admine' },
+      { name: 'Top Players', icon: <FaTrophy />, href: '/superadmine/topPlayers' }
     ]
   },
   {

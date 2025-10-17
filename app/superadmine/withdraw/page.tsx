@@ -1,5 +1,3 @@
-// C:/Users/mike199414/Desktop/Projects/Telegram bingo game/TELGRAM BINGO GAME DASHBORD/Admine Dashbord/client/app/superadmine/withdraw/page.tsx
-
 'use client';
 
 import { useState, useEffect } from 'react';
