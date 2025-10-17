@@ -34,7 +34,10 @@ type PayoutType = 'daily' | 'weekly-history' | 'weekly-admin';
 const getCurrentWeekNumber = () => {
     const now = new Date();
     const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const diff = (now.getTime() - startOfYear.getTime() + 86400000) / (1000 * 60 * 60 * 24); 
+    // The divisor is now 604800000ms (7 days)
+    const diff = (now.getTime() - startOfYear.getTime() + (24 * 60 * 60 * 1000)) / (1000 * 60 * 60 * 24); 
+    // Add 1 to ensure week 1 is the first week, then use Math.floor or similar logic.
+    // For simplicity and common use in calendar calcs:
     return Math.ceil(diff / 7);
 };
 
@@ -42,8 +45,6 @@ const getCurrentWeekNumber = () => {
 type WeeklyAdminSuccess = { error?: false; message?: string; data: WeeklyWinner[]; week: number };
 type WeeklyAdminError = { error: true; message: string; week?: number };
 type WeeklyAdminResponse = WeeklyAdminSuccess | WeeklyAdminError;
-
-// Type for a successful daily/weekly history fetch - REMOVED: No longer needed with strong overloads
 
 // Function Overloads for Type Safety (Keep these)
 async function fetchHistory(type: 'daily'): Promise<DailyPayout[]>;
@@ -75,7 +76,7 @@ async function fetchHistory(
     } else if (type === 'weekly-history') {
         endpoint = `${BASE_URL}/api/bonusHistery/weekly`;
     } else if (type === 'weekly-admin') {
-        endpoint = `${BASE_URL}/api/admin/weekly/winners${week ? `?week=${week}` : ''}`;
+        endpoint = `${BASE_URL}/api/bonusHistery/admin/weekly/winners${week ? `?week=${week}` : ''}`;
     }
 
     try {
@@ -162,6 +163,7 @@ const BonusHistory: React.FC = () => {
     const [adminWinners, setAdminWinners] = useState<WeeklyWinner[]>([]);
     
     const currentWeek = getCurrentWeekNumber();
+    // Default to last week (e.g., if current is 42, default is 41)
     const defaultPayoutWeek = currentWeek === 1 ? 52 : currentWeek - 1; 
     const [payoutWeek, setPayoutWeek] = useState<number>(defaultPayoutWeek);
 
@@ -213,8 +215,8 @@ const BonusHistory: React.FC = () => {
                 fetchHistory('weekly-history') // Inferred as WeeklyHistoryGroup[]
             ]);
             
-            setDailyHistory(dailyData);
-            setWeeklyHistory(weeklyData);
+            setDailyHistory(dailyData as DailyPayout[]);
+            setWeeklyHistory(weeklyData as WeeklyHistoryGroup[]);
 
         } catch (error) {
             console.error("Failed to fetch history:", error);
@@ -226,10 +228,12 @@ const BonusHistory: React.FC = () => {
     // --- Effects ---
 
     useEffect(() => {
+        // Fetch daily and weekly history data on initial load
         fetchData();
     }, [fetchData]); 
 
     useEffect(() => {
+        // Fetch admin winners whenever the tab is 'weekly-admin' or the week changes
         if (activeTab === 'weekly-admin') {
             fetchAdminWinners(payoutWeek);
         }
@@ -256,13 +260,15 @@ const BonusHistory: React.FC = () => {
             const result = await executePayoutRequest(payoutWeek, adminWinners); 
             setAdminMessage(`✅ Success! ${result.count} winner(s) paid for Week ${payoutWeek}. Payout recorded.`);
             setAdminWinners([]); 
-            fetchData(); 
+            fetchData(); // Refresh history
+            setPayoutWeek(getCurrentWeekNumber() - 1); // Auto-advance to the previous week to prevent re-payout
 
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
             setAdminMessage(`❌ Payout failed: ${errorMessage}`);
         } finally {
             setIsPayoutLoading(false);
+            // Re-fetch to check if the week is now paid
             fetchAdminWinners(payoutWeek); 
         }
     };
@@ -271,7 +277,8 @@ const BonusHistory: React.FC = () => {
     // --- Helper Components ---
 
     const Card = ({ title, icon, children }: { title: string, icon: React.ReactNode, children: React.ReactNode }) => (
-        <div className="bg-gray-800 p-6 rounded-xl shadow-2xl h-full border border-green-700/50">
+        // Added responsive padding for better mobile spacing (sm:p-6 is the default desktop size)
+        <div className="bg-gray-800 p-4 sm:p-6 rounded-xl shadow-2xl h-full border border-green-700/50">
             <h2 className="text-xl font-bold mb-4 flex items-center text-green-400">
                 {icon}
                 <span className="ml-2">{title}</span>
@@ -284,30 +291,33 @@ const BonusHistory: React.FC = () => {
         try {
             const date = new Date(dateString);
             if (isNaN(date.getTime())) return 'Invalid Date';
-            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString();
+            // Adjusted format for better display on small screens
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         } catch {
             return 'Invalid Date';
         }
     };
     
     const DailyHistoryTable = () => (
-        <div className="overflow-x-auto">
+        // Ensures horizontal scrolling if the content is too wide on mobile
+        <div className="overflow-x-auto rounded-lg border border-gray-700">
             <table className="min-w-full divide-y divide-gray-700">
                 <thead>
                     <tr className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-gray-700/50">
-                        <th className="px-4 py-3">User ID</th>
-                        <th className="px-4 py-3">Amount</th>
-                        <th className="px-4 py-3">Wins (24h)</th>
-                        <th className="px-4 py-3">Time Awarded</th>
+                        {/* Adjusted padding for tighter fit on mobile (sm:px-4 is the default desktop size) */}
+                        <th className="px-3 py-3 sm:px-4">User ID</th>
+                        <th className="px-3 py-3 sm:px-4">Amount</th>
+                        <th className="px-3 py-3 sm:px-4">Wins (24h)</th>
+                        <th className="px-3 py-3 sm:px-4 whitespace-nowrap">Time Awarded</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800 text-sm">
                     {dailyHistory.map((payout) => (
                         <tr key={payout._id} className="hover:bg-gray-700 transition duration-150">
-                            <td className="px-4 py-3 font-mono text-xs text-gray-300">{payout.telegramId}</td>
-                            <td className="px-4 py-3 text-green-400 font-semibold">{payout.amount} ETB</td>
-                            <td className="px-4 py-3 text-yellow-400">{payout.details.winsIn24h}</td>
-                            <td className="px-4 py-3 text-gray-400">{formatPayoutDate(payout.createdAt)}</td>
+                            <td className="px-3 py-3 sm:px-4 font-mono text-xs text-gray-300 truncate max-w-xs">{payout.telegramId}</td>
+                            <td className="px-3 py-3 sm:px-4 text-green-400 font-semibold whitespace-nowrap">{payout.amount} ETB</td>
+                            <td className="px-3 py-3 sm:px-4 text-yellow-400">{payout.details.winsIn24h}</td>
+                            <td className="px-3 py-3 sm:px-4 text-gray-400 whitespace-nowrap text-xs sm:text-sm">{formatPayoutDate(payout.createdAt)}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -317,31 +327,32 @@ const BonusHistory: React.FC = () => {
 
     const WeeklyHistoryList = () => (
         <div className="space-y-6">
+            {weeklyHistory.length === 0 && <p className="text-gray-400 text-center py-4">No weekly challenge history found yet.</p>}
             {weeklyHistory.map((week) => (
                 <Card key={week.weekOfYear} title={`Weekly Challenge - Week ${week.weekOfYear} (PAID)`} icon={<Trophy className="w-5 h-5" />}>
                     <div className="space-y-2">
                         {week.winners.map((winner) => (
                             <div 
                                 key={winner.telegramId} 
-                                className={`flex justify-between items-center p-3 rounded-lg ${
-                                    winner.rank === 1 ? 'bg-yellow-900/40 border border-yellow-500' : 'bg-gray-700/50'
+                                className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 rounded-xl transition duration-200 ${
+                                    winner.rank === 1 ? 'bg-yellow-900/40 border border-yellow-500' : 'bg-gray-700/50 hover:bg-gray-700'
                                 }`}
                             >
-                                <div className="flex items-center">
-                                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 ${
-                                        winner.rank === 1 ? 'text-black bg-yellow-400' : 
+                                <div className="flex items-center mb-2 sm:mb-0">
+                                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm sm:text-base mr-3 flex-shrink-0 ${
+                                        winner.rank === 1 ? 'text-black bg-yellow-400 shadow-lg' : 
                                         winner.rank === 2 ? 'text-white bg-gray-400' : 
                                         'text-white bg-gray-500'
                                     }`}>
                                         {winner.rank}
                                     </span>
-                                    <div>
-                                        <p className="font-semibold text-white">{winner.username || 'N/A'}</p>
-                                        <p className="text-xs text-gray-400">ID: {winner.telegramId}</p>
+                                    <div className="min-w-0">
+                                        <p className="font-semibold text-white truncate">{winner.username || 'N/A'}</p>
+                                        <p className="text-xs text-gray-400 truncate">ID: {winner.telegramId}</p>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="font-bold text-green-400">{winner.amount || 'N/A'} ETB</p>
+                                <div className="text-right flex-shrink-0 mt-2 sm:mt-0">
+                                    <p className="font-bold text-green-400 text-lg whitespace-nowrap">{winner.amount || 'N/A'} ETB</p>
                                     <p className="text-xs text-gray-400">Wins: {winner.totalWins}</p>
                                 </div>
                             </div>
@@ -349,162 +360,179 @@ const BonusHistory: React.FC = () => {
                     </div>
                 </Card>
             ))}
-            {weeklyHistory.length === 0 && <p className="text-gray-400 text-center">No weekly challenge history found yet.</p>}
         </div>
     );
 
-    const WeeklyAdminTable = () => (
-        <div className="space-y-4">
-            {/* Week Selector and Status */}
-            <div className="flex flex-col sm:flex-row justify-between items-center p-4 bg-gray-800 rounded-xl shadow-lg border border-yellow-700/50">
-                <div className="flex items-center space-x-3 mb-3 sm:mb-0">
-                    <label htmlFor="week-select" className="text-gray-300 font-semibold whitespace-nowrap">Select Week:</label>
-                    <select
-                        id="week-select"
-                        value={payoutWeek}
-                        onChange={(e) => setPayoutWeek(parseInt(e.target.value, 10))}
-                        className="p-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-yellow-500 focus:border-yellow-500"
-                        disabled={isLoading || isPayoutLoading}
-                    >
-                        {Array.from({ length: 5 }, (_, i) => currentWeek - i).filter(w => w > 0).map(week => (
-                            <option key={week} value={week}>Week {week}</option>
-                        ))}
-                    </select>
-                    <button
-                        onClick={() => fetchAdminWinners(payoutWeek)}
-                        className="text-sm text-yellow-500 hover:text-yellow-400 flex items-center p-2 rounded transition"
-                        disabled={isLoading || isPayoutLoading}
-                    >
-                        <RefreshCw className={`w-4 h-4 mr-1 ${isLoading && activeTab === 'weekly-admin' ? 'animate-spin' : ''}`} />
-                        Recalculate
-                    </button>
-                </div>
-                
-                <p className={`text-sm font-medium ${adminMessage?.startsWith('✅') ? 'text-green-400' : adminMessage?.startsWith('❌') || adminMessage?.includes('already been executed') ? 'text-red-400' : 'text-yellow-400'}`}>
-                    {adminMessage || 'Select a week and hit "Recalculate" to find top players.'}
-                </p>
-            </div>
+    const WeeklyAdminTable = () => {
+        // Generate an array of weeks to select, covering the current week and the 51 previous weeks.
+        const weeksOfYear = Array.from({ length: 52 }, (_, i) => {
+            // Calculate the week number, wrapping from 1 to 52/53
+            let week = currentWeek - i;
+            if (week <= 0) {
+                // Assuming a max of 52 weeks for simplicity in the dropdown options
+                week += 52; 
+            }
+            return week;
+        }).filter(w => w !== currentWeek); // Exclude the current, ongoing week.
 
-            {/* Winners List */}
-            <Card title={`Winners for Week ${payoutWeek} (Unconfirmed)`} icon={<DollarSign className="w-5 h-5 text-yellow-400" />}>
-                {isLoading && activeTab === 'weekly-admin' && !isPayoutLoading ? (
-                    <div className="text-center p-8">
-                        <Loader2 className="w-8 h-8 text-yellow-500 animate-spin mx-auto mb-4" />
-                        <p className="text-gray-400">Calculating top players...</p>
-                    </div>
-                ) : adminWinners.length > 0 ? (
-                    <>
-                        <div className="overflow-x-auto mb-4">
-                            <table className="min-w-full divide-y divide-gray-700">
-                                <thead>
-                                    <tr className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-gray-700/50">
-                                        <th className="px-4 py-3">Rank</th>
-                                        <th className="px-4 py-3">User</th>
-                                        <th className="px-4 py-3">Total Wins</th>
-                                        <th className="px-4 py-3">Reward (ETB)</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-800 text-sm">
-                                    {adminWinners.map((winner) => (
-                                        <tr key={winner.telegramId} className="hover:bg-gray-700 transition duration-150">
-                                            <td className="px-4 py-3 font-bold text-yellow-400">{winner.rank}</td>
-                                            <td className="px-4 py-3">
-                                                <p className="text-white">{winner.username || 'N/A'}</p>
-                                                <p className="text-xs text-gray-400 font-mono">ID: {winner.telegramId}</p>
-                                            </td>
-                                            <td className="px-4 py-3 text-green-400 font-semibold">{winner.totalWins}</td>
-                                            <td className="px-4 py-3 text-green-400 font-bold">{winner.rewardAmount}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        {/* Payout Confirmation Button */}
-                        <button
-                            onClick={handlePayout}
-                            disabled={isPayoutLoading || adminWinners.length === 0}
-                            className={`w-full py-3 rounded-xl font-bold text-lg transition-colors duration-200 flex items-center justify-center ${
-                                isPayoutLoading ? 'bg-gray-600 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-900/50'
-                            }`}
+        return (
+            <div className="space-y-6">
+                {/* Week Selector and Status - Enhanced for mobile stacking */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 bg-gray-800 rounded-xl shadow-lg border border-yellow-700/50">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 mb-4 md:mb-0 w-full md:w-auto">
+                        <label htmlFor="week-select" className="text-gray-300 font-semibold whitespace-nowrap text-sm">Select Week:</label>
+                        <select
+                            id="week-select"
+                            value={payoutWeek}
+                            onChange={(e) => setPayoutWeek(parseInt(e.target.value, 10))}
+                            className="p-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-yellow-500 focus:border-yellow-500 w-full sm:w-auto"
+                            disabled={isLoading || isPayoutLoading}
                         >
-                            {isPayoutLoading ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                    Processing Payout...
-                                </>
-                            ) : (
-                                <>
-                                    <DollarSign className="w-5 h-5 mr-2" />
-                                    Confirm & Execute Payout Now
-                                </>
-                            )}
+                            {/* UPDATED DROPDOWN OPTIONS LOGIC */}
+                            {weeksOfYear.map(week => (
+                                <option key={week} value={week}>Week {week}</option>
+                            ))}
+                        </select>
+                        <button
+                            onClick={() => fetchAdminWinners(payoutWeek)}
+                            className="w-full sm:w-auto text-sm text-yellow-500 hover:text-yellow-400 flex items-center justify-center p-2 rounded transition border border-yellow-500/50 hover:border-yellow-400/50 bg-gray-700/50"
+                            disabled={isLoading || isPayoutLoading}
+                        >
+                            <RefreshCw className={`w-4 h-4 mr-1 ${isLoading && activeTab === 'weekly-admin' ? 'animate-spin' : ''}`} />
+                            Recalculate
                         </button>
-                    </>
-                ) : adminMessage && (adminMessage.includes('already been executed') || adminMessage.includes('No winners found') || adminMessage.includes('API base URL')) ? (
-                    <div className="text-center p-4">
-                        <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
-                        <p className="text-red-400">{adminMessage}</p>
                     </div>
-                ) : (
-                    <p className="text-gray-400 text-center py-4">No data to display. Use the selector above to find winners for a specific week.</p>
-                )}
-            </Card>
-        </div>
-    );
+                    
+                    <p className={`text-sm font-medium p-2 rounded-lg text-center w-full md:w-auto ${adminMessage?.startsWith('✅') ? 'bg-green-900/40 text-green-400' : adminMessage?.startsWith('❌') || adminMessage?.includes('already been executed') ? 'bg-red-900/40 text-red-400' : 'bg-yellow-900/40 text-yellow-400'}`}>
+                        {adminMessage || 'Select a week and hit "Recalculate" to find top players.'}
+                    </p>
+                </div>
+
+                {/* Winners List */}
+                <Card title={`Winners for Week ${payoutWeek} (Unconfirmed)`} icon={<DollarSign className="w-5 h-5 text-yellow-400" />}>
+                    {isLoading && activeTab === 'weekly-admin' && !isPayoutLoading ? (
+                        <div className="text-center p-8">
+                            <Loader2 className="w-8 h-8 text-yellow-500 animate-spin mx-auto mb-4" />
+                            <p className="text-gray-400">Calculating top players...</p>
+                        </div>
+                    ) : adminWinners.length > 0 ? (
+                        <>
+                            {/* Ensures horizontal scrolling for the table on small screens */}
+                            <div className="overflow-x-auto mb-6 rounded-lg border border-gray-700"> 
+                                <table className="min-w-full divide-y divide-gray-700">
+                                    <thead>
+                                        <tr className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-gray-700/50">
+                                            <th className="px-3 py-3 sm:px-4 w-1/6">Rank</th>
+                                            <th className="px-3 py-3 sm:px-4 w-3/6">User</th>
+                                            <th className="px-3 py-3 sm:px-4 w-1/6">Total Wins</th>
+                                            <th className="px-3 py-3 sm:px-4 w-1/6 whitespace-nowrap">Reward (ETB)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-800 text-sm">
+                                        {adminWinners.map((winner) => (
+                                            <tr key={winner.telegramId} className="hover:bg-gray-700 transition duration-150">
+                                                <td className="px-3 py-3 sm:px-4 font-bold text-yellow-400">{winner.rank}</td>
+                                                <td className="px-3 py-3 sm:px-4">
+                                                    <p className="text-white truncate">{winner.username || 'N/A'}</p>
+                                                    <p className="text-xs text-gray-400 font-mono truncate">ID: {winner.telegramId}</p>
+                                                </td>
+                                                <td className="px-3 py-3 sm:px-4 text-green-400 font-semibold">{winner.totalWins}</td>
+                                                <td className="px-3 py-3 sm:px-4 text-green-400 font-bold whitespace-nowrap">{winner.rewardAmount}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            {/* Payout Confirmation Button */}
+                            <button
+                                onClick={handlePayout}
+                                disabled={isPayoutLoading || adminWinners.length === 0}
+                                className={`w-full py-3 rounded-xl font-bold text-lg transition-colors duration-200 flex items-center justify-center ${
+                                    isPayoutLoading ? 'bg-gray-600 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-900/50'
+                                }`}
+                            >
+                                {isPayoutLoading ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                        Processing Payout...
+                                    </>
+                                ) : (
+                                    <>
+                                        <DollarSign className="w-5 h-5 mr-2" />
+                                        Confirm & Execute Payout Now
+                                    </>
+                                )}
+                            </button>
+                        </>
+                    ) : adminMessage && (adminMessage.includes('already been executed') || adminMessage.includes('No winners found') || adminMessage.includes('API base URL')) ? (
+                        <div className="text-center p-4 bg-red-900/30 rounded-lg">
+                            <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
+                            <p className="text-red-400 font-medium">{adminMessage}</p>
+                        </div>
+                    ) : (
+                        <p className="text-gray-400 text-center py-4">No data to display. Use the selector above to find winners for a specific week.</p>
+                    )}
+                </Card>
+            </div>
+        );
+    };
 
 
     // --- Main Render ---
 
     return (
-        <div className="min-h-screen bg-gray-900 p-4 sm:p-8 font-sans">
-            <div className="max-w-5xl mx-auto">
+        // Adjusted overall padding for smaller screens
+        <div className="min-h-screen bg-gray-900 md:p-3 sm:p-6 lg:p-8 font-sans "> 
+            <div className="w-[90%] mx-auto">
                 
-                <header className="mb-8">
-                    <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-2 tracking-tight">
+                <header className="mb-8 p-1">
+                    {/* Adjusted text size for responsiveness */}
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mb-2 tracking-tight">
                         Bonus Administration & History
                     </h1>
-                    <p className="text-gray-400">
+                    <p className="text-sm sm:text-base text-gray-400">
                         Manage weekly payouts and review bonus transaction history.
                     </p>
                 </header>
 
-                {/* Tab Navigation */}
-                <div className="flex space-x-2 mb-6 border-b border-gray-700 overflow-x-auto">
+                {/* Tab Navigation - Added overflow-x-auto to ensure tabs are accessible on small screens */}
+                <div className="flex flex-col md:flex-row space-x-2 mb-6 border-b border-gray-700 overflow-x-auto pb-1">
                     <button
                         onClick={() => setActiveTab('weekly-admin')}
-                        className={`px-4 py-2 font-medium transition duration-200 rounded-t-lg flex items-center whitespace-nowrap ${
+                        className={`flex-shrink-0 px-3 py-2 sm:px-4 sm:py-2 font-medium transition duration-200 rounded-t-lg flex items-center whitespace-nowrap text-sm sm:text-base ${
                             activeTab === 'weekly-admin' ? 'text-white border-b-2 border-yellow-500' : 'text-gray-400 hover:text-gray-200'
                         }`}
                     >
-                        <DollarSign className="w-5 h-5 mr-2" />
+                        <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
                         Weekly Payout Admin
                     </button>
                     <button
                         onClick={() => setActiveTab('weekly-history')}
-                        className={`px-4 py-2 font-medium transition duration-200 rounded-t-lg flex items-center whitespace-nowrap ${
+                        className={`flex-shrink-0 px-3 py-2 sm:px-4 sm:py-2 font-medium transition duration-200 rounded-t-lg flex items-center whitespace-nowrap text-sm sm:text-base ${
                             activeTab === 'weekly-history' ? 'text-white border-b-2 border-green-500' : 'text-gray-400 hover:text-gray-200'
                         }`}
                     >
-                        <Trophy className="w-5 h-5 mr-2" />
+                        <Trophy className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
                         Weekly Payout History
                     </button>
                     <button
                         onClick={() => setActiveTab('daily')}
-                        className={`px-4 py-2 font-medium transition duration-200 rounded-t-lg flex items-center whitespace-nowrap ${
+                        className={`flex-shrink-0 px-3 py-2 sm:px-4 sm:py-2 font-medium transition duration-200 rounded-t-lg flex items-center whitespace-nowrap text-sm sm:text-base ${
                             activeTab === 'daily' ? 'text-white border-b-2 border-green-500' : 'text-gray-400 hover:text-gray-200'
                         }`}
                     >
-                        <Zap className="w-5 h-5 mr-2" />
+                        <Zap className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
                         Daily 5-Win History
                     </button>
                     <button 
                         onClick={fetchData} 
-                        className="ml-auto text-sm text-green-500 hover:text-green-400 flex items-center p-2 rounded transition"
+                        className="ml-auto flex-shrink-0 text-sm text-green-500 hover:text-green-400 flex items-center p-2 rounded transition"
                         disabled={isLoading}
                     >
                         <RefreshCw className={`w-4 h-4 mr-1 ${isLoading && activeTab !== 'weekly-admin' ? 'animate-spin' : ''}`} />
-                        Refresh History
+                        <span className="hidden sm:inline">Refresh History</span>
+                        <span className="sm:hidden">Refresh</span>
                     </button>
                 </div>
 
