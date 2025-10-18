@@ -132,7 +132,7 @@ const executePayoutRequest = async (week: number, winners: WeeklyWinner[]) => {
         throw new Error('API base URL is not configured (NEXT_PUBLIC_API_BASE_URL is missing).');
     }
 
-    const apiUrl = `${BASE_URL}/api/admin/weekly/payout`;
+    const apiUrl = `${BASE_URL}/api/bonusHistery/admin/weekly/payout`;
 
     try {
         const response = await fetch(apiUrl, {
