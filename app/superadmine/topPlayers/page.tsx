@@ -110,12 +110,12 @@ async function fetchHistory(
         // Return DailyPayout[] or WeeklyHistoryGroup[]
         return (result.data || result); 
 
-    } catch (error) {
-        console.error(`Error fetching ${type} history from API:`, error);
+    } catch (fetchError) { // RENAMED 'error' to 'fetchError' to resolve lint warning
+        console.error(`Error fetching ${type} history from API:`, fetchError);
 
         const errorMessage =
-            error instanceof Error
-                ? error.message
+            fetchError instanceof Error
+                ? fetchError.message
                 : 'A network or unknown error occurred.';
 
         if (type === 'weekly-admin') {
@@ -507,7 +507,7 @@ const BonusHistory: React.FC = () => {
                                 This week has already been paid out and is recorded in the history.
                             </p>
                             <p className="text-green-400/80 text-sm mt-1">
-                                Check the "Weekly Payout History" tab for details.
+                                Check the &quot;Weekly Payout History&quot; tab for details.
                             </p>
                         </div>
                         
@@ -576,7 +576,8 @@ const BonusHistory: React.FC = () => {
                     </div>
                     
                     <p className={`text-sm font-medium p-2 rounded-lg text-center w-full md:w-auto ${adminMessage?.startsWith('✅') ? 'bg-green-900/40 text-green-400' : adminMessage?.startsWith('❌') || adminMessage?.includes('already been executed') ? 'bg-red-900/40 text-red-400' : 'bg-yellow-900/40 text-yellow-400'}`}>
-                        {adminMessage || 'Select a week and hit "Recalculate" to find top players.'}
+                        {/* FIXED JSX ERROR: used &quot; to escape double quotes */}
+                        {adminMessage || 'Select a week and hit &quot;Recalculate&quot; to find top players.'}
                     </p>
                 </div>
 
