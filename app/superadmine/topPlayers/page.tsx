@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, Zap, Trophy, DollarSign, Loader2, AlertTriangle } from 'lucide-react';
+import { RefreshCw, Zap, Trophy, DollarSign, Loader2, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // --- Type Definitions for the Data 
 interface DailyPayout {
@@ -30,16 +30,17 @@ interface WeeklyHistoryGroup {
 
 type PayoutType = 'daily' | 'weekly-history' | 'weekly-admin';
 
-// --- Utility Function ---
+// --- Utility Function (REQUIRED for UI defaulting and dropdown generation) ---
 const getCurrentWeekNumber = () => {
     const now = new Date();
     const startOfYear = new Date(now.getFullYear(), 0, 1);
     // The divisor is now 604800000ms (7 days)
     const diff = (now.getTime() - startOfYear.getTime() + (24 * 60 * 60 * 1000)) / (1000 * 60 * 60 * 24); 
     // Add 1 to ensure week 1 is the first week, then use Math.floor or similar logic.
-    // For simplicity and common use in calendar calcs:
+    // This simple calculation is only used for initializing the UI dropdown range.
     return Math.ceil(diff / 7);
 };
+
 
 // --- API Helper Types ---
 type WeeklyAdminSuccess = { error?: false; message?: string; data: WeeklyWinner[]; week: number };
@@ -76,6 +77,7 @@ async function fetchHistory(
     } else if (type === 'weekly-history') {
         endpoint = `${BASE_URL}/api/bonusHistery/weekly`;
     } else if (type === 'weekly-admin') {
+        // The week parameter is sent to the backend, which performs the authoritative calculation.
         endpoint = `${BASE_URL}/api/bonusHistery/admin/weekly/winners${week ? `?week=${week}` : ''}`;
     }
 
@@ -156,13 +158,19 @@ const executePayoutRequest = async (week: number, winners: WeeklyWinner[]) => {
     }
 };
 
+const ITEMS_PER_PAGE = 10; // Constant for pagination limit
+
 const BonusHistory: React.FC = () => {
     // --- State Declarations ---
     const [dailyHistory, setDailyHistory] = useState<DailyPayout[]>([]);
     const [weeklyHistory, setWeeklyHistory] = useState<WeeklyHistoryGroup[]>([]);
     const [adminWinners, setAdminWinners] = useState<WeeklyWinner[]>([]);
     
-    const currentWeek = getCurrentWeekNumber();
+    // **NEW STATE FOR DAILY HISTORY PAGINATION**
+    const [dailyPage, setDailyPage] = useState(1);
+    
+    // This simple client-side week number is used only for UI defaults and dropdown generation.
+    const currentWeek = getCurrentWeekNumber(); 
     // Default to last week (e.g., if current is 42, default is 41)
     const defaultPayoutWeek = currentWeek === 1 ? 52 : currentWeek - 1; 
     const [payoutWeek, setPayoutWeek] = useState<number>(defaultPayoutWeek);
@@ -173,12 +181,28 @@ const BonusHistory: React.FC = () => {
     const [isPayoutLoading, setIsPayoutLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<PayoutType>('weekly-admin');
 
+    // **NEW DERIVED STATE: Check if the current week is in the paid history**
+    const isCurrentWeekPaid = weeklyHistory.some(
+        (group) => group.weekOfYear === payoutWeek
+    );
+    
+    // **PAGINATION CALCULATIONS FOR DAILY HISTORY**
+    const totalDailyItems = dailyHistory.length;
+    const totalDailyPages = Math.ceil(totalDailyItems / ITEMS_PER_PAGE);
+    const dailyStartIndex = (dailyPage - 1) * ITEMS_PER_PAGE;
+    const dailyEndIndex = dailyPage * ITEMS_PER_PAGE;
+    const paginatedDailyHistory = dailyHistory.slice(dailyStartIndex, dailyEndIndex);
+
+
     // --- Memoized Handlers ---
 
     const fetchAdminWinners = useCallback(async (week: number) => {
         setAdminWinners([]);
         setAdminMessage(null);
-        setIsLoading(true);
+        // Only show loading state if the week is not already paid
+        if (!isCurrentWeekPaid) {
+            setIsLoading(true);
+        }
 
         try {
             // TypeScript now correctly infers the return type as WeeklyAdminResponse
@@ -202,9 +226,12 @@ const BonusHistory: React.FC = () => {
         } catch (error) {
             setAdminMessage('Failed to fetch winners for admin review due to an unexpected error.');
         } finally {
-            setIsLoading(false);
+             if (!isCurrentWeekPaid) {
+                setIsLoading(false);
+            }
         }
-    }, []); 
+    // Dependency on isCurrentWeekPaid is important for the loading state logic inside.
+    }, [isCurrentWeekPaid]); 
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
@@ -217,6 +244,8 @@ const BonusHistory: React.FC = () => {
             
             setDailyHistory(dailyData as DailyPayout[]);
             setWeeklyHistory(weeklyData as WeeklyHistoryGroup[]);
+            // Reset daily page to 1 after fetching new data
+            setDailyPage(1); 
 
         } catch (error) {
             console.error("Failed to fetch history:", error);
@@ -234,6 +263,8 @@ const BonusHistory: React.FC = () => {
 
     useEffect(() => {
         // Fetch admin winners whenever the tab is 'weekly-admin' or the week changes
+        // Only run if the week is NOT already paid, or if the user forces a recalculate.
+        // We run it anyway, but the UI will suppress the need for a payout.
         if (activeTab === 'weekly-admin') {
             fetchAdminWinners(payoutWeek);
         }
@@ -260,17 +291,27 @@ const BonusHistory: React.FC = () => {
             const result = await executePayoutRequest(payoutWeek, adminWinners); 
             setAdminMessage(`✅ Success! ${result.count} winner(s) paid for Week ${payoutWeek}. Payout recorded.`);
             setAdminWinners([]); 
-            fetchData(); // Refresh history
-            setPayoutWeek(getCurrentWeekNumber() - 1); // Auto-advance to the previous week to prevent re-payout
+            // Auto-advance to the previous week (based on client date)
+            setPayoutWeek(getCurrentWeekNumber() - 1); 
+            fetchData(); // Refresh history (important to update isCurrentWeekPaid)
 
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
             setAdminMessage(`❌ Payout failed: ${errorMessage}`);
         } finally {
             setIsPayoutLoading(false);
-            // Re-fetch to check if the week is now paid
+            // Re-fetch to check if the week is now paid (and to refresh the admin message)
             fetchAdminWinners(payoutWeek); 
         }
+    };
+    
+    // **NEW HANDLERS FOR DAILY HISTORY PAGINATION**
+    const handleDailyNext = () => {
+        setDailyPage(prev => Math.min(prev + 1, totalDailyPages));
+    };
+
+    const handleDailyPrevious = () => {
+        setDailyPage(prev => Math.max(prev - 1, 1));
     };
 
 
@@ -298,32 +339,80 @@ const BonusHistory: React.FC = () => {
         }
     };
     
-    const DailyHistoryTable = () => (
-        // Ensures horizontal scrolling if the content is too wide on mobile
-        <div className="overflow-x-auto rounded-lg border border-gray-700">
-            <table className="min-w-full divide-y divide-gray-700">
-                <thead>
-                    <tr className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-gray-700/50">
-                        {/* Adjusted padding for tighter fit on mobile (sm:px-4 is the default desktop size) */}
-                        <th className="px-3 py-3 sm:px-4">User ID</th>
-                        <th className="px-3 py-3 sm:px-4">Amount</th>
-                        <th className="px-3 py-3 sm:px-4">Wins (24h)</th>
-                        <th className="px-3 py-3 sm:px-4 whitespace-nowrap">Time Awarded</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800 text-sm">
-                    {dailyHistory.map((payout) => (
-                        <tr key={payout._id} className="hover:bg-gray-700 transition duration-150">
-                            <td className="px-3 py-3 sm:px-4 font-mono text-xs text-gray-300 truncate max-w-xs">{payout.telegramId}</td>
-                            <td className="px-3 py-3 sm:px-4 text-green-400 font-semibold whitespace-nowrap">{payout.amount} ETB</td>
-                            <td className="px-3 py-3 sm:px-4 text-yellow-400">{payout.details.winsIn24h}</td>
-                            <td className="px-3 py-3 sm:px-4 text-gray-400 whitespace-nowrap text-xs sm:text-sm">{formatPayoutDate(payout.createdAt)}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
+    // **UPDATED DailyHistoryTable TO ACCEPT PAGINATED DATA AND HANDLERS**
+    interface DailyHistoryTableProps {
+        data: DailyPayout[];
+        currentPage: number;
+        totalPages: number;
+        onNext: () => void;
+        onPrevious: () => void;
+    }
+
+    const DailyHistoryTable: React.FC<DailyHistoryTableProps> = ({ data, currentPage, totalPages, onNext, onPrevious }) => {
+        const isPrevDisabled = currentPage === 1;
+        const isNextDisabled = currentPage === totalPages || totalPages === 0;
+
+        return (
+            <>
+                {/* Ensures horizontal scrolling if the content is too wide on mobile */}
+                <div className="overflow-x-auto rounded-lg border border-gray-700">
+                    <table className="min-w-full divide-y divide-gray-700">
+                        <thead>
+                            <tr className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-gray-700/50">
+                                {/* Adjusted padding for tighter fit on mobile (sm:px-4 is the default desktop size) */}
+                                <th className="px-3 py-3 sm:px-4">User ID</th>
+                                <th className="px-3 py-3 sm:px-4">Amount</th>
+                                <th className="px-3 py-3 sm:px-4">Wins (24h)</th>
+                                <th className="px-3 py-3 sm:px-4 whitespace-nowrap">Time Awarded</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-800 text-sm">
+                            {data.map((payout) => (
+                                <tr key={payout._id} className="hover:bg-gray-700 transition duration-150">
+                                    <td className="px-3 py-3 sm:px-4 font-mono text-xs text-gray-300 truncate max-w-xs">{payout.telegramId}</td>
+                                    <td className="px-3 py-3 sm:px-4 text-green-400 font-semibold whitespace-nowrap">{payout.amount} ETB</td>
+                                    <td className="px-3 py-3 sm:px-4 text-yellow-400">{payout.details.winsIn24h}</td>
+                                    <td className="px-3 py-3 sm:px-4 text-gray-400 whitespace-nowrap text-xs sm:text-sm">{formatPayoutDate(payout.createdAt)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <div className="flex justify-between items-center mt-4 p-2 bg-gray-700/50 rounded-lg">
+                        <button
+                            onClick={onPrevious}
+                            disabled={isPrevDisabled}
+                            className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors duration-150 ${
+                                isPrevDisabled ? 'text-gray-500 bg-gray-800 cursor-not-allowed' : 'text-green-400 hover:bg-gray-600'
+                            }`}
+                        >
+                            <ChevronLeft className="w-4 h-4 mr-1" />
+                            Previous
+                        </button>
+                        
+                        <span className="text-sm font-medium text-gray-300">
+                            Page {currentPage} of {totalPages}
+                        </span>
+
+                        <button
+                            onClick={onNext}
+                            disabled={isNextDisabled}
+                            className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors duration-150 ${
+                                isNextDisabled ? 'text-gray-500 bg-gray-800 cursor-not-allowed' : 'text-green-400 hover:bg-gray-600'
+                            }`}
+                        >
+                            Next
+                            <ChevronRight className="w-4 h-4 ml-1" />
+                        </button>
+                    </div>
+                )}
+            </>
+        );
+    };
+
 
     const WeeklyHistoryList = () => (
         <div className="space-y-6">
@@ -373,8 +462,91 @@ const BonusHistory: React.FC = () => {
                 week += 52; 
             }
             return week;
-        }).filter(w => w !== currentWeek); // Exclude the current, ongoing week.
+        })
 
+        // **LOGIC FOR ALREADY-PAID WEEK**
+        if (isCurrentWeekPaid) {
+            const paidWeekData = weeklyHistory.find(group => group.weekOfYear === payoutWeek);
+            
+            return (
+                <div className="space-y-6">
+                    {/* Week Selector and Status - Enhanced for mobile stacking */}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 bg-gray-800 rounded-xl shadow-lg border border-yellow-700/50">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 mb-4 md:mb-0 w-full md:w-auto">
+                            <label htmlFor="week-select" className="text-gray-300 font-semibold whitespace-nowrap text-sm">Select Week:</label>
+                            <select
+                                id="week-select"
+                                value={payoutWeek}
+                                onChange={(e) => setPayoutWeek(parseInt(e.target.value, 10))}
+                                className="p-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-yellow-500 focus:border-yellow-500 w-full sm:w-auto"
+                                disabled={isLoading || isPayoutLoading}
+                            >
+                                {weeksOfYear.map(week => (
+                                    <option key={week} value={week}>Week {week}</option>
+                                ))}
+                            </select>
+                            <button
+                                onClick={() => fetchAdminWinners(payoutWeek)}
+                                className="w-full sm:w-auto text-sm text-yellow-500 hover:text-yellow-400 flex items-center justify-center p-2 rounded transition border border-yellow-500/50 hover:border-yellow-400/50 bg-gray-700/50"
+                                disabled={isLoading || isPayoutLoading}
+                            >
+                                <RefreshCw className={`w-4 h-4 mr-1 ${isLoading && activeTab === 'weekly-admin' ? 'animate-spin' : ''}`} />
+                                Recalculate
+                            </button>
+                        </div>
+                        
+                        <p className="text-sm font-medium p-2 rounded-lg text-center w-full md:w-auto bg-green-900/40 text-green-400">
+                            ✅ Payout for Week {payoutWeek} has already been recorded.
+                        </p>
+                    </div>
+
+                    <Card title={`Winners for Week ${payoutWeek} (PAID)`} icon={<Trophy className="w-5 h-5 text-green-400" />}>
+                        <div className="text-center p-4 bg-green-900/30 rounded-lg mb-4">
+                            <DollarSign className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                            <p className="text-green-400 font-bold text-lg">
+                                This week has already been paid out and is recorded in the history.
+                            </p>
+                            <p className="text-green-400/80 text-sm mt-1">
+                                Check the "Weekly Payout History" tab for details.
+                            </p>
+                        </div>
+                        
+                        {paidWeekData?.winners.length ? (
+                            <div className="overflow-x-auto rounded-lg border border-gray-700"> 
+                                <table className="min-w-full divide-y divide-gray-700">
+                                    <thead>
+                                        <tr className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-gray-700/50">
+                                            <th className="px-3 py-3 sm:px-4 w-1/6">Rank</th>
+                                            <th className="px-3 py-3 sm:px-4 w-3/6">User</th>
+                                            <th className="px-3 py-3 sm:px-4 w-1/6">Total Wins</th>
+                                            <th className="px-3 py-3 sm:px-4 w-1/6 whitespace-nowrap">Reward (ETB)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-800 text-sm">
+                                        {/* Note: In history, the amount field is used for the reward */}
+                                        {paidWeekData.winners.map((winner) => (
+                                            <tr key={winner.telegramId} className="bg-gray-700/50">
+                                                <td className="px-3 py-3 sm:px-4 font-bold text-yellow-400">{winner.rank}</td>
+                                                <td className="px-3 py-3 sm:px-4">
+                                                    <p className="text-white truncate">{winner.username || 'N/A'}</p>
+                                                    <p className="text-xs text-gray-400 font-mono truncate">ID: {winner.telegramId}</p>
+                                                </td>
+                                                <td className="px-3 py-3 sm:px-4 text-green-400 font-semibold">{winner.totalWins}</td>
+                                                <td className="px-3 py-3 sm:px-4 text-green-400 font-bold whitespace-nowrap">{winner.amount || winner.rewardAmount}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <p className="text-gray-400 text-center py-4">Winner data for this paid week is unavailable.</p>
+                        )}
+                    </Card>
+                </div>
+            );
+        }
+
+        // **DEFAULT LOGIC FOR UNPAID WEEK**
         return (
             <div className="space-y-6">
                 {/* Week Selector and Status - Enhanced for mobile stacking */}
@@ -549,7 +721,17 @@ const BonusHistory: React.FC = () => {
                         {activeTab === 'weekly-history' && <WeeklyHistoryList />}
                         {activeTab === 'daily' && (
                             <Card title="Recent Daily Bonuses" icon={<Zap className="w-5 h-5" />}>
-                                {dailyHistory.length > 0 ? <DailyHistoryTable /> : <p className="text-gray-400 text-center py-4">No daily bonus payouts recorded yet.</p>}
+                                {dailyHistory.length > 0 ? (
+                                    <DailyHistoryTable 
+                                        data={paginatedDailyHistory}
+                                        currentPage={dailyPage}
+                                        totalPages={totalDailyPages}
+                                        onNext={handleDailyNext}
+                                        onPrevious={handleDailyPrevious}
+                                    />
+                                ) : (
+                                    <p className="text-gray-400 text-center py-4">No daily bonus payouts recorded yet.</p>
+                                )}
                             </Card>
                         )}
                     </div>
