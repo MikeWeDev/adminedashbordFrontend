@@ -118,8 +118,6 @@ export default function UserManagementPage() {
   // Calendar state
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
-const finishedGamesCount = useMemo(() => games.length, [games]);
-  // Fetch summary, games, and payments
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -285,11 +283,11 @@ console.log('Fetched gamesData:', gamesData);
             value={`${Number(summary.users || 0).toLocaleString()}`}
             icon="users"
           />
-          <Card
-            title="Games Played Today"
-            value={`${Number(finishedGamesCount || 0)}`}
-            icon="games"
-          />
+         <Card
+    title="Games Played Today"
+    value={`${Number(summary.totalGamesToday || 0).toLocaleString()}`} // <-- USE THE VALUE FROM THE SUMMARY API
+    icon="games"
+/>
             <Card
             title="Total Bonus Balance"
             value={`${Number(totalBonusBalance || 0).toLocaleString()} Birr`}
