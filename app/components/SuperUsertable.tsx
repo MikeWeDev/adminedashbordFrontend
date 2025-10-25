@@ -1,30 +1,8 @@
-import { useState, useMemo } from 'react';
-import Link from 'next/link'; // <-- Next.js Link is correctly imported here
+import { useState, useMemo, Dispatch, SetStateAction } from 'react';
+import Link from 'next/link';
+// NOTE: We assume the external environment provides Next.js Link for this mock.
 
-// --- Dependency Replacements (Mandatory for single-file environment) ---
-// Defining types for CustomLink props (Removed as we use next/link now)
-/*
-interface CustomLinkProps {
-  href: string;
-  className: string;
-  children: React.ReactNode;
-}
-const CustomLink: React.FC<CustomLinkProps> = ({ href, className, children }) => (
-  <a 
-    href={href} 
-    className={className} 
-    onClick={(e) => {
-      // Prevent actual navigation if you want to keep the demonstration local
-      e.preventDefault(); 
-      console.log(`Navigating to: ${href}`);
-    }}
-  >
-    {children}
-  </a>
-);
-*/
-
-// Replaces 'react-icons/fa/FaEdit' (No props, definition is fine)
+// Replaces 'react-icons/fa/FaEdit'
 const FaEdit = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
         <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -47,7 +25,6 @@ interface User {
     username: string;
     phoneNumber?: string;
     balance: number;
-    // EDITED: Made bonus_balance optional to match potential external data structure (error 2719)
     bonus_balance?: number; 
     registeredAt: string;
 }
@@ -55,18 +32,21 @@ interface User {
 interface UserTableProps {
     users: User[];
     currentPage: number;
-    itemsPerPage: number;
+    itemsPerPage: number; 
     totalUsers: number;
     totalPages: number;
     onPageChange: (page: number) => void;
     onSortChange: (field: string, order: 'asc' | 'desc') => void;
     currentSortBy: string;
     currentSortOrder: 'asc' | 'desc';
+    usernameQuery: string; 
+    contactQuery: string; 
+    onSearchChange: (field: 'username' | 'contact', value: string) => void;
 }
 
 // --- Component Definition ---
 export const UserTable: React.FC<UserTableProps> = ({
-    users,
+    users, // Now holds the current page of sorted and filtered users
     currentPage,
     totalUsers,
     totalPages,
@@ -74,23 +54,16 @@ export const UserTable: React.FC<UserTableProps> = ({
     onSortChange,
     currentSortBy,
     currentSortOrder,
+    usernameQuery,
+    contactQuery,
+    onSearchChange,
 }) => {
-    const [usernameQuery, setUsernameQuery] = useState('');
-    const [contactQuery, setContactQuery] = useState('');
-
-    const filteredUsers = useMemo(() => {
-        return users.filter((user) => {
-            // Add a null check for user.username
-            const matchesUsername = user.username
-                ? user.username.toLowerCase().includes(usernameQuery.toLowerCase())
-                : false; // If username is undefined, it won't match.
-
-            const matchesContact =
-                user.phoneNumber?.includes(contactQuery) ||
-                user.telegramId?.toString().includes(contactQuery);
-            return matchesUsername && (contactQuery ? matchesContact : true);
-        });
+    
+    // Client-side filtering logic remains commented out as we assume server-side filtering
+    /* const filteredUsers = useMemo(() => {
+        // ... filtering logic ...
     }, [users, usernameQuery, contactQuery]);
+    */
 
     const handleSortClick = (field: string) => {
         if (currentSortBy === field) {
@@ -126,20 +99,19 @@ export const UserTable: React.FC<UserTableProps> = ({
                     type="text"
                     placeholder="Search by username..."
                     value={usernameQuery}
-                    onChange={(e) => setUsernameQuery(e.target.value)}
+                    onChange={(e) => onSearchChange('username', e.target.value)}
                     className="w-full md:w-1/3 px-4 py-2 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
                 <input
                     type="text"
                     placeholder="Search by phone number or Telegram ID..."
                     value={contactQuery}
-                    onChange={(e) => setContactQuery(e.target.value)}
-                    className="w-full md:w-1/3 px-4 py-2 border rounded-lg shadow-sm text-black   focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onChange={(e) => onSearchChange('contact', e.target.value)}
+                    className="w-full md:w-1/3 px-4 py-2 border rounded-lg shadow-sm text-black   focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
             </div>
 
             <div className="overflow-x-auto">
-                {/* CRITICAL FIX: Removed whitespace/newlines for hydration */}
                 <table className="table-auto border-collapse w-full "><thead>
                     <tr className="bg-gray-200 text-gray-700 uppercase text-xs leading-normal">
                         <th
@@ -179,8 +151,9 @@ export const UserTable: React.FC<UserTableProps> = ({
                         <th className="py-3 px-6 text-left rounded-tr-lg whitespace-nowrap">Actions</th>
                     </tr>
                 </thead><tbody className="text-gray-700 text-sm font-light">
-                    {filteredUsers.length > 0 ? (
-                        filteredUsers.map((user) => (
+                    {/* Use 'users' prop and explicitly type 'user' */}
+                    {users.length > 0 ? ( 
+                        users.map((user: User) => ( 
                             <tr
                                 key={user._id}
                                 className="border-b border-gray-200 hover:bg-gray-100 transition-colors duration-150"
@@ -269,7 +242,7 @@ export const UserTable: React.FC<UserTableProps> = ({
     );
 };
 
-// --- Mock App for Preview ---
+// --- Mock App for Preview (Fixes error 2739) ---
 const App = () => {
     // Mock Data including bonus_balance
     const mockUsers: User[] = [
@@ -283,9 +256,12 @@ const App = () => {
     // Mock State and Logic (must be present for runnability)
     const [currentPage, setCurrentPage] = useState(1);
     const [sortBy, setSortBy] = useState('registeredAt');
-    // Using explicit string literal type for safety, although the initialization value is correct.
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); 
     
+    // Add state for new search props
+    const [usernameQuery, setUsernameQuery] = useState('');
+    const [contactQuery, setContactQuery] = useState('');
+
     const totalUsers = mockUsers.length;
     const itemsPerPage = 10;
     const totalPages = Math.ceil(totalUsers / itemsPerPage);
@@ -300,7 +276,6 @@ const App = () => {
                 return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
             }
             if (typeof valA === 'number' && typeof valB === 'number') {
-                // FIX: Replaced 'a' with 'valA' to ensure arithmetic operation is between numbers
                 return sortOrder === 'asc' ? valA - valB : valB - valA; 
             }
             // Fallback for dates (registeredAt)
@@ -319,6 +294,14 @@ const App = () => {
         setSortOrder(order);
     };
 
+    // Add handler for search change
+    const handleSearchChange = (field: 'username' | 'contact', value: string) => {
+        if (field === 'username') setUsernameQuery(value);
+        if (field === 'contact') setContactQuery(value);
+        // In a real app, this should also trigger onPageChange(1) and a data fetch
+        setCurrentPage(1); 
+    };
+
     return (
         <div className="min-h-screen bg-gray-100 p-4 sm:p-8 font-[Inter]">
             <div className="max-w-7xl mx-auto">
@@ -335,6 +318,9 @@ const App = () => {
                     onSortChange={handleSortChange}
                     currentSortBy={sortBy}
                     currentSortOrder={sortOrder}
+                    usernameQuery={usernameQuery}
+                    contactQuery={contactQuery}
+                    onSearchChange={handleSearchChange}
                 />
             </div>
         </div>

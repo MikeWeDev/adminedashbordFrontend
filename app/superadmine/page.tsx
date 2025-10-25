@@ -114,6 +114,10 @@ export default function UserManagementPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [sortBy, setSortBy] = useState('registeredAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [searchQuery, setSearchQuery] = useState({
+    username: '',
+    contact: '',
+  });
 
   // Calendar state
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
@@ -185,6 +189,8 @@ console.log('Fetched gamesData:', gamesData);
           limit: itemsPerPage.toString(),
           sortBy,
           sortOrder,
+          usernameSearch: searchQuery.username,
+          contactSearch: searchQuery.contact
         }).toString();
         const res = await fetch(`${DASHBOARD_API_URL}/users?${query}`);
         if (!res.ok) throw new Error(`Failed to fetch users: ${res.statusText}`);
@@ -201,7 +207,7 @@ console.log('Fetched gamesData:', gamesData);
       }
     };
     fetchUsers();
-  }, [currentPage, itemsPerPage, sortBy, sortOrder]);
+  }, [currentPage, itemsPerPage, sortBy, sortOrder,searchQuery]);
 
   const handlePageChange = (page: number) => page >= 1 && page <= totalPages && setCurrentPage(page);
   const handleSortChange = (field: string, order: 'asc' | 'desc') => {
@@ -209,6 +215,10 @@ console.log('Fetched gamesData:', gamesData);
     setSortOrder(order);
     setCurrentPage(1);
   };
+  const handleSearchChange = (field: 'username' | 'contact', value: string) => {
+    setSearchQuery(prev => ({ ...prev, [field]: value }));
+    setCurrentPage(1); // Crucial: Reset page to 1 on any new search
+  };
 
   if (loading) {
     return (
@@ -312,6 +322,9 @@ console.log('Fetched gamesData:', gamesData);
                onSortChange={handleSortChange}
                currentSortBy={sortBy}
                currentSortOrder={sortOrder}
+               usernameQuery={searchQuery.username}
+               contactQuery={searchQuery.contact}
+               onSearchChange={handleSearchChange}
              />
              </div>
       </div>
