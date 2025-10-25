@@ -39,17 +39,17 @@ interface User {
 }
 
 interface SummaryData {
-  profit: number;
-  dailyProfit: number;
-  users: number;
-  gamesPlayed: { [key: number]: number };
-  totalGamesToday: number;
-  totalBonusBalance: number;
-  dailyWinningsPaid: number; // ⭐ ADD THIS NEW FIELD
- totalAccountBalance?: number;
+  profit: number;
+  dailyProfit: number;
+  users: number;
+  gamesPlayed: { [key: number]: number };
+  totalGamesToday: number;
+  totalBonusBalance: number; 
+   totalAccountBalance?: number;
 }
 
 interface GameHistoryEntry {
+  _id: string;
   GameSessionId: string;
   gameId: string;
   playersCount: number;
@@ -60,20 +60,20 @@ interface GameHistoryEntry {
   endedAt: string | null;
 }
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 const DASHBOARD_API_URL = `${BASE_URL}/api/dashboard`;
 const PAYMENT_API_URL = `${BASE_URL}/api/payments`;
 
 const defaultSummary: SummaryData = {
-  profit: 0,
-  dailyProfit: 0,
-  users: 0,
-  gamesPlayed: { 10: 0, 20: 0, 30: 0 },
-  totalGamesToday: 0,
-  totalBonusBalance: 0,
-  dailyWinningsPaid: 0, // ⭐ ADD INITIALIZATION
-  totalAccountBalance: 0
-
+  profit: 0,
+  dailyProfit: 0,
+  users: 0,
+  gamesPlayed: { 10: 0, 20: 0, 30: 0 },
+  totalGamesToday: 0,
+  totalBonusBalance: 0, 
+  totalAccountBalance: 0,
 };
+
 const icons = {
   profit: <FaChartLine />,
   users: <FaUsers />,
@@ -94,7 +94,7 @@ const Card = ({ title, value, icon }: { title: string; value: string | number; i
   </div>
 );
 
-export default function UserManagementPageA() {
+export default function UserManagementPage() {
   useSessionCheck();
 
   const [summary, setSummary] = useState<SummaryData>(defaultSummary);
@@ -114,14 +114,14 @@ export default function UserManagementPageA() {
   const [totalPages, setTotalPages] = useState(1);
   const [sortBy, setSortBy] = useState('registeredAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [searchQuery, setSearchQuery] = useState({
+    username: '',
+    contact: '',
+  });
 
   // Calendar state
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
-  const finishedGamesCount = useMemo(() => games.filter(game => game.endedAt).length, [games]);
-  
-
-// Fetch summary, games, and payments
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -140,23 +140,28 @@ export default function UserManagementPageA() {
         if (!paymentRes.ok) throw new Error(`Failed to fetch payments: ${paymentRes.status}`);
 
         const summaryData = await summaryRes.json();
+console.log('gamesRes.ok:', gamesRes.ok);
         const gamesData = await gamesRes.json();
+console.log('Fetched gamesData:', gamesData);
         const paymentData = await paymentRes.json();
+
         
-        // Update summary state, including the new dailyWinningsPaid field
+        // --- LOG 1: Check summary data for totalBonusBalance ---
+        // -----------------------------------------------------
+
         setSummary({ 
-            ...defaultSummary, 
-            ...summaryData, 
-            gamesPlayed: { ...defaultSummary.gamesPlayed, ...summaryData.gamesPlayed } ,
+            ...defaultSummary, 
+            ...summaryData, 
+            gamesPlayed: { ...defaultSummary.gamesPlayed, ...summaryData.gamesPlayed } ,
             totalAccountBalance: summaryData.totalAccountBalance ?? 0,
-        });
-        
+        });
         setGames(gamesData);
         setDailyDeposit(paymentData.totalDeposits ?? 0);
         setDailyWithdrawal(paymentData.totalWithdrawals ?? 0);
         setTotalBonusBalance(summaryData.totalBonusBalance ?? 0); 
 
         // ⭐ FIX: Set Winner Amount directly from the backend (dailyWinningsPaid)
+        // This replaces the old, incorrect calculation that relied on totalStakes.
         const actualWinnerAmount = summaryData.dailyWinningsPaid ?? 0;
         setWinnerAmount(actualWinnerAmount);
         
@@ -173,9 +178,9 @@ export default function UserManagementPageA() {
       }
     };
     fetchData();
-  }, [selectedDate]); // Add selectedDate as dependency
+  }, [selectedDate]);
 
-
+  // Fetch users table (keep original logic)
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -184,6 +189,8 @@ export default function UserManagementPageA() {
           limit: itemsPerPage.toString(),
           sortBy,
           sortOrder,
+          usernameSearch: searchQuery.username,
+          contactSearch: searchQuery.contact
         }).toString();
         const res = await fetch(`${DASHBOARD_API_URL}/users?${query}`);
         if (!res.ok) throw new Error(`Failed to fetch users: ${res.statusText}`);
@@ -200,7 +207,7 @@ export default function UserManagementPageA() {
       }
     };
     fetchUsers();
-  }, [currentPage, itemsPerPage, sortBy, sortOrder]);
+  }, [currentPage, itemsPerPage, sortBy, sortOrder,searchQuery]);
 
   const handlePageChange = (page: number) => page >= 1 && page <= totalPages && setCurrentPage(page);
   const handleSortChange = (field: string, order: 'asc' | 'desc') => {
@@ -208,6 +215,10 @@ export default function UserManagementPageA() {
     setSortOrder(order);
     setCurrentPage(1);
   };
+  const handleSearchChange = (field: 'username' | 'contact', value: string) => {
+    setSearchQuery(prev => ({ ...prev, [field]: value }));
+    setCurrentPage(1); // Crucial: Reset page to 1 on any new search
+  };
 
   if (loading) {
     return (
@@ -231,16 +242,17 @@ export default function UserManagementPageA() {
   }
 
   return (
-    <main className="flex-1 w-full p-4 flex flex-col md:items-center items-start justify-start bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen transition-all">
-      <div className="w-[55%] md:w-full  lg:mt-8 flex flex-col gap-6">
+    <main className="flex-1 w-full p-4 flex flex-col items-start md:items-center justify-start bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen transition-all">
+      <div className="w-[55%] md:w-full lg:mt-8 flex flex-col gap-6">
 
         {/* Calendar Filter */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl shadow-md bg-white hover:shadow-xl transition-shadow duration-300 w-full ">
+        <div className="flex flex-col sm:flex-row sm:items-center  w-[90%] justify-between gap-4 p-4 rounded-xl shadow-md bg-white hover:shadow-xl transition-shadow duration-300 md:w-full w-[80%]">
           <h3 className="text-lg font-semibold text-gray-700 tracking-wide">Filter by Date</h3>
           <DatePicker
             selected={selectedDate}
             onChange={(date: Date | null) => setSelectedDate(date)}
             dateFormat="yyyy/MM/dd"
+
             placeholderText="Select a date"
             className="cursor-pointer p-3 sm:px-5 sm:py-3 text-gray-900 font-semibold shadow-lg rounded-full
                          bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
@@ -249,7 +261,7 @@ export default function UserManagementPageA() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 w-full ">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:w-full w-[90%]">
           <Card
             title="Daily Deposit"
             value={`${Number(dailyDeposit || 0).toLocaleString()} Birr`}
@@ -281,18 +293,18 @@ export default function UserManagementPageA() {
             value={`${Number(summary.users || 0).toLocaleString()}`}
             icon="users"
           />
-          <Card
-            title="Games Played Today"
-            value={`${Number(finishedGamesCount || 0)}`}
-            icon="games"
-          />
+         <Card
+    title="Games Played Today"
+    value={`${Number(summary.totalGamesToday || 0).toLocaleString()}`} // <-- USE THE VALUE FROM THE SUMMARY API
+    icon="games"
+/>
             <Card
             title="Total Bonus Balance"
             value={`${Number(totalBonusBalance || 0).toLocaleString()} Birr`}
             icon="moneyBill" // Use the money icon
           />
            <Card
-           title="Total Real Balance"
+            title="Total Real Balance"
             value={`${Number(summary.totalAccountBalance || 0).toLocaleString()} Birr`}
             icon="moneyBill" 
           />
@@ -310,6 +322,9 @@ export default function UserManagementPageA() {
                onSortChange={handleSortChange}
                currentSortBy={sortBy}
                currentSortOrder={sortOrder}
+               usernameQuery={searchQuery.username}
+               contactQuery={searchQuery.contact}
+               onSearchChange={handleSearchChange}
              />
              </div>
       </div>
