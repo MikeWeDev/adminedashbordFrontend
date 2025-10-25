@@ -60,6 +60,11 @@ export default function UserManagementPage() {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [errorSummary, setErrorSummary] = useState<string | null>(null);
   const [errorUsers, setErrorUsers] = useState<string | null>(null);
+   const [searchQuery, setSearchQuery] = useState({
+    username: '',
+    contact: '',
+  });
+
 
   useEffect(() => {
     const fetchSummary = async () => {
@@ -93,6 +98,9 @@ export default function UserManagementPage() {
           limit: itemsPerPage.toString(),
           sortBy,
           sortOrder,
+          usernameSearch: searchQuery.username,
+          contactSearch: searchQuery.contact
+
         }).toString();
         const res = await fetch(`${API_URL}/users?${query}`);
         if (!res.ok) throw new Error(`Failed to fetch users: ${res.statusText}`);
@@ -107,7 +115,7 @@ export default function UserManagementPage() {
       }
     };
     fetchUsers();
-  }, [currentPage, itemsPerPage, sortBy, sortOrder]);
+  }, [currentPage, itemsPerPage, sortBy, sortOrder,searchQuery]);
 
   const handlePageChange = (page: number) => page >= 1 && page <= totalPages && setCurrentPage(page);
   const handleSortChange = (field: string, order: 'asc' | 'desc') => {
@@ -115,6 +123,11 @@ export default function UserManagementPage() {
     setSortOrder(order);
     setCurrentPage(1);
   };
+
+ const handleSearchChange = (field: 'username' | 'contact', value: string) => {
+    setSearchQuery(prev => ({ ...prev, [field]: value }));
+    setCurrentPage(1); // Crucial: Reset page to 1 on any new search
+  };
 
   // Full-page loading
   if (loadingSummary || loadingUsers) {
@@ -158,6 +171,9 @@ export default function UserManagementPage() {
           onSortChange={handleSortChange}
           currentSortBy={sortBy}
           currentSortOrder={sortOrder}
+          usernameQuery={searchQuery.username}
+          contactQuery={searchQuery.contact}
+          onSearchChange={handleSearchChange}
         />
         </div>
       </div>
