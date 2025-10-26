@@ -371,7 +371,7 @@ const BonusHistory: React.FC = () => {
                                 <tr key={payout._id} className="hover:bg-gray-700 transition duration-150">
                                     <td className="px-3 py-3 sm:px-4 font-mono text-xs text-gray-300 truncate max-w-xs">{payout.telegramId}</td>
                                     <td className="px-3 py-3 sm:px-4 text-green-400 font-semibold whitespace-nowrap">{payout.amount} ETB</td>
-                                    <td className="px-3 py-3 sm:px-4 text-yellow-400">{payout.details.winsIn24h}</td>
+                                    <td className="px-3 py-3 sm:px-4 text-yellow-400">5</td>
                                     <td className="px-3 py-3 sm:px-4 text-gray-400 whitespace-nowrap text-xs sm:text-sm">{formatPayoutDate(payout.createdAt)}</td>
                                 </tr>
                             ))}

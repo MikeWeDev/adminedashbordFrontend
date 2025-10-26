@@ -115,14 +115,14 @@ export default function SuperUserManagementPage() {
   const [sortBy, setSortBy] = useState('registeredAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [searchQuery, setSearchQuery] = useState({
-    username: '',
-    contact: '',
-  });
+    username: '',
+    contact: '',
+  });
 
   // Calendar state
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
-  useEffect(() => {
+    useEffect(() => {
     const fetchData = async () => {
       try {
         setError(null);
