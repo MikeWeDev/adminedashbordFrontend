@@ -8,6 +8,7 @@ interface BonusSettings {
     // ADDED: New configured bonus amounts
     weeklyTopPlayerBonus: number;
     fiveWinDailyBonus: number;
+    registerationBonus:number;
 }
 
 // Flexible type for NewSettings to allow temporary string input (including empty string)
@@ -17,6 +18,7 @@ interface NewBonusSettings {
     // ADDED: New configured bonus amounts (string | number for input)
     weeklyTopPlayerBonus: number | string;
     fiveWinDailyBonus: number | string;
+    registerationBonus:number | string;
 }
 
 interface BonusState {
@@ -39,8 +41,8 @@ const getErrorMessage = (error: unknown): string => {
 // --- Main Dashboard Component ---
 const BonusConfigurationPage = () => {
     const [state, setState] = useState<BonusState>({
-        currentSettings: { initiationBonus: 0, depositBonus: 0, weeklyTopPlayerBonus: 0, fiveWinDailyBonus: 0},
-        newSettings: { initiationBonus: 0, depositBonus: 0, weeklyTopPlayerBonus: 0, fiveWinDailyBonus: 0 },
+        currentSettings: { initiationBonus: 0, depositBonus: 0, weeklyTopPlayerBonus: 0, fiveWinDailyBonus: 0,registerationBonus :0},
+        newSettings: { initiationBonus: 0, depositBonus: 0, weeklyTopPlayerBonus: 0, fiveWinDailyBonus: 0 , registerationBonus :0},
         isLoading: true,
         isSaving: false,
         error: null,
@@ -67,6 +69,7 @@ const BonusConfigurationPage = () => {
                 depositBonus: data.depositBonus || 0,
                 weeklyTopPlayerBonus: data.weeklyTopPlayerBonus || 0,
                 fiveWinDailyBonus: data.fiveWinDailyBonus || 0,
+                registerationBonus:data.registerationBonus || 0,
             };
 
             setState((s) => ({
@@ -124,6 +127,7 @@ const BonusConfigurationPage = () => {
             // UPDATED: Include new fields in submission
             weeklyTopPlayerBonus: parseFloat(String(state.newSettings.weeklyTopPlayerBonus)) || 0,
             fiveWinDailyBonus: parseFloat(String(state.newSettings.fiveWinDailyBonus)) || 0,
+            registerationBonus:parseFloat(String(state.newSettings.registerationBonus)) || 0
         };
         
         // UPDATED: Check for negative values across all fields
@@ -160,6 +164,8 @@ const BonusConfigurationPage = () => {
                     depositBonus: savedSettings.depositBonus,
                     weeklyTopPlayerBonus: savedSettings.weeklyTopPlayerBonus,
                     fiveWinDailyBonus: savedSettings.fiveWinDailyBonus,
+                    registerationBonus:savedSettings.registerationBonus,
+                    
                 },
                 message: result.message || 'Settings saved successfully!',
                 isSaving: false,
@@ -222,16 +228,21 @@ const BonusConfigurationPage = () => {
                             </h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <SettingDisplay
-                                    title="Invitation Bonus"
+                                    title="Invitation Coin_Bonus"
                                     value={currentSettings.initiationBonus}
                                     icon="💸"
                                 />
                                 <SettingDisplay
-                                    title="Deposit Bonus"
+                                    title="Deposit Coin_Bonus"
                                     value={currentSettings.depositBonus}
                                     icon="💰"
                                 />
                                 {/* ADDED: Display for Weekly Top Player Bonus */}
+                                 <SettingDisplay
+                                    title="Registration Bonus"
+                                    value={currentSettings.registerationBonus}
+                                    icon="✅"
+                                />
                                 <SettingDisplay
                                     title="Weekly Top Player Bonus"
                                     value={currentSettings.weeklyTopPlayerBonus}
@@ -243,6 +254,7 @@ const BonusConfigurationPage = () => {
                                     value={currentSettings.fiveWinDailyBonus}
                                     icon="✨"
                                 />
+                                
                               
                                </div>
                         </div>
@@ -269,7 +281,14 @@ const BonusConfigurationPage = () => {
                                         onChange={handleChange}
                                         disabled={isSaving}
                                     />
-
+                                    
+                                    <InputField
+                                        label="New Registration Bonus Amount"
+                                        name="registerationBonus" // **IMPORTANT**
+                                        value={newSettings.registerationBonus}
+                                        onChange={handleChange}
+                                        disabled={isSaving}
+                                    />
                                     {/* ADDED: Input for Weekly Top Player Bonus */}
                                     <InputField
                                         label="New Weekly Top Player Bonus"
