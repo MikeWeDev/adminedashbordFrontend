@@ -58,6 +58,7 @@ const getErrorMessage = (error: unknown): string => {
  * Converts a UTC hour (0-23) to an EAT hour (0-23).
  * EAT = UTC + 3
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const convertUtcHourToLocal = (utcHour: number): number => {
     // Add the offset and ensure it wraps around 24 hours
     return (utcHour + EAT_OFFSET_HOURS) % 24;
@@ -127,6 +128,7 @@ const BonusConfigurationPage = () => {
         message: null,
     });
 
+    // NOTE: In a real Next.js app, NEXT_PUBLIC_API_BASE_URL should be defined in .env files.
     const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
     const API_URL = `${BASE_URL}/api/bonus`; 
 
@@ -149,7 +151,6 @@ const BonusConfigurationPage = () => {
                 fiveWinDailyBonus: data.fiveWinDailyBonus || 0,
                 registerationBonus: data.registerationBonus || 0,
                 claimLimitBonus: data.claimLimitBonus || 50,
-                // Use the corrected field name for consistency
                 // Safely handle if the API returns the old name (bonusAmountClimBonus)
                 bonusAmountClaimBonus: data.bonusAmountClaimBonus || data.bonusAmountClimBonus || 10, 
                 broadcastCronSchedule: data.broadcastCronSchedule || initialCron,
@@ -180,6 +181,7 @@ const BonusConfigurationPage = () => {
     }, [API_URL, initialCron]);
 
     useEffect(() => {
+        // Warning 1: Fixed by using useCallback for fetchSettings
         fetchSettings();
     }, [fetchSettings]); 
 
@@ -352,7 +354,7 @@ const BonusConfigurationPage = () => {
 
     return (
         <div className="h-full bg-gray-900 text-gray-100 p-4 sm:p-6 font-sans flex flex-col">
-            <script src="https://cdn.tailwindcss.com"></script>
+            {/* REMOVED: <script src="https://cdn.tailwindcss.com"></script> (Caused the Next.js compilation error) */}
             <div className="w-full max-w-5xl mx-auto flex flex-col h-full">
                 
                 {/* Header */}
@@ -409,7 +411,6 @@ const BonusConfigurationPage = () => {
                                     value={currentLocalTimeData.localTime} 
                                     icon="⏰" 
                                     subtext={`(Stored as UTC Hour: ${currentLocalTimeData.utcHour})`}
-                                    // Removed isCron={false} which was causing the TypeScript error
                                 />
 
                             </div>
@@ -520,7 +521,6 @@ const BonusConfigurationPage = () => {
 };
 
 // --- Helper Component for Display ---
-// FIXED: Removed the unused 'isCron' prop from the type definition.
 const SettingDisplay: React.FC<{ title: string; value: string | number; icon: string; subtext?: string }> = ({ title, value, icon, subtext }) => (
     <div className="p-4 bg-gray-900 rounded-xl border border-gray-700 shadow-inner flex items-center justify-between">
         <div>
@@ -556,7 +556,7 @@ const InputField: React.FC<{ label: string; name: keyof Omit<BonusSettings, 'bro
     </div>
 );
 
-// --- New Time Input Group Component ---
+// --- Time Input Group Component ---
 const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void; disabled: boolean; }> = ({ localTime, minute, onChange, disabled }) => {
     
     // Generate options for hours (00:00 to 23:00)
