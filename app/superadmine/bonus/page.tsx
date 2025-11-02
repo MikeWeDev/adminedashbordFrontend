@@ -27,8 +27,9 @@ interface NewBonusSettings {
     broadcastCronSchedule: string; // The raw CRON string (Minute Hour DayofMonth Month DayofWeek)
     
     // UI fields for time (managed locally for user convenience)
-    broadcastTimeLocal: string; // HH:MM string in local time (EAT)
-    broadcastMinute: string;    // The minute part of the CRON schedule
+    // ⬇️ CHANGED: broadcastTimeLocal now stores the HH:MM AM/PM string (e.g., "02:30 PM")
+    broadcastTimeLocal: string; 
+    broadcastMinute: string;    // The minute part of the CRON schedule
 }
 
 interface BonusState {
@@ -58,7 +59,6 @@ const getErrorMessage = (error: unknown): string => {
  * Converts a UTC hour (0-23) to an EAT hour (0-23).
  * EAT = UTC + 3
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const convertUtcHourToLocal = (utcHour: number): number => {
     // Add the offset and ensure it wraps around 24 hours
     return (utcHour + EAT_OFFSET_HOURS) % 24;
@@ -73,9 +73,46 @@ const convertLocalHourToUtc = (localHour: number): number => {
     return (localHour - EAT_OFFSET_HOURS + 24) % 24;
 };
 
+
+// ----------------------------------------------------
+// 💡 NEW HELPER FUNCTIONS FOR 12-HOUR FORMAT (UX)
+// ----------------------------------------------------
+
+/**
+ * Converts 24-hour format (0-23) to 12-hour format (1-12 AM/PM).
+ */
+const formatHourTo12h = (hour24: number): { hour12: string, period: 'AM' | 'PM' } => {
+    const period = hour24 >= 12 ? 'PM' : 'AM';
+    const hour12Int = hour24 % 12 || 12; // 0 (midnight) and 12 (noon) become 12
+    return { 
+        hour12: String(hour12Int).padStart(2, '0'), // Pad 1-9 for consistent display (e.g., 09)
+        period 
+    };
+};
+
+/**
+ * Converts 12-hour format components back to 24-hour format (0-23).
+ */
+const parse12hTo24h = (hour12Str: string, period: 'AM' | 'PM'): number => {
+    const hour12 = parseInt(hour12Str, 10);
+    if (isNaN(hour12) || hour12 < 1 || hour12 > 12) return 0; // Default to midnight on error
+
+    if (period === 'AM') {
+        // 12 AM (midnight) is 0 in 24h
+        return hour12 === 12 ? 0 : hour12;
+    } else { // PM
+        // 12 PM (noon) is 12 in 24h
+        return hour12 === 12 ? 12 : hour12 + 12;
+    }
+};
+
+// ----------------------------------------------------
+// 🔄 UPDATED CRON PARSING FUNCTION
+// ----------------------------------------------------
+
 /**
  * Parses a CRON string ('30 11 * * *') to extract the minute and hour (UTC).
- * Returns the local hour and minute for the UI.
+ * Returns the local hour (EAT) in 12-hour format for the UI.
  */
 const parseCronToLocalTime = (cron: string) => {
     try {
@@ -87,20 +124,34 @@ const parseCronToLocalTime = (cron: string) => {
 
         if (isNaN(minute) || isNaN(utcHour)) throw new Error("Invalid numeric part in CRON.");
 
-        const localHour = convertUtcHourToLocal(utcHour);
+        // 1. Convert UTC Hour (backend) to Local 24-hour Hour (EAT)
+        const localHour24 = convertUtcHourToLocal(utcHour);
+        
+        // 2. Convert Local 24-hour Hour to 12-hour format
+        const { hour12, period } = formatHourTo12h(localHour24);
 
-        // Format hour to HH and minute to MM (e.g., 9 -> 09)
-        const localHourFormatted = String(localHour).padStart(2, '0');
+        // Format minute to MM (e.g., 9 -> 09)
         const minuteFormatted = String(minute).padStart(2, '0');
 
         return {
-            localTime: `${localHourFormatted}:${minuteFormatted}`,
+            // 💡 localTime is now the 12-hour HH:MM AM/PM string
+            localTime: `${hour12}:${minuteFormatted} ${period}`, 
             minute: minuteFormatted,
-            utcHour: utcHour
+            utcHour: utcHour,
+            // 💡 Added localHour24 for display/debugging if needed
+            localHour24: localHour24 
         };
     } catch (e) {
         console.error("Error parsing CRON schedule:", e);
-        return { localTime: "00:30", minute: "30", utcHour: 0 }; // Default fallback
+        // Default fallback (e.g., 12:30 AM EAT)
+        const defaultLocalHour24 = convertUtcHourToLocal(0); // UTC 0 to EAT 3
+        const defaultTime12h = formatHourTo12h(defaultLocalHour24);
+        return { 
+            localTime: `${defaultTime12h.hour12}:30 ${defaultTime12h.period}`, 
+            minute: "30", 
+            utcHour: 0,
+            localHour24: defaultLocalHour24 
+        }; 
     }
 };
 
@@ -108,7 +159,8 @@ const parseCronToLocalTime = (cron: string) => {
 // --- Main Dashboard Component ---
 const BonusConfigurationPage = () => {
     // Initial state setup
-    const initialCron = '30 11 * * *'; // Default value from schema
+    // Initial CRON '30 11 * * *' (UTC 11:30) converts to EAT 14:30 (2:30 PM)
+    const initialCron = '30 11 * * *'; 
     const initialTimeData = parseCronToLocalTime(initialCron);
 
     const [state, setState] = useState<BonusState>({
@@ -132,8 +184,9 @@ const BonusConfigurationPage = () => {
     const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
     const API_URL = `${BASE_URL}/api/bonus`; 
 
-    // 1. Fetch current settings
+    // 1. Fetch current settings (fetchSettings remains largely the same, using the updated parseCronToLocalTime)
     const fetchSettings = useCallback(async () => {
+        // ... (fetch logic remains the same) ...
         setState((s) => ({ ...s, isLoading: true, error: null }));
         try {
             const response = await fetch(API_URL);
@@ -181,11 +234,10 @@ const BonusConfigurationPage = () => {
     }, [API_URL, initialCron]);
 
     useEffect(() => {
-        // Warning 1: Fixed by using useCallback for fetchSettings
         fetchSettings();
     }, [fetchSettings]); 
 
-    // Handle input changes (handles both number and string fields)
+    // Handle input changes (handleChange remains largely the same, handling the 'broadcastTimeLocal' and 'broadcastMinute' strings)
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         
@@ -234,27 +286,40 @@ const BonusConfigurationPage = () => {
         }
     };
     
+    // ----------------------------------------------------
+    // 🔄 UPDATED CRON GENERATION FUNCTION
+    // ----------------------------------------------------
+    
     // Convert the selected local time/minute back to the UTC CRON string on submission
     const getCronScheduleFromLocalTime = useMemo(() => {
-        // Extract hour and minute from the local time string (e.g., "14:30")
-        const [localHourStr] = state.newSettings.broadcastTimeLocal.split(':');
+        // Extract hour and minute from the local time string (e.g., "02:30 PM")
+        const timeParts = state.newSettings.broadcastTimeLocal.split(' ');
+        if (timeParts.length !== 2) return null; // Ensure format is correct
+
+        const [hour12Str] = timeParts[0].split(':');
+        const period = timeParts[1] as 'AM' | 'PM';
         
-        const localHour = parseInt(localHourStr, 10);
+        // Use the minute from the separate state field
         const minute = parseInt(state.newSettings.broadcastMinute, 10);
 
-        if (isNaN(localHour) || isNaN(minute)) {
-            return null; // Should be handled by form validation/defaults
+        if (!hour12Str || !period || isNaN(minute)) {
+             return null; 
         }
 
-        const utcHour = convertLocalHourToUtc(localHour);
+        // 1. Convert 12-hour format back to Local 24-hour hour (EAT)
+        const localHour24 = parse12hTo24h(hour12Str, period);
+        
+        // 2. Convert Local 24-hour hour to UTC Hour (for the backend)
+        const utcHour = convertLocalHourToUtc(localHour24);
 
         // CRON format: minute hour dayOfMonth month dayOfWeek
         return `${minute} ${utcHour} * * *`;
     }, [state.newSettings.broadcastTimeLocal, state.newSettings.broadcastMinute]);
 
 
-    // 2. Submit update
+    // 2. Submit update (handleSubmit remains the same, relying on the updated getCronScheduleFromLocalTime)
     const handleSubmit = async (e: React.FormEvent) => {
+        // ... (submission logic remains the same) ...
         e.preventDefault();
         if (state.isSaving) return;
         
@@ -352,9 +417,12 @@ const BonusConfigurationPage = () => {
         return parseCronToLocalTime(currentSettings.broadcastCronSchedule);
     }, [currentSettings.broadcastCronSchedule]);
 
+    // ----------------------------------------------------
+    // 🎨 UI RENDER LOGIC (No major change here, relies on updated TimeInputGroup)
+    // ----------------------------------------------------
+
     return (
         <div className="h-full bg-gray-900 text-gray-100 p-4 sm:p-6 font-sans flex flex-col">
-            {/* REMOVED: <script src="https://cdn.tailwindcss.com"></script> (Caused the Next.js compilation error) */}
             <div className="w-full max-w-5xl mx-auto flex flex-col h-full">
                 
                 {/* Header */}
@@ -405,7 +473,7 @@ const BonusConfigurationPage = () => {
                                 {/* NEW SETTINGS (Numeric) */}
                                 <SettingDisplay title="Max Bonus Claims Per Day" value={currentSettings.claimLimitBonus} icon="🛑" />
                                 <SettingDisplay title="Claim Bonus Amount" value={currentSettings.bonusAmountClaimBonus} icon="🎁" />
-                                {/* NEW SETTING (String) - Show both local and UTC */}
+                                {/* NEW SETTING (String) - Show local time in 12h format and UTC hour */}
                                 <SettingDisplay 
                                     title={`Broadcast Time (${TARGET_TIME_ZONE})`} 
                                     value={currentLocalTimeData.localTime} 
@@ -424,60 +492,16 @@ const BonusConfigurationPage = () => {
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     
-                                    {/* Existing Inputs */}
-                                    <InputField
-                                        label="New Invitation Bonus Amount"
-                                        name="initiationBonus"
-                                        value={newSettings.initiationBonus}
-                                        onChange={handleChange}
-                                        disabled={isSaving}
-                                    />
-                                    <InputField
-                                        label="New Deposit Bonus Amount"
-                                        name="depositBonus"
-                                        value={newSettings.depositBonus}
-                                        onChange={handleChange}
-                                        disabled={isSaving}
-                                    />
-                                    <InputField
-                                        label="New Registration Bonus Amount"
-                                        name="registerationBonus" 
-                                        value={newSettings.registerationBonus}
-                                        onChange={handleChange}
-                                        disabled={isSaving}
-                                    />
-                                    <InputField
-                                        label="New Weekly Top Player Bonus"
-                                        name="weeklyTopPlayerBonus"
-                                        value={newSettings.weeklyTopPlayerBonus}
-                                        onChange={handleChange}
-                                        disabled={isSaving}
-                                    />
-                                    <InputField
-                                        label="New 5-Win Daily Streak Bonus"
-                                        name="fiveWinDailyBonus"
-                                        value={newSettings.fiveWinDailyBonus}
-                                        onChange={handleChange}
-                                        disabled={isSaving}
-                                    />
+                                    {/* Existing Inputs (Numeric) */}
+                                    <InputField label="New Invitation Bonus Amount" name="initiationBonus" value={newSettings.initiationBonus} onChange={handleChange} disabled={isSaving} />
+                                    <InputField label="New Deposit Bonus Amount" name="depositBonus" value={newSettings.depositBonus} onChange={handleChange} disabled={isSaving} />
+                                    <InputField label="New Registration Bonus Amount" name="registerationBonus" value={newSettings.registerationBonus} onChange={handleChange} disabled={isSaving} />
+                                    <InputField label="New Weekly Top Player Bonus" name="weeklyTopPlayerBonus" value={newSettings.weeklyTopPlayerBonus} onChange={handleChange} disabled={isSaving} />
+                                    <InputField label="New 5-Win Daily Streak Bonus" name="fiveWinDailyBonus" value={newSettings.fiveWinDailyBonus} onChange={handleChange} disabled={isSaving} />
+                                    <InputField label="New Max Bonus Claims Per Day" name="claimLimitBonus" value={newSettings.claimLimitBonus} onChange={handleChange} disabled={isSaving} />
+                                    <InputField label="New Claim Bonus Amount" name="bonusAmountClaimBonus" value={newSettings.bonusAmountClaimBonus} onChange={handleChange} disabled={isSaving} />
                                     
-                                    {/* NEW INPUTS (Numeric) */}
-                                    <InputField
-                                        label="New Max Bonus Claims Per Day"
-                                        name="claimLimitBonus"
-                                        value={newSettings.claimLimitBonus}
-                                        onChange={handleChange}
-                                        disabled={isSaving}
-                                    />
-                                    <InputField
-                                        label="New Claim Bonus Amount"
-                                        name="bonusAmountClaimBonus" // Used corrected name
-                                        value={newSettings.bonusAmountClaimBonus}
-                                        onChange={handleChange}
-                                        disabled={isSaving}
-                                    />
-                                    
-                                    {/* NEW INPUT (Time Selector - Local Time) */}
+                                    {/* 🔄 UPDATED TIME INPUT */}
                                     <TimeInputGroup
                                         localTime={newSettings.broadcastTimeLocal}
                                         minute={newSettings.broadcastMinute}
@@ -509,7 +533,7 @@ const BonusConfigurationPage = () => {
                                     )}
                                 </button>
                                 <p className="text-sm text-gray-500 text-center pt-2">
-                                    NOTE: Broadcast schedule is converted from {TARGET_TIME_ZONE} to UTC before saving to the database. The CRON string is generated as: <span className="font-mono bg-gray-700 p-1 rounded text-xs text-yellow-300">{getCronScheduleFromLocalTime || 'Error generating CRON'}</span>
+                                    NOTE: Broadcast schedule is converted from **{TARGET_TIME_ZONE}** to UTC before saving to the database. The CRON string is generated as: <span className="font-mono bg-gray-700 p-1 rounded text-xs text-yellow-300">{getCronScheduleFromLocalTime || 'Error generating CRON'}</span>
                                 </p>
                             </form>
                         </div>
@@ -520,7 +544,7 @@ const BonusConfigurationPage = () => {
     );
 };
 
-// --- Helper Component for Display ---
+// --- Helper Component for Display (No changes) ---
 const SettingDisplay: React.FC<{ title: string; value: string | number; icon: string; subtext?: string }> = ({ title, value, icon, subtext }) => (
     <div className="p-4 bg-gray-900 rounded-xl border border-gray-700 shadow-inner flex items-center justify-between">
         <div>
@@ -534,7 +558,7 @@ const SettingDisplay: React.FC<{ title: string; value: string | number; icon: st
     </div>
 );
 
-// --- Helper Component for Numeric Input Fields ---
+// --- Helper Component for Numeric Input Fields (No changes) ---
 const InputField: React.FC<{ label: string; name: keyof Omit<BonusSettings, 'broadcastCronSchedule'>; value: string | number; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; disabled: boolean; }> = ({ label, name, value, onChange, disabled }) => (
     <div>
         <label htmlFor={name} className="block text-sm font-medium text-gray-300 mb-2">
@@ -556,44 +580,63 @@ const InputField: React.FC<{ label: string; name: keyof Omit<BonusSettings, 'bro
     </div>
 );
 
+// ----------------------------------------------------
+// 🔄 UPDATED TIME INPUT GROUP COMPONENT
+// ----------------------------------------------------
+
 // --- Time Input Group Component ---
 const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void; disabled: boolean; }> = ({ localTime, minute, onChange, disabled }) => {
     
-    // Generate options for hours (00:00 to 23:00)
-    const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+    // Generate options for 12-hour format (01 to 12)
+    const hours12 = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
     // Generate options for minutes (00, 15, 30, 45)
     const minutes = ['00', '15', '30', '45'];
+    const periods: ('AM' | 'PM')[] = ['AM', 'PM'];
     
-    // Extract the currently selected hour (HH)
-    const currentHour = localTime.split(':')[0];
+    // Extract the currently selected 12-hour hour (HH) and period (AM/PM)
+    const timeParts = localTime.split(' '); // e.g., ["02:30", "PM"]
+    const currentHour12 = timeParts[0]?.split(':')[0] || '12'; // Default hour
+    const currentPeriod = timeParts[1] || 'PM'; // Default period
+
+    const handleHourChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        // When hour changes, reconstruct the full HH:MM AM/PM string for local state
+        const newHour12 = e.target.value;
+        const newTime = `${newHour12}:${minute} ${currentPeriod}`;
+        // Create a synthetic event object to pass to the main handler
+        onChange({ target: { name: 'broadcastTimeLocal', value: newTime } } as React.ChangeEvent<HTMLSelectElement>);
+    };
+
+    const handlePeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        // When period changes, reconstruct the full HH:MM AM/PM string for local state
+        const newPeriod = e.target.value;
+        const newTime = `${currentHour12}:${minute} ${newPeriod}`;
+        // Create a synthetic event object to pass to the main handler
+        onChange({ target: { name: 'broadcastTimeLocal', value: newTime } } as React.ChangeEvent<HTMLSelectElement>);
+    };
+
 
     return (
         <div className="lg:col-span-1">
             <label className="block text-sm font-medium text-gray-300 mb-2">
-                New Broadcast Time ({TARGET_TIME_ZONE})
+                New Broadcast Time (**12-Hour**) ({TARGET_TIME_ZONE})
             </label>
             <div className="flex space-x-2">
-                {/* Hour Selector (HH) */}
+                
+                {/* Hour Selector (HH) in 12h format */}
                 <select
-                    name="broadcastTimeLocal"
-                    value={currentHour}
-                    onChange={(e) => {
-                        // When hour changes, reconstruct the full HH:MM string for local state
-                        const newHour = e.target.value;
-                        const newTime = `${newHour}:${minute}`;
-                        // Create a synthetic event object to pass to the main handler
-                        onChange({ target: { name: 'broadcastTimeLocal', value: newTime } } as React.ChangeEvent<HTMLSelectElement>);
-                    }}
+                    name="broadcastHour12" // temporary name, we handle change manually
+                    value={currentHour12}
+                    onChange={handleHourChange}
                     required
                     disabled={disabled}
                     className="mt-1 block w-full px-4 py-3 border border-gray-700 rounded-xl shadow-inner bg-gray-900 text-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition duration-150 text-lg font-mono appearance-none"
                 >
-                    {hours.map(h => (
-                        <option key={h} value={h}>{h}:00</option>
+                    {hours12.map(h => (
+                        <option key={h} value={h}>{h}</option>
                     ))}
                 </select>
-
-                {/* Minute Selector (MM) */}
+                
+                {/* Minute Selector (MM) - Same as before */}
                 <select
                     name="broadcastMinute"
                     value={minute}
@@ -606,8 +649,23 @@ const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e
                         <option key={m} value={m}>{m}</option>
                     ))}
                 </select>
+
+                {/* AM/PM Selector */}
+                <select
+                    name="broadcastPeriod" // temporary name, we handle change manually
+                    value={currentPeriod}
+                    onChange={handlePeriodChange}
+                    required
+                    disabled={disabled}
+                    className="mt-1 block w-20 px-2 py-3 border border-gray-700 rounded-xl shadow-inner bg-gray-900 text-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition duration-150 text-lg font-mono appearance-none"
+                >
+                    {periods.map(p => (
+                        <option key={p} value={p}>{p}</option>
+                    ))}
+                </select>
+
             </div>
-            <p className="text-xs text-gray-500 mt-1">Select the desired hour and minute in EAT.</p>
+            <p className="text-xs text-gray-500 mt-1">Select the desired hour, minute, and AM/PM in EAT.</p>
         </div>
     );
 };
