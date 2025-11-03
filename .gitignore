@@ -55,6 +55,12 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# Next.js build output
+.next/
+
+# dependencies
+node_modules
+
 # typescript
 *.tsbuildinfo
 # next-env.d.ts (Keep this commented out unless you want to exclude it)
