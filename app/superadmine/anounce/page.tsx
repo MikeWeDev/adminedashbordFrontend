@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { PlusCircle, Trash2, Zap, Link } from 'lucide-react';
 
 // --- Button Editor Utilities and Interfaces ---
@@ -296,26 +296,46 @@ export default function BroadcastPage() {
         setShowConfirmModal(true);
     };
 
+
     const confirmDeleteAction = async () => {
         if (!announcementToDelete) return;
+        
+        // 1. Optimistically remove it from the list
         setAnnouncements(announcements.filter(item => item.messageContent !== announcementToDelete.messageContent));
+        
         setShowConfirmModal(false);
         setStatus('Deleting announcement...');
+        
         try {
             const response = await fetch(`${API_BASE_URL}/delete-all`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ messageContent: announcementToDelete.messageContent }),
             });
-            if (!response.ok) throw new Error(await response.text());
+            
+            // 💡 CRITICAL FIX: Handle the 409 Conflict status
+            if (response.status === 409) {
+                 const data = await response.json();
+                 // Re-add the announcement to the local state since the job was blocked
+                 setAnnouncements(prev => [...prev, announcementToDelete]); 
+                 setStatus(data.message || '⚠️ Another deletion is in progress. Please wait and try again.');
+                 return; // Stop execution
+            }
+
+            if (!response.ok) {
+                 // For other bad statuses (400, 500), throw an error
+                 throw new Error(await response.text());
+            }
+
+            // If successful (202 Accepted)
             await fetchAnnouncements();
-            setStatus('✅ Deletion Job Started!** The message removal is running in the background. The history will be updated and cleared on the next page refresh');
+            setStatus('✅ Deletion Job Started! The message removal is running in the background. The history will be updated and cleared on the next page refresh');
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-            console.error('Error deleting announcement:', errorMessage);
-            // Re-add the deleted item if the API call fails
+            console.error('Error starting deletion job:', errorMessage);
+            // Re-add the deleted item if the API call failed (for any reason other than 409, which is handled above)
             setAnnouncements(prev => [...prev, announcementToDelete]); 
-            setStatus(`❌ Failed to delete announcement: ${errorMessage}`);
+            setStatus(`❌ Failed to start deletion job: ${errorMessage}`);
         } finally {
             setAnnouncementToDelete(null);
         }
