@@ -142,7 +142,13 @@ export default function BroadcastPage() {
     // =========================================================================
     // 2. CHANGE: Set the default message text
     // Original: const [message, setMessage] = useState<string>('');
-    const DEFAULT_MESSAGE = '🔥 Players Are Active 🔥 ባለ 10 ብር Bingo አሁን ይጫወቱ 🎮💵';
+    const DEFAULT_MESSAGE = `🔥  5 ጨዋታ ካሸነፉ → ወዲያውኑ 10 ብር ቦነስ ያገኛሉ! 💰
+💸 ከ6 ጨዋታ በኋላ፣ 7ኛው ጨዋታ ላይ የአገልግሎት ክፍያ  አይወኖረዉም። ስለዚህ በ7ኛው ጨዋታ ካሸነፉ የጨዋታዉን ገንዘብ 100% የእርስዎ ይሆናል። 🏆
+👑 በየሳምንቱ ከፍተኛ 5 ተጫዋቾች እያንዳንዳቸው 50 ብር ቦነስ ያገኛሉ!
+🎮 ይጫወቱ ⚡️
+🏆 ያሸነፉ 💰
+💸 ይሸለሙ 🔥
+Join now 👉 @DanBingoBot`;
     const [message, setMessage] = useState<string>(DEFAULT_MESSAGE);
     // =========================================================================
     const [image, setImage] = useState<File | null>(null);
@@ -154,6 +160,7 @@ export default function BroadcastPage() {
     const [currentMessageIndex, setCurrentMessageIndex] = useState<number>(0);
     const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
     const [announcementToDelete, setAnnouncementToDelete] = useState<Announcement | null>(null);
+    const [buttonToggle,setButtonToggle]=useState<boolean>(false);
     
     // Structured array for editor and final string for backend
     const [structuredButtons, setStructuredButtons] = useState<Button[]>(parseButtonsString(INITIAL_BUTTON_STRING));
@@ -296,50 +303,56 @@ export default function BroadcastPage() {
         setShowConfirmModal(true);
     };
 
+        const confirmDeleteAction = async () => {
+            if (!announcementToDelete) return;
 
-    const confirmDeleteAction = async () => {
-        if (!announcementToDelete) return;
-        
-        // 1. Optimistically remove it from the list
-        setAnnouncements(announcements.filter(item => item.messageContent !== announcementToDelete.messageContent));
-        
-        setShowConfirmModal(false);
-        setStatus('Deleting announcement...');
-        
-        try {
-            const response = await fetch(`${API_BASE_URL}/delete-all`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messageContent: announcementToDelete.messageContent }),
-            });
+            setButtonToggle(true); // FIX: Disable button at the start of the action
             
-            // 💡 CRITICAL FIX: Handle the 409 Conflict status
-            if (response.status === 409) {
-                 const data = await response.json();
-                 // Re-add the announcement to the local state since the job was blocked
-                 setAnnouncements(prev => [...prev, announcementToDelete]); 
-                 setStatus(data.message || '⚠️ Another deletion is in progress. Please wait and try again.');
-                 return; // Stop execution
-            }
+            // 1. Optimistically remove it from the list
+            setAnnouncements(announcements.filter(item => item.messageContent !== announcementToDelete.messageContent));
+            
+            setShowConfirmModal(false);
+            setStatus('Deleting announcement...');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/delete-all`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messageContent: announcementToDelete.messageContent }),
+                });
+                
+                // 💡 409 Conflict: Server confirmed a job is ALREADY running.
+                if (response.status === 409) {
+                    const data = await response.json();
+                    // Re-add the announcement to the local state since the job was blocked
+                    setAnnouncements(prev => [...prev, announcementToDelete]); 
+                    setStatus(data.message || '⚠️ Another deletion is in progress. Please wait and try again.');
+                    // setButtonToggle(true) is already set, so we can just return
+                    return; // CRITICAL: Skip finally, keeping button disabled until refresh
+                }
 
-            if (!response.ok) {
-                 // For other bad statuses (400, 500), throw an error
-                 throw new Error(await response.text());
-            }
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
 
-            // If successful (202 Accepted)
-            await fetchAnnouncements();
-            setStatus('✅ Deletion Job Started! The message removal is running in the background. The history will be updated and cleared on the next page refresh');
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-            console.error('Error starting deletion job:', errorMessage);
-            // Re-add the deleted item if the API call failed (for any reason other than 409, which is handled above)
-            setAnnouncements(prev => [...prev, announcementToDelete]); 
-            setStatus(`❌ Failed to start deletion job: ${errorMessage}`);
-        } finally {
-            setAnnouncementToDelete(null);
-        }
-    };
+                // If successful (202 Accepted)
+                await fetchAnnouncements();
+                setStatus('✅ Deletion Job Started! The message removal is running in the background. The history will be updated and cleared on the next page refresh');
+                
+            } catch (error: unknown) {
+                const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+                console.error('Error starting deletion job:', errorMessage);
+                setAnnouncements(prev => [...prev, announcementToDelete]); 
+                setStatus(`❌ Failed to start deletion job: ${errorMessage}`);
+            } finally {
+                // FIX: Only re-enable if we didn't hit the 409 block (i.e., we didn't return)
+                if (announcementToDelete) {
+                    setButtonToggle(false); // Re-enable the button
+                }
+                setAnnouncementToDelete(null);
+            }
+        };
+
 
     const currentAnnouncement = announcements.length > 0 ? announcements[currentMessageIndex] : null;
 
@@ -491,6 +504,7 @@ export default function BroadcastPage() {
                                 </button>
                                 <button
                                     onClick={() => currentAnnouncement && handleDeleteClick(currentAnnouncement)}
+                                    disabled={buttonToggle}
                                     className="ml-4 text-red-500 hover:text-red-700 transition duration-200 ease-in-out p-1 rounded-full hover:bg-red-100 focus:outline-none"
                                     aria-label="Delete announcement"
                                 >
