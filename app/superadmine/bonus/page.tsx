@@ -12,6 +12,8 @@ interface BonusSettings {
     // CORRECTED FIELD NAME (Assuming this is the correct field name from the latest schema)
     bonusAmountClaimBonus: number; 
     broadcastCronSchedule: string;
+    registrationBonusLimit: number; // The controllable limit
+    registrationBonusCount: number; // The read-only counter
 }
 
 // Flexible type for NewSettings to allow temporary string input (including empty string)
@@ -25,6 +27,8 @@ interface NewBonusSettings {
     // CORRECTED FIELD NAME
     bonusAmountClaimBonus: number | string; 
     broadcastCronSchedule: string; // The raw CRON string (Minute Hour DayofMonth Month DayofWeek)
+    registrationBonusLimit: number | string; // Input field for limit
+     registrationBonusCount: number | string;
     
     // UI fields for time (managed locally for user convenience)
     // ⬇️ CHANGED: broadcastTimeLocal now stores the HH:MM AM/PM string (e.g., "02:30 PM")
@@ -167,12 +171,16 @@ const BonusConfigurationPage = () => {
         currentSettings: { 
             initiationBonus: 0, depositBonus: 0, weeklyTopPlayerBonus: 0, fiveWinDailyBonus: 0, registerationBonus: 0,
             claimLimitBonus: 50, bonusAmountClaimBonus: 10, broadcastCronSchedule: initialCron, 
+            registrationBonusLimit: 2, // Matches default in your schema snippet
+             registrationBonusCount: 0,
         },
         newSettings: { 
             initiationBonus: 0, depositBonus: 0, weeklyTopPlayerBonus: 0, fiveWinDailyBonus: 0, registerationBonus: 0,
             claimLimitBonus: 50, bonusAmountClaimBonus: 10, broadcastCronSchedule: initialCron, 
             broadcastTimeLocal: initialTimeData.localTime,
             broadcastMinute: initialTimeData.minute,
+            registrationBonusLimit: 2,
+            registrationBonusCount: 0,
         },
         isLoading: true,
         isSaving: false,
@@ -203,10 +211,11 @@ const BonusConfigurationPage = () => {
                 weeklyTopPlayerBonus: data.weeklyTopPlayerBonus || 0,
                 fiveWinDailyBonus: data.fiveWinDailyBonus || 0,
                 registerationBonus: data.registerationBonus || 0,
-                claimLimitBonus: data.claimLimitBonus || 50,
-                // Safely handle if the API returns the old name (bonusAmountClimBonus)
+                claimLimitBonus: data.claimLimitBonus ?? 1,                // Safely handle if the API returns the old name (bonusAmountClimBonus)
                 bonusAmountClaimBonus: data.bonusAmountClaimBonus || data.bonusAmountClimBonus || 10, 
                 broadcastCronSchedule: data.broadcastCronSchedule || initialCron,
+                registrationBonusLimit: data.registrationBonusLimit ?? 2, // Use 2 as the default if not present
+                registrationBonusCount: data.registrationBonusCount || 0, // Use 0 as the default if not present
             };
 
             const timeData = parseCronToLocalTime(fetchedSettings.broadcastCronSchedule);
@@ -219,6 +228,8 @@ const BonusConfigurationPage = () => {
                     ...fetchedSettings,
                     broadcastTimeLocal: timeData.localTime,
                     broadcastMinute: timeData.minute,
+                    registrationBonusLimit: fetchedSettings.registrationBonusLimit,
+                    registrationBonusCount: fetchedSettings.registrationBonusCount,
                 }, 
                 isLoading: false,
             }));
@@ -343,13 +354,17 @@ const BonusConfigurationPage = () => {
             bonusAmountClaimBonus: parseFloat(String(state.newSettings.bonusAmountClaimBonus)) || 0,
             // Use the calculated UTC CRON string
             broadcastCronSchedule: finalCronSchedule,
+            registrationBonusLimit: parseFloat(String(state.newSettings.registrationBonusLimit)) || 0,
+            // ⭐ INCLUDE THE READ-ONLY COUNT from the current state
+            registrationBonusCount: parseFloat(String(state.newSettings.registrationBonusCount)) || 0,
         };
         
         // Check for negative values across all numeric fields
         const numericValues = [
             submissionData.initiationBonus, submissionData.depositBonus, submissionData.weeklyTopPlayerBonus, 
             submissionData.fiveWinDailyBonus, submissionData.registerationBonus, submissionData.claimLimitBonus,
-            submissionData.bonusAmountClaimBonus
+            submissionData.bonusAmountClaimBonus,
+            submissionData.registrationBonusLimit
         ];
         
         const hasNegative = numericValues.some(val => val < 0);
@@ -380,6 +395,8 @@ const BonusConfigurationPage = () => {
                 broadcastCronSchedule: result.settings?.broadcastCronSchedule || submissionData.broadcastCronSchedule,
                 // Handle the API potentially sending the old 'Clim' field, ensuring the new one is prioritized/set
                 bonusAmountClaimBonus: result.settings?.bonusAmountClaimBonus || result.settings?.bonusAmountClimBonus || 0,
+                registrationBonusLimit: result.settings?.registrationBonusLimit || 0,
+               registrationBonusCount: result.settings?.registrationBonusCount || 0,
             };
             
             const timeData = parseCronToLocalTime(savedSettings.broadcastCronSchedule);
@@ -391,6 +408,7 @@ const BonusConfigurationPage = () => {
                     ...savedSettings,
                     broadcastTimeLocal: timeData.localTime,
                     broadcastMinute: timeData.minute,
+                    registrationBonusLimit: savedSettings.registrationBonusLimit,
                 }, // Reset form fields to the newly saved values
                 message: result.message || 'Settings saved successfully!',
                 isSaving: false,
@@ -480,6 +498,18 @@ const BonusConfigurationPage = () => {
                                     icon="⏰" 
                                     subtext={`(Stored as UTC Hour: ${currentLocalTimeData.utcHour})`}
                                 />
+                               <SettingDisplay 
+                                       title="Registration Limit (Total Users)" 
+                                       value={currentSettings.registrationBonusLimit} 
+                                       icon="👥" 
+                                           />
+                            {/* ⭐ NEW FIELD DISPLAY (COUNT) */}
+                            <SettingDisplay 
+                                title="Registration Users Claimed" 
+                                value={currentSettings.registrationBonusCount} 
+                                icon="📈" 
+                                subtext={`Progress: ${((currentSettings.registrationBonusCount / currentSettings.registrationBonusLimit) * 100).toFixed(2)}%`}
+                            />
 
                             </div>
                         </div>
@@ -500,7 +530,21 @@ const BonusConfigurationPage = () => {
                                     <InputField label="New 5-Win Daily Streak Bonus" name="fiveWinDailyBonus" value={newSettings.fiveWinDailyBonus} onChange={handleChange} disabled={isSaving} />
                                     <InputField label="New Max Bonus Claims Per Day" name="claimLimitBonus" value={newSettings.claimLimitBonus} onChange={handleChange} disabled={isSaving} />
                                     <InputField label="New Claim Bonus Amount" name="bonusAmountClaimBonus" value={newSettings.bonusAmountClaimBonus} onChange={handleChange} disabled={isSaving} />
-                                    
+                                    <InputField 
+                                        label="New Registration Bonus Limit (Users)" 
+                                        name="registrationBonusLimit" 
+                                        value={newSettings.registrationBonusLimit} 
+                                        onChange={handleChange} 
+                                        disabled={isSaving} 
+                                    />
+                                    {/* ⭐ NEW INPUT FIELD FOR MANUAL COUNT UPDATE/RESET */}
+                                    <InputField 
+                                        label="New Registration Count (Manual Reset)" 
+                                        name="registrationBonusCount" 
+                                        value={newSettings.registrationBonusCount} 
+                                        onChange={handleChange} 
+                                        disabled={isSaving} 
+                                    />
                                     {/* 🔄 UPDATED TIME INPUT */}
                                     <TimeInputGroup
                                         localTime={newSettings.broadcastTimeLocal}
@@ -558,8 +602,14 @@ const SettingDisplay: React.FC<{ title: string; value: string | number; icon: st
     </div>
 );
 
-// --- Helper Component for Numeric Input Fields (No changes) ---
-const InputField: React.FC<{ label: string; name: keyof Omit<BonusSettings, 'broadcastCronSchedule'>; value: string | number; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; disabled: boolean; }> = ({ label, name, value, onChange, disabled }) => (
+
+const InputField: React.FC<{ 
+    label: string; 
+    name: keyof Omit<BonusSettings, 'broadcastCronSchedule'>; // name is one of the numeric fields
+    value: string | number; 
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; 
+    disabled: boolean; 
+}> = ({ label, name, value, onChange, disabled }) => (
     <div>
         <label htmlFor={name} className="block text-sm font-medium text-gray-300 mb-2">
             {label}
@@ -570,16 +620,16 @@ const InputField: React.FC<{ label: string; name: keyof Omit<BonusSettings, 'bro
             name={name}
             value={value} 
             onChange={onChange}
-            step="0.01"
+            // ⭐ UPDATED: Use step="1" for limit fields, otherwise use step="0.01"
+            step={['claimLimitBonus', 'registrationBonusLimit'].includes(name as string) ? "1" : "0.01"}
             min="0"
             required
             disabled={disabled}
             className="mt-1 block w-full px-4 py-3 border border-gray-700 rounded-xl shadow-inner bg-gray-900 text-teal-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition duration-150 text-lg"
-            placeholder="e.g., 50.00"
+            placeholder={['claimLimitBonus', 'registrationBonusLimit'].includes(name as string) ? "e.g., 50" : "e.g., 50.00"}
         />
     </div>
 );
-
 // ----------------------------------------------------
 // 🔄 UPDATED TIME INPUT GROUP COMPONENT
 // ----------------------------------------------------
