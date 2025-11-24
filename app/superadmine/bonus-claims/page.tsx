@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 
-const API_BASE_URL = 'http://localhost:5000/api/bonusCliam'; // Update if needed
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+const API_BASE_URL = `${BASE_URL}/api/bonusCliam`; 
 
 export interface Claim {
     claimId: string;
