@@ -35,7 +35,9 @@ const sidebarLinks = [
     links: [
       { name: 'User & Accounts', icon: <FaUser />, href: '/superadmine/userMangment' },
       { name: 'Admins', icon: <FaUserShield />, href: '/superadmine/admine' },
-      { name: 'Top Players', icon: <FaTrophy />, href: '/superadmine/topPlayers' }
+      { name: 'Top Players', icon: <FaTrophy />, href: '/superadmine/topPlayers' },
+      { name: 'Bonus Cliam', icon: <FaTrophy />, href: '/superadmine/bonus-claims' }
+
     ]
   },
   {
