@@ -1,6 +1,6 @@
 'use client';
 
-import { FaSort, FaSortAlphaDown, FaSortAlphaUp } from 'react-icons/fa';
+import { FaSort, FaSortAlphaDown, FaSortAlphaUp, FaUsers } from 'react-icons/fa';
 
 export type SortOrder = 'asc' | 'desc';
 
@@ -28,6 +28,7 @@ export default function GameTable({
   sortOrder,
   onSortChange,
   onEndGame,
+  onViewPlayers, // New Prop
 }: {
   rows: GameRow[];
   page: number;
@@ -38,6 +39,7 @@ export default function GameTable({
   sortOrder: SortOrder;
   onSortChange: (k: keyof GameRow) => void;
   onEndGame: (id: string) => void;
+  onViewPlayers: (id: string) => void; // New Prop Type
 }) {
   const sortIcon = (field: keyof GameRow) => {
     if (sortBy !== field) return <FaSort className="inline-block opacity-50" />;
@@ -64,7 +66,7 @@ export default function GameTable({
   return (
     <div className="bg-white p-4 rounded-lg shadow">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-semibold">Game Sessions</h3>
+        <h3 className="text-lg font-semibold text-gray-800">Game Sessions</h3>
         <p className="text-sm text-gray-600">
           {totalItems} total {totalItems === 1 ? 'session' : 'sessions'}
         </p>
@@ -73,17 +75,16 @@ export default function GameTable({
       <div className="overflow-x-auto">
         <table className="min-w-full table-auto text-sm">
           <thead>
-            <tr className="bg-gray-200 text-gray-700 uppercase leading-normal text-xs">
+            <tr className="bg-gray-100 text-gray-600 uppercase leading-normal text-xs border-b">
               {headCell('Session ID', 'GameSessionId')}
               {headCell('Game', 'gameId')}
               {headCell('Stake', 'stakeAmount', 'hidden sm:table-cell')}
               {headCell('Prize', 'prizeAmount')}
               {headCell('Cards', 'totalCards', 'hidden sm:table-cell')}
-              {headCell('Players', 'playersCount', 'hidden sm:table-cell')}
+              {headCell('Players', 'playersCount')}
               {headCell('Status', 'isActive')}
-              {headCell('Created', 'createdAt', 'hidden sm:table-cell')}
-              {headCell('Ended', 'endedAt', 'hidden sm:table-cell')}
-              <th scope="col" className="py-3 px-4 text-left whitespace-nowrap">
+              {headCell('Created', 'createdAt', 'hidden lg:table-cell')}
+              <th scope="col" className="py-3 px-4 text-center whitespace-nowrap">
                 Actions
               </th>
             </tr>
@@ -92,7 +93,7 @@ export default function GameTable({
           <tbody className="text-gray-700">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={10} className="py-6 text-center text-gray-500">
+                <td colSpan={10} className="py-10 text-center text-gray-500">
                   No game sessions found.
                 </td>
               </tr>
@@ -107,36 +108,47 @@ export default function GameTable({
                   : 0;
 
               return (
-                <tr key={g._id} className="border-b border-gray-200 hover:bg-gray-50">
-                  <td className="py-3 px-4 font-mono">{g.GameSessionId}</td>
-                  <td className="py-3 px-4">{g.gameId}</td>
-                  <td className="py-3 px-4 hidden sm:table-cell">{g.stakeAmount}</td>
-                  <td className="py-3 px-4">{g.prizeAmount}</td>
+                <tr key={g._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                  <td className="py-3 px-4 font-mono text-xs text-indigo-600">{g.GameSessionId.slice(0, 8)}...</td>
+                  <td className="py-3 px-4 font-bold">{g.gameId}</td>
+                  <td className="py-3 px-4 hidden sm:table-cell">${g.stakeAmount}</td>
+                  <td className="py-3 px-4 font-semibold text-green-600">${g.prizeAmount}</td>
                   <td className="py-3 px-4 hidden sm:table-cell">{g.totalCards}</td>
-                  <td className="py-3 px-4 hidden sm:table-cell">{playersCount}</td>
+                  <td className="py-3 px-4">
+                    <button 
+                      onClick={() => onViewPlayers(g._id)}
+                      className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 hover:underline transition"
+                    >
+                      <FaUsers /> {playersCount}
+                    </button>
+                  </td>
                   <td className="py-3 px-4">
                     <span
-                      className={`px-2 py-1 rounded text-xs font-semibold ${
-                        g.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                      className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold ${
+                        g.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
                       }`}
                     >
-                      {g.isActive ? 'Active' : 'Ended'}
+                      {g.isActive ? 'Live' : 'Ended'}
                     </span>
                   </td>
-                  <td className="py-3 px-4 whitespace-nowrap hidden sm:table-cell">
-                    {new Date(g.createdAt).toLocaleString()}
+                  <td className="py-3 px-4 whitespace-nowrap hidden lg:table-cell text-gray-500">
+                    {new Date(g.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="py-3 px-4 whitespace-nowrap hidden sm:table-cell">
-                    {g.endedAt ? new Date(g.endedAt).toLocaleString() : '-'}
-                  </td>
-                 <td className="py-3 px-4 mt-4 whitespace-nowrap bg-gray-50 flex items-center justify-end">
-                    <button
+                  <td className="py-3 px-4">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
                         onClick={() => onEndGame(g._id)}
-                        className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition"
-                    >
-                        End
-                    </button>
-                          </td>
+                        disabled={!g.isActive}
+                        className={`px-3 py-1 text-xs rounded transition ${
+                          g.isActive 
+                            ? 'bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200' 
+                            : 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200'
+                        }`}
+                      >
+                        End Game
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               );
             })}
@@ -145,24 +157,26 @@ export default function GameTable({
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mt-4 p-3 bg-gray-50 rounded-lg">
-        <button
-          onClick={() => onPageChange(page - 1)}
-          disabled={page === 1}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          Previous
-        </button>
-        <span className="text-gray-700 text-sm sm:text-base">
-          Page {page} of {totalPages} ({totalItems} total)
-        </span>
-        <button
-          onClick={() => onPageChange(page + 1)}
-          disabled={page === totalPages}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          Next
-        </button>
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mt-6 pt-4 border-t">
+        <p className="text-xs text-gray-500">
+           Showing page {page} of {totalPages}
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onPageChange(page - 1)}
+            disabled={page === 1}
+            className="px-3 py-1 bg-white border border-gray-300 text-gray-600 rounded hover:bg-gray-50 disabled:opacity-50 transition"
+          >
+            Prev
+          </button>
+          <button
+            onClick={() => onPageChange(page + 1)}
+            disabled={page === totalPages}
+            className="px-3 py-1 bg-white border border-gray-300 text-gray-600 rounded hover:bg-gray-50 disabled:opacity-50 transition"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );

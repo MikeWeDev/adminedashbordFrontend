@@ -2,12 +2,20 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaGamepad, FaCheckCircle, FaTimesCircle, FaUsers, FaPowerOff } from 'react-icons/fa';
+import { 
+  FaGamepad, 
+  FaCheckCircle, 
+  FaTimesCircle, 
+  FaUsers, 
+  FaPowerOff, 
+  FaTimes, 
+  FaCircleNotch 
+} from 'react-icons/fa';
 import GameTable, { GameRow, SortOrder } from '../../../components/GameTable';
 
-// 👉 Set your backend base once here:
+// 👉 Backend configuration
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-const API_BASE =`${BASE_URL}/api/admin`;
+const API_BASE = `${BASE_URL}/api/admin`;
 
 type Summary = {
   totalGames: number;
@@ -32,7 +40,6 @@ const icons = {
   players: <FaUsers />,
 };
 
-// 🔹 Updated Card UI
 function Card({
   title,
   value,
@@ -58,18 +65,14 @@ function Card({
 export default function GameManagementPage() {
   const router = useRouter();
 
-  // table state
+  // --- 1. Table & Summary State ---
   const [games, setGames] = useState<GameRow[]>([]);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-
-  // sorting (default: createdAt desc)
   const [sortBy, setSortBy] = useState<keyof GameRow>('createdAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-
-  // cards
   const [summary, setSummary] = useState<Summary>({
     totalGames: 0,
     activeGames: 0,
@@ -77,11 +80,13 @@ export default function GameManagementPage() {
     activePlayers: 0,
   });
 
-  // global toggle
+  // --- 2. Player Modal State ---
+  const [selectedGamePlayers, setSelectedGamePlayers] = useState<{ id: string, list: any[] } | null>(null);
+  const [viewLoading, setViewLoading] = useState(false);
+
+  // --- 3. System Control State ---
   const [allowNewGames, setAllowNewGames] = useState<boolean | null>(null);
   const [toggleLoading, setToggleLoading] = useState(false);
-
-  // load games
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,6 +99,8 @@ export default function GameManagementPage() {
     return p.toString();
   }, [page, limit, sortBy, sortOrder]);
 
+  // --- 4. API Actions ---
+
   async function fetchGames() {
     try {
       setLoading(true);
@@ -101,17 +108,12 @@ export default function GameManagementPage() {
       const res = await fetch(`${API_BASE}/games?${query}`, { cache: 'no-store' });
       if (!res.ok) throw new Error(`Failed to fetch games: ${res.statusText}`);
       const data: GamesResponse = await res.json();
-
       setGames(data.data);
       setSummary(data.summary);
       setTotalPages(data.totalPages);
       setTotalItems(data.totalItems);
-    }catch (e: unknown) {
-      if (e instanceof Error) {
-        setError(e.message);
-      } else {
-        setError(String(e) || 'Unknown error');
-      }
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -124,27 +126,30 @@ export default function GameManagementPage() {
         const j = await res.json();
         setAllowNewGames(!!j.allowNewGames);
       }
-    } catch {
-      // ignore (UI will just not show toggle state)
-    }
+    } catch { /* Silent fail */ }
   }
 
-  useEffect(() => {
-    fetchGames();
-  }, [query]);
+  const viewPlayers = async (id: string) => {
+    setViewLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/games/${id}/players`);
+      if (!res.ok) throw new Error("Failed to load players");
+      const data = await res.json();
+      setSelectedGamePlayers({ id: data.gameId, list: data.players });
+    } catch (err) {
+      alert("Could not load player list.");
+    } finally {
+      setViewLoading(false);
+    }
+  };
 
-  useEffect(() => {
-    fetchToggleState();
-  }, []);
-
-  // Actions
   const endGame = async (id: string) => {
-    const confirmEnd = confirm('End this game now? This marks it inactive and stamps endedAt.');
+    const confirmEnd = confirm('End this game session now?');
     if (!confirmEnd) return;
     const res = await fetch(`${API_BASE}/games/${id}/end`, { method: 'PUT' });
     if (!res.ok) {
       const msg = await res.text();
-      alert(`Failed to end game: ${msg}`);
+      alert(`Failed: ${msg}`);
       return;
     }
     await fetchGames();
@@ -156,26 +161,25 @@ export default function GameManagementPage() {
     try {
       const path = allowNewGames ? 'disable' : 'enable';
       const res = await fetch(`${API_BASE}/system/rounds/${path}`, { method: 'PUT' });
-      if (!res.ok) {
-        const msg = await res.text();
-        alert(`Toggle failed: ${msg}`);
-        return;
-      }
+      if (!res.ok) throw new Error("Toggle failed");
       await fetchToggleState();
       await fetchGames();
+    } catch (e) {
+      alert("System control update failed.");
     } finally {
       setToggleLoading(false);
     }
   };
 
-  // Table handlers
-  const onPageChange = (next: number) => {
-    if (next >= 1 && next <= totalPages) setPage(next);
-  };
+  // --- 5. Lifecycle ---
+  useEffect(() => { fetchGames(); }, [query]);
+  useEffect(() => { fetchToggleState(); }, []);
 
+  // --- 6. Handlers ---
+  const onPageChange = (next: number) => { if (next >= 1 && next <= totalPages) setPage(next); };
   const onSortChange = (field: keyof GameRow) => {
     if (sortBy === field) {
-      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+      setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortBy(field);
       setSortOrder('asc');
@@ -183,30 +187,20 @@ export default function GameManagementPage() {
     setPage(1);
   };
 
-  if (loading) {
+  if (loading && games.length === 0) {
     return (
-      <main className="p-6">
-        <div className="bg-white p-6 rounded-lg shadow text-gray-700">Loading games…</div>
-      </main>
-    );
-  }
-
-  if (error) {
-    return (
-      <main className="p-6">
-        <div className="bg-white p-6 rounded-lg shadow text-red-600">
-          <p className="font-semibold">Error</p>
-          <p className="text-sm text-gray-600 mt-1">{error}</p>
-        </div>
+      <main className="p-6 flex items-center justify-center min-h-screen">
+        <FaCircleNotch className="animate-spin text-indigo-600 text-4xl" />
       </main>
     );
   }
 
   return (
-    <main className="flex-1 w-full p-6 bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen">
-      <div className="w-[60%] lg:w-[80%] flex flex-col gap-6">
+    <main className="flex-1 w-full p-6 bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 min-h-screen relative">
+      <div className="w-full max-w-7xl mx-auto flex flex-col gap-6">
+        
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
           <Card title="Total Games" value={summary.totalGames} icon="games" />
           <Card title="Active Games" value={summary.activeGames} icon="active" />
           <Card title="Inactive Games" value={summary.inactiveGames} icon="inactive" />
@@ -214,33 +208,27 @@ export default function GameManagementPage() {
         </div>
 
         {/* Global Toggle */}
-        <div className="bg-white rounded-xl shadow-md p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-full  transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl">
+        <div className="bg-white rounded-xl shadow-md p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-full transform transition-all hover:shadow-xl">
           <div>
-            <p className="text-gray-700 font-semibold text-base sm:text-lg">Future Rounds</p>
-            <p className="text-sm text-gray-500">
-              {allowNewGames === null
-                ? "Loading…"
-                : allowNewGames
-                ? "New rounds are allowed"
-                : "New rounds are disabled"}
+            <p className="text-gray-700 font-semibold text-lg uppercase tracking-tight">System Status</p>
+            <p className={`text-sm font-medium ${allowNewGames ? "text-green-600" : "text-red-500"}`}>
+              {allowNewGames === null ? "Checking..." : allowNewGames ? "● New rounds are enabled" : "○ New rounds are currently blocked"}
             </p>
           </div>
           <button
             disabled={allowNewGames === null || toggleLoading}
             onClick={toggleFutureRounds}
-            className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm sm:text-base text-white transition ${
-              allowNewGames
-                ? "bg-yellow-600 hover:bg-yellow-700"
-                : "bg-green-600 hover:bg-green-700"
+            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-white font-bold transition shadow-md active:scale-95 ${
+              allowNewGames ? "bg-red-500 hover:bg-red-600" : "bg-green-600 hover:bg-green-700"
             } disabled:opacity-50`}
           >
-            <FaPowerOff className="text-lg sm:text-xl" />
-            {allowNewGames ? "Shut Down Future Rounds" : "Enable Future Rounds"}
+            {toggleLoading ? <FaCircleNotch className="animate-spin" /> : <FaPowerOff />}
+            {allowNewGames ? "Shutdown Future Rounds" : "Resume Future Rounds"}
           </button>
         </div>
 
         {/* Game Table */}
-        <div className="mt-4 overflow-x-auto bg-white rounded-xl shadow-md p-4 hover:shadow-xl transition-shadow duration-300">
+        <div className="mt-4 bg-white rounded-xl shadow-md overflow-hidden transition-shadow hover:shadow-xl">
           <GameTable
             rows={games}
             page={page}
@@ -251,9 +239,82 @@ export default function GameManagementPage() {
             sortOrder={sortOrder}
             onSortChange={onSortChange}
             onEndGame={endGame}
+            onViewPlayers={viewPlayers}
           />
         </div>
       </div>
+
+      {/* --- PLAYER LIST MODAL --- */}
+      {selectedGamePlayers && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[999] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-5 border-b flex justify-between items-center bg-gray-50">
+              <div>
+                <h3 className="font-bold text-xl text-gray-800">Session Players</h3>
+                <p className="text-xs text-indigo-600 font-mono mt-1">Game ID: {selectedGamePlayers.id}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedGamePlayers(null)} 
+                className="p-2 hover:bg-gray-200 rounded-full transition text-gray-400 hover:text-gray-800"
+              >
+                <FaTimes className="text-xl" />
+              </button>
+            </div>
+            
+            <div className="max-h-[50vh] overflow-y-auto">
+              {selectedGamePlayers.list.length > 0 ? (
+                <table className="w-full text-left">
+                  <thead className="bg-gray-100 text-[10px] uppercase text-gray-500 sticky top-0">
+                    <tr>
+                      <th className="px-6 py-3">#</th>
+                      <th className="px-6 py-3">Telegram ID</th>
+                      <th className="px-6 py-3 text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {selectedGamePlayers.list.map((player, index) => (
+                      <tr key={index} className="hover:bg-indigo-50/30 transition">
+                        <td className="px-6 py-4 text-sm text-gray-400">{index + 1}</td>
+                        <td className="px-6 py-4 font-mono text-sm text-gray-800 font-medium">
+                          {player.telegramId}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                            player.status === 'connected' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                          }`}>
+                            {player.status || 'joined'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="py-20 text-center text-gray-400">
+                  <FaUsers className="mx-auto text-5xl mb-3 opacity-10" />
+                  <p className="text-sm">No players found for this session.</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-4 border-t bg-gray-50 text-right">
+              <button 
+                onClick={() => setSelectedGamePlayers(null)}
+                className="bg-indigo-600 text-white px-8 py-2 rounded-lg hover:bg-indigo-700 font-semibold shadow-md transition-all active:scale-95"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Loading overlay for fetching players */}
+      {viewLoading && (
+        <div className="fixed inset-0 bg-white/20 backdrop-blur-[1px] flex items-center justify-center z-[1000]">
+           <FaCircleNotch className="animate-spin text-indigo-600 text-4xl" />
+        </div>
+      )}
     </main>
   );
 }
