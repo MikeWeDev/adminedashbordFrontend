@@ -110,11 +110,11 @@ setSummary(data.summary);
 setTotalPages(data.totalPages);
 setTotalItems(data.totalItems);
   } catch (e: unknown) {
-    setError(e instanceof Error ? e.message : 'Unknown error');
+    setError(e instanceof Error ? e.message : 'Unknown err');
   } finally {
     setLoading(false);
   }
-}, [query]); // query is a dependency because fetchGames uses it
+}, [query]); // query is a dependency because fetchGames use
 
 const fetchToggleState = useCallback(async () => {
   try {
