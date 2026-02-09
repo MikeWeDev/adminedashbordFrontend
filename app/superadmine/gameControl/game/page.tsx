@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState,useCallback } from 'react';
 import { 
   FaGamepad, 
   FaCheckCircle, 
@@ -63,7 +62,6 @@ function Card({
 }
 
 export default function GameManagementPage() {
-  const router = useRouter();
 
   // --- 1. Table & Summary State ---
   const [games, setGames] = useState<GameRow[]>([]);
@@ -81,7 +79,7 @@ export default function GameManagementPage() {
   });
 
   // --- 2. Player Modal State ---
-  const [selectedGamePlayers, setSelectedGamePlayers] = useState<{ id: string, list: any[] } | null>(null);
+  const [selectedGamePlayers, setSelectedGamePlayers] = useState<{ id: string, list: Array<{ telegramId: number; status?: string }> } | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
 
   // --- 3. System Control State ---
@@ -101,33 +99,32 @@ export default function GameManagementPage() {
 
   // --- 4. API Actions ---
 
-  async function fetchGames() {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await fetch(`${API_BASE}/games?${query}`, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`Failed to fetch games: ${res.statusText}`);
-      const data: GamesResponse = await res.json();
-      setGames(data.data);
-      setSummary(data.summary);
-      setTotalPages(data.totalPages);
-      setTotalItems(data.totalItems);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
+const fetchGames = useCallback(async () => {
+  try {
+    setLoading(true);
+    setError(null);
+    const res = await fetch(`${API_BASE}/games?${query}`, { cache: 'no-store' });
+    const data: GamesResponse = await res.json();
+setGames(data.data);
+setSummary(data.summary);
+setTotalPages(data.totalPages);
+setTotalItems(data.totalItems);
+  } catch (e: unknown) {
+    setError(e instanceof Error ? e.message : 'Unknown error');
+  } finally {
+    setLoading(false);
   }
+}, [query]); // query is a dependency because fetchGames uses it
 
-  async function fetchToggleState() {
-    try {
-      const res = await fetch(`${API_BASE}/system/rounds`, { cache: 'no-store' });
-      if (res.ok) {
-        const j = await res.json();
-        setAllowNewGames(!!j.allowNewGames);
-      }
-    } catch { /* Silent fail */ }
-  }
+const fetchToggleState = useCallback(async () => {
+  try {
+    const res = await fetch(`${API_BASE}/system/rounds`, { cache: 'no-store' });
+    if (res.ok) {
+      const j = await res.json();
+      setAllowNewGames(!!j.allowNewGames);
+    }
+  } catch { /* Silent fail */ }
+}, []);
 
   const viewPlayers = async (id: string) => {
     setViewLoading(true);
@@ -171,9 +168,14 @@ export default function GameManagementPage() {
     }
   };
 
-  // --- 5. Lifecycle ---
-  useEffect(() => { fetchGames(); }, [query]);
-  useEffect(() => { fetchToggleState(); }, []);
+ // --- 5. Lifecycle ---
+useEffect(() => { 
+  fetchGames(); 
+}, [fetchGames]); // Now safe to include
+
+useEffect(() => { 
+  fetchToggleState(); 
+}, [fetchToggleState]); // Now safe to include
 
   // --- 6. Handlers ---
   const onPageChange = (next: number) => { if (next >= 1 && next <= totalPages) setPage(next); };
