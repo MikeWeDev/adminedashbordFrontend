@@ -300,7 +300,7 @@ export default function GameManagementPage() {
             <div className="p-4 border-t bg-gray-50 text-right">
               <button 
                 onClick={() => setSelectedGamePlayers(null)}
-                className="bg-indigo-600 text-white px-8 py-2 rounded-lg hover:bg-indigo-700 font-semibold shadow-md transition-all active:scale-95"
+                className="bg-indigo-600 text-white px-8 py-2 rounded-lg hover:bg-indigo-800 font-semibold shadow-md transition-all active:scale-95"
               >
                 Close
               </button>
