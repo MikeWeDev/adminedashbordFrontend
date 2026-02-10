@@ -126,19 +126,42 @@ const fetchToggleState = useCallback(async () => {
   } catch { /* Silent fail */ }
 }, []);
 
-  const viewPlayers = async (id: string) => {
-    setViewLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/games/${id}/players`);
-      if (!res.ok) throw new Error("Failed to load players");
-      const data = await res.json();
-      setSelectedGamePlayers({ id: data.gameId, list: data.players });
-    } catch (err) {
-      alert("Could not load player list.");
-    } finally {
-      setViewLoading(false);
+
+
+
+const viewPlayers = async (id: string) => {
+  setViewLoading(true);
+  try {
+    const res = await fetch(`${API_BASE}/games/${id}/players`);
+    if (!res.ok) throw new Error(`Server returned ${res.status}`);
+    
+    const data = await res.json();
+    console.log('Raw Backend Response:', data);
+
+    if (data.players) {
+      // 1. Open the Modal
+      setSelectedGamePlayers({ 
+        id: data.sessionId || data.gameId, 
+        list: data.players 
+      });
+
+      // 2. ✅ Update the table state so the icon 0 changes to the actual count
+      setGames(prevGames => prevGames.map(g => {
+        if (g._id === id) {
+          return { 
+            ...g, 
+            playersCount: data.players.length // Update the count in the table row
+          };
+        }
+        return g;
+      }));
     }
-  };
+  } catch (err) {
+    console.error('Frontend Fetch Error:', err);
+  } finally {
+    setViewLoading(false);
+  }
+};
 
   const endGame = async (id: string) => {
     const confirmEnd = confirm('End this game session now?');
