@@ -79,8 +79,17 @@ export default function GameManagementPage() {
   });
 
   // --- 2. Player Modal State ---
-  const [selectedGamePlayers, setSelectedGamePlayers] = useState<{ id: string, list: Array<{ telegramId: number; status?: string }> } | null>(null);
-  const [viewLoading, setViewLoading] = useState(false);
+const [selectedGamePlayers, setSelectedGamePlayers] = useState<{ 
+  id: string, 
+  isLive?: boolean, // Added this
+  list: Array<{ 
+    telegramId: string; 
+    username?: string; // Added this
+    status?: string; 
+    cards?: any[]      // Added this
+  }> 
+} | null>(null);
+const [viewLoading, setViewLoading] = useState(false);
 
   // --- 3. System Control State ---
   const [allowNewGames, setAllowNewGames] = useState<boolean | null>(null);
@@ -136,22 +145,17 @@ const viewPlayers = async (id: string) => {
     if (!res.ok) throw new Error(`Server returned ${res.status}`);
     
     const data = await res.json();
-    console.log('Raw Backend Response:', data);
 
     if (data.players) {
-      // 1. Open the Modal
       setSelectedGamePlayers({ 
         id: data.sessionId || data.gameId, 
+        isLive: data.isLive, // Capture the live status
         list: data.players 
       });
 
-      // 2. ✅ Update the table state so the icon 0 changes to the actual count
       setGames(prevGames => prevGames.map(g => {
         if (g._id === id) {
-          return { 
-            ...g, 
-            playersCount: data.players.length // Update the count in the table row
-          };
+          return { ...g, playersCount: data.players.length };
         }
         return g;
       }));
@@ -270,69 +274,92 @@ useEffect(() => {
       </div>
 
       {/* --- PLAYER LIST MODAL --- */}
-      {selectedGamePlayers && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[999] p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-5 border-b flex justify-between items-center bg-gray-50">
-              <div>
+    {selectedGamePlayers && (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[999] p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+          <div className="p-5 border-b flex justify-between items-center bg-gray-50">
+            <div>
+              <div className="flex items-center gap-2">
                 <h3 className="font-bold text-xl text-gray-800">Session Players</h3>
-                <p className="text-xs text-indigo-600 font-mono mt-1">Game ID: {selectedGamePlayers.id}</p>
+                {/* Added Live Indicator */}
+                {selectedGamePlayers.isLive && (
+                  <span className="flex items-center gap-1 bg-green-100 text-green-600 text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse">
+                    ● LIVE
+                  </span>
+                )}
               </div>
-              <button 
-                onClick={() => setSelectedGamePlayers(null)} 
-                className="p-2 hover:bg-gray-200 rounded-full transition text-gray-400 hover:text-gray-800"
-              >
-                <FaTimes className="text-xl" />
-              </button>
+              <p className="text-xs text-indigo-600 font-mono mt-1">ID: {selectedGamePlayers.id}</p>
             </div>
-            
-            <div className="max-h-[50vh] overflow-y-auto">
-              {selectedGamePlayers.list.length > 0 ? (
-                <table className="w-full text-left">
-                  <thead className="bg-gray-100 text-[10px] uppercase text-gray-500 sticky top-0">
-                    <tr>
-                      <th className="px-6 py-3">#</th>
-                      <th className="px-6 py-3">Telegram ID</th>
-                      <th className="px-6 py-3 text-right">Status</th>
+            <button onClick={() => setSelectedGamePlayers(null)} className="p-2 hover:bg-gray-200 rounded-full text-gray-400">
+              <FaTimes className="text-xl" />
+            </button>
+          </div>
+          
+          <div className="max-h-[60vh] overflow-y-auto">
+            {selectedGamePlayers.list.length > 0 ? (
+              <table className="w-full text-left">
+                <thead className="bg-gray-100 text-[10px] uppercase text-gray-500 sticky top-0">
+                  <tr>
+                    <th className="px-6 py-3">User</th>
+                    <th className="px-6 py-3">Telegram ID</th>
+                    <th className="px-6 py-3">Cards</th>
+                    <th className="px-6 py-3 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {selectedGamePlayers.list.map((player, index) => (
+                    <tr key={index} className="hover:bg-indigo-50/30 transition">
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-bold text-gray-900">{player.username || 'N/A'}</p>
+                      </td>
+                      <td className="px-6 py-4 font-mono text-xs text-gray-500">
+                        {player.telegramId}
+                      </td>
+                      <td className="px-6 py-4">
+                        {/* Render cards as a comma-separated list */}
+                        <div className="flex flex-wrap gap-1">
+                          {player.cards && player.cards.length > 0 ? (
+                            player.cards.map((c, i) => (
+                              <span key={i} className="bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded border">
+                                {c}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-gray-300 text-xs">-</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                          player.status === 'Winner' || player.status === 'winner' 
+                            ? 'bg-yellow-100 text-yellow-700' 
+                            : player.status === 'connected' || player.status === 'Live'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          {player.status}
+                        </span>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {selectedGamePlayers.list.map((player, index) => (
-                      <tr key={index} className="hover:bg-indigo-50/30 transition">
-                        <td className="px-6 py-4 text-sm text-gray-400">{index + 1}</td>
-                        <td className="px-6 py-4 font-mono text-sm text-gray-800 font-medium">
-                          {player.telegramId}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                            player.status === 'connected' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                          }`}>
-                            {player.status || 'joined'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <div className="py-20 text-center text-gray-400">
-                  <FaUsers className="mx-auto text-5xl mb-3 opacity-10" />
-                  <p className="text-sm">No players found for this session.</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="p-4 border-t bg-gray-50 text-right">
-              <button 
-                onClick={() => setSelectedGamePlayers(null)}
-                className="bg-indigo-600 text-white px-8 py-2 rounded-lg hover:bg-indigo-800 font-semibold shadow-md transition-all active:scale-95"
-              >
-                Close
-              </button>
-            </div>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="py-20 text-center text-gray-400">
+                <FaUsers className="mx-auto text-5xl mb-3 opacity-10" />
+                <p className="text-sm">No players found for this session.</p>
+              </div>
+            )}
+          </div>
+          
+          <div className="p-4 border-t bg-gray-50 text-right">
+            <button onClick={() => setSelectedGamePlayers(null)} className="bg-indigo-600 text-white px-8 py-2 rounded-lg font-semibold">
+              Close
+            </button>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* Loading overlay for fetching players */}
       {viewLoading && (
