@@ -86,6 +86,7 @@ const [selectedGamePlayers, setSelectedGamePlayers] = useState<{
     telegramId: string; 
     username?: string; // Added this
     status?: string; 
+    paidCount?: number; 
     cards?: any[]      // Added this
   }> 
 } | null>(null);
@@ -303,6 +304,7 @@ useEffect(() => {
                     <th className="px-6 py-3">User</th>
                     <th className="px-6 py-3">Telegram ID</th>
                     <th className="px-6 py-3">Cards</th>
+                    <th className='px-6 py-3'>Paid</th>
                     <th className="px-6 py-3 text-right">Status</th>
                   </tr>
                 </thead>
@@ -328,6 +330,9 @@ useEffect(() => {
                             <span className="text-gray-300 text-xs">-</span>
                           )}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm font-bold text-indigo-600">
+                        {player.paidCount || 0}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
