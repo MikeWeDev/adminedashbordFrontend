@@ -159,6 +159,8 @@ const viewPlayers = async (id: string) => {
         list: data.players               // Contains hasPaid for each player
       });
 
+      console.log('Fetched Players:', selectedGamePlayers);
+
       // Keep your existing setGames logic below...
     }
   } catch (err) {
