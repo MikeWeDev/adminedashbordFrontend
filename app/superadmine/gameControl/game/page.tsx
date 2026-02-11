@@ -85,13 +85,14 @@ const [selectedGamePlayers, setSelectedGamePlayers] = useState<{
   isLive?: boolean,
   totalPlayers?: number, // ⭐ Added
   paidCount?: number,    // ⭐ Added
-  list: Array<{ 
+ list: Array<{ 
     telegramId: string; 
     username?: string; 
     status?: string; 
-    hasPaid: boolean;   // ⭐ Changed from paidCount to hasPaid
-    cards?: any[]
-  }> 
+    hasPaid: boolean;
+    paidAmount?: number;
+    cards?: any[];
+  }>
 } | null>(null);
 const [viewLoading, setViewLoading] = useState(false);
 
@@ -142,33 +143,44 @@ const fetchToggleState = useCallback(async () => {
 
 
 
-const viewPlayers = async (id: string) => {
-  setViewLoading(true);
-  try {
-    const res = await fetch(`${API_BASE}/games/${id}/players`);
-    if (!res.ok) throw new Error(`Server returned ${res.status}`);
-    
-    const data = await res.json();
+  const viewPlayers = async (id: string) => {
+    setViewLoading(true);
 
-    if (data.players) {
-      setSelectedGamePlayers({ 
-        id: data.sessionId || data.gameId, 
+    try {
+      const res = await fetch(`${API_BASE}/games/${id}/players`);
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+      const data = await res.json();
+
+      // ⭐ Map backend → frontend structure
+      const mappedPlayers = (data.players || []).map((p: any) => ({
+        telegramId: String(p.telegramId),
+        username: p.username,
+        status: p.status,
+        cards: p.cards || [],
+        hasPaid: !!p.paid,          // ⭐ IMPORTANT FIX
+        paidAmount: p.paidAmount || 0
+      }));
+
+      setSelectedGamePlayers({
+        id: data.sessionId || data.gameId,
         isLive: data.isLive,
-        totalPlayers: data.totalPlayers, // ⭐ Map from backend
-        paidCount: data.paidCount,       // ⭐ Map from backend
-        list: data.players               // Contains hasPaid for each player
+        totalPlayers: data.totalPlayers || mappedPlayers.length,
+        paidCount:
+          data.paidCount ??
+          mappedPlayers.filter((p: any) => p.hasPaid).length,
+        list: mappedPlayers
       });
+      console.log('Fetched Players:', mappedPlayers);
 
-      console.log('Fetched Players:', selectedGamePlayers);
 
-      // Keep your existing setGames logic below...
+    } catch (err) {
+      console.error("Frontend Fetch Error:", err);
+    } finally {
+      setViewLoading(false);
     }
-  } catch (err) {
-    console.error('Frontend Fetch Error:', err);
-  } finally {
-    setViewLoading(false);
-  }
-};
+  };
+
 
   const endGame = async (id: string) => {
     const confirmEnd = confirm('End this game session now?');
