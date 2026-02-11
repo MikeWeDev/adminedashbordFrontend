@@ -78,16 +78,19 @@ export default function GameManagementPage() {
     activePlayers: 0,
   });
 
-  // --- 2. Player Modal State ---
+
+// Replace your current state definition with this:
 const [selectedGamePlayers, setSelectedGamePlayers] = useState<{ 
   id: string, 
-  isLive?: boolean, // Added this
+  isLive?: boolean,
+  totalPlayers?: number, // ⭐ Added
+  paidCount?: number,    // ⭐ Added
   list: Array<{ 
     telegramId: string; 
-    username?: string; // Added this
+    username?: string; 
     status?: string; 
-    paidCount?: number; 
-    cards?: any[]      // Added this
+    hasPaid?: boolean;   // ⭐ Changed from paidCount to hasPaid
+    cards?: any[]
   }> 
 } | null>(null);
 const [viewLoading, setViewLoading] = useState(false);
@@ -150,16 +153,13 @@ const viewPlayers = async (id: string) => {
     if (data.players) {
       setSelectedGamePlayers({ 
         id: data.sessionId || data.gameId, 
-        isLive: data.isLive, // Capture the live status
-        list: data.players 
+        isLive: data.isLive,
+        totalPlayers: data.totalPlayers, // ⭐ Map from backend
+        paidCount: data.paidCount,       // ⭐ Map from backend
+        list: data.players               // Contains hasPaid for each player
       });
 
-      setGames(prevGames => prevGames.map(g => {
-        if (g._id === id) {
-          return { ...g, playersCount: data.players.length };
-        }
-        return g;
-      }));
+      // Keep your existing setGames logic below...
     }
   } catch (err) {
     console.error('Frontend Fetch Error:', err);
@@ -289,7 +289,18 @@ useEffect(() => {
                   </span>
                 )}
               </div>
-              <p className="text-xs text-indigo-600 font-mono mt-1">ID: {selectedGamePlayers.id}</p>
+              <div className="flex gap-2 mt-2">
+      <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded">
+        TOTAL: {selectedGamePlayers.totalPlayers || 0}
+      </span>
+      <span className="text-[10px] font-bold px-2 py-0.5 bg-green-50 text-green-600 border border-green-100 rounded">
+        PAID: {selectedGamePlayers.paidCount || 0}
+      </span>
+      <span className="text-[10px] font-bold px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded">
+        UNPAID: {(selectedGamePlayers.totalPlayers || 0) - (selectedGamePlayers.paidCount || 0)}
+      </span>
+              </div>  
+            <p className="text-xs text-indigo-600 font-mono mt-1">ID: {selectedGamePlayers.id}</p>
             </div>
             <button onClick={() => setSelectedGamePlayers(null)} className="p-2 hover:bg-gray-200 rounded-full text-gray-400">
               <FaTimes className="text-xl" />
@@ -304,7 +315,6 @@ useEffect(() => {
                     <th className="px-6 py-3">User</th>
                     <th className="px-6 py-3">Telegram ID</th>
                     <th className="px-6 py-3">Cards</th>
-                    <th className='px-6 py-3'>Paid</th>
                     <th className="px-6 py-3 text-right">Status</th>
                   </tr>
                 </thead>
@@ -330,9 +340,6 @@ useEffect(() => {
                             <span className="text-gray-300 text-xs">-</span>
                           )}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm font-bold text-indigo-600">
-                        {player.paidCount || 0}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
