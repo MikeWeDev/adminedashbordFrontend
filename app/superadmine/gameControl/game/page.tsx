@@ -86,13 +86,14 @@ const [selectedGamePlayers, setSelectedGamePlayers] = useState<{
   totalPlayers?: number, // ⭐ Added
   paidCount?: number,    // ⭐ Added
  list: Array<{ 
-    telegramId: string; 
-    username?: string; 
-    status?: string; 
-    hasPaid: boolean;
-    paidAmount?: number;
-    cards?: any[];
-  }>
+  telegramId: string; 
+  username?: string; 
+  status?: string; 
+  paid: boolean;
+  paidAmount?: number;
+  cards?: any[];
+}>
+
 } | null>(null);
 const [viewLoading, setViewLoading] = useState(false);
 
@@ -153,14 +154,15 @@ const fetchToggleState = useCallback(async () => {
       const data = await res.json();
 
       // ⭐ Map backend → frontend structure
-      const mappedPlayers = (data.players || []).map((p: any) => ({
+     const mappedPlayers = (data.players || []).map((p: any) => ({
         telegramId: String(p.telegramId),
         username: p.username,
         status: p.status,
         cards: p.cards || [],
-        hasPaid: !!p.paid,          // ⭐ IMPORTANT FIX
+        paid: !!p.paid,
         paidAmount: p.paidAmount || 0
       }));
+
 
       setSelectedGamePlayers({
         id: data.sessionId || data.gameId,
@@ -357,16 +359,20 @@ useEffect(() => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                          {/* Check the boolean 'hasPaid' sent by backend */}
-                          {player.hasPaid ? (
-                            <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-[10px] font-bold px-2 py-1 rounded border border-green-200">
-                              <FaCheckCircle className="text-[8px]" /> PAID
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 text-[10px] font-bold px-2 py-1 rounded border border-red-200">
-                              <FaTimesCircle className="text-[8px]" /> UNPAID
-                            </span>
-                          )}
+                        {player.paid ? (
+                              <div className="flex flex-col gap-1">
+                                <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-[10px] font-bold px-2 py-1 rounded border border-green-200">
+                                  <FaCheckCircle className="text-[8px]" /> PAID
+                                </span>
+                                <span className="text-[10px] text-green-600 font-mono">
+                                  {player.paidAmount} ETB
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 text-[10px] font-bold px-2 py-1 rounded border border-red-200">
+                                <FaTimesCircle className="text-[8px]" /> UNPAID
+                              </span>
+                            )}
                         </td>
                       <td className="px-6 py-4 text-right">
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
