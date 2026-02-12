@@ -172,8 +172,7 @@ const fetchToggleState = useCallback(async () => {
         isLive: data.isLive,
         totalPlayers: data.totalPlayers || mappedPlayers.length,
         paidCount:
-          data.paidCount ??
-          mappedPlayers.filter((p: any) => p.hasPaid).length,
+                data.paidCount ?? mappedPlayers.filter((p: any) => p.paid).length,
         list: mappedPlayers
       });
       console.log('Fetched Players:', mappedPlayers);
