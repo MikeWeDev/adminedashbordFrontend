@@ -164,6 +164,7 @@ const fetchToggleState = useCallback(async () => {
       }));
 
        console.log("✅ MAPPED PLAYERS:", mappedPlayers);
+       console.log("DEBUG DATA:", data.debug);
 
 
       setSelectedGamePlayers({
