@@ -163,6 +163,8 @@ const fetchToggleState = useCallback(async () => {
         paidAmount: p.paidAmount || 0
       }));
 
+       console.log("✅ MAPPED PLAYERS:", mappedPlayers);
+
 
       setSelectedGamePlayers({
         id: data.sessionId || data.gameId,
