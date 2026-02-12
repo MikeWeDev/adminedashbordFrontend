@@ -78,16 +78,22 @@ export default function GameManagementPage() {
     activePlayers: 0,
   });
 
-  // --- 2. Player Modal State ---
+
+// Replace your current state definition with this:
 const [selectedGamePlayers, setSelectedGamePlayers] = useState<{ 
   id: string, 
-  isLive?: boolean, // Added this
-  list: Array<{ 
-    telegramId: string; 
-    username?: string; // Added this
-    status?: string; 
-    cards?: any[]      // Added this
-  }> 
+  isLive?: boolean,
+  totalPlayers?: number, // ⭐ Added
+  paidCount?: number,    // ⭐ Added
+ list: Array<{ 
+  telegramId: string; 
+  username?: string; 
+  status?: string; 
+  paid: boolean;
+  paidAmount?: number;
+  cards?: any[];
+}>
+
 } | null>(null);
 const [viewLoading, setViewLoading] = useState(false);
 
@@ -138,34 +144,45 @@ const fetchToggleState = useCallback(async () => {
 
 
 
-const viewPlayers = async (id: string) => {
-  setViewLoading(true);
-  try {
-    const res = await fetch(`${API_BASE}/games/${id}/players`);
-    if (!res.ok) throw new Error(`Server returned ${res.status}`);
-    
-    const data = await res.json();
+  const viewPlayers = async (id: string) => {
+    setViewLoading(true);
 
-    if (data.players) {
-      setSelectedGamePlayers({ 
-        id: data.sessionId || data.gameId, 
-        isLive: data.isLive, // Capture the live status
-        list: data.players 
-      });
+    try {
+      const res = await fetch(`${API_BASE}/games/${id}/players`);
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
 
-      setGames(prevGames => prevGames.map(g => {
-        if (g._id === id) {
-          return { ...g, playersCount: data.players.length };
-        }
-        return g;
+      const data = await res.json();
+
+      // ⭐ Map backend → frontend structure
+     const mappedPlayers = (data.players || []).map((p: any) => ({
+        telegramId: String(p.telegramId),
+        username: p.username,
+        status: p.status,
+        cards: p.cards || [],
+        paid: !!p.paid,
+        paidAmount: p.paidAmount || 0
       }));
+
+
+      setSelectedGamePlayers({
+        id: data.sessionId || data.gameId,
+        isLive: data.isLive,
+        totalPlayers: data.totalPlayers || mappedPlayers.length,
+        paidCount:
+          data.paidCount ??
+          mappedPlayers.filter((p: any) => p.hasPaid).length,
+        list: mappedPlayers
+      });
+      console.log('Fetched Players:', mappedPlayers);
+
+
+    } catch (err) {
+      console.error("Frontend Fetch Error:", err);
+    } finally {
+      setViewLoading(false);
     }
-  } catch (err) {
-    console.error('Frontend Fetch Error:', err);
-  } finally {
-    setViewLoading(false);
-  }
-};
+  };
+
 
   const endGame = async (id: string) => {
     const confirmEnd = confirm('End this game session now?');
@@ -288,7 +305,18 @@ useEffect(() => {
                   </span>
                 )}
               </div>
-              <p className="text-xs text-indigo-600 font-mono mt-1">ID: {selectedGamePlayers.id}</p>
+              <div className="flex gap-2 mt-2">
+      <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded">
+        TOTAL: {selectedGamePlayers.totalPlayers || 0}
+      </span>
+      <span className="text-[10px] font-bold px-2 py-0.5 bg-green-50 text-green-600 border border-green-100 rounded">
+        PAID: {selectedGamePlayers.paidCount || 0}
+      </span>
+      <span className="text-[10px] font-bold px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded">
+        UNPAID: {(selectedGamePlayers.totalPlayers || 0) - (selectedGamePlayers.paidCount || 0)}
+      </span>
+              </div>  
+            <p className="text-xs text-indigo-600 font-mono mt-1">ID: {selectedGamePlayers.id}</p>
             </div>
             <button onClick={() => setSelectedGamePlayers(null)} className="p-2 hover:bg-gray-200 rounded-full text-gray-400">
               <FaTimes className="text-xl" />
@@ -303,6 +331,7 @@ useEffect(() => {
                     <th className="px-6 py-3">User</th>
                     <th className="px-6 py-3">Telegram ID</th>
                     <th className="px-6 py-3">Cards</th>
+                    <th className='px-6 py-3'>Paid</th>
                     <th className="px-6 py-3 text-right">Status</th>
                   </tr>
                 </thead>
@@ -329,6 +358,22 @@ useEffect(() => {
                           )}
                         </div>
                       </td>
+                      <td className="px-6 py-4">
+                        {player.paid ? (
+                              <div className="flex flex-col gap-1">
+                                <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-[10px] font-bold px-2 py-1 rounded border border-green-200">
+                                  <FaCheckCircle className="text-[8px]" /> PAID
+                                </span>
+                                <span className="text-[10px] text-green-600 font-mono">
+                                  {player.paidAmount} ETB
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 text-[10px] font-bold px-2 py-1 rounded border border-red-200">
+                                <FaTimesCircle className="text-[8px]" /> UNPAID
+                              </span>
+                            )}
+                        </td>
                       <td className="px-6 py-4 text-right">
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
                           player.status === 'Winner' || player.status === 'winner' 
