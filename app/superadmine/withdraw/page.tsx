@@ -47,7 +47,7 @@ export default function AdminDashboard() {
   const handleComplete = async (withdrawalId: string) => {
     if (window.confirm('Are you sure you want to complete this withdrawal?')) {
       try {
-        const res = await fetch('https://adminbackend.bingoogame.com/api/withdrawReq/withdrawals/complete', {
+        const res = await fetch(`${BASE_URL}/api/withdrawReq/withdrawals/complete`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -68,7 +68,7 @@ export default function AdminDashboard() {
   const handleCancel = async (withdrawalId: string) => {
     if (window.confirm('Are you sure you want to cancel this withdrawal?')) {
       try {
-        const res = await fetch('https://adminbackend.bingoogame.com/api/withdrawReq/withdrawals/cancel', {
+        const res = await fetch(`${BASE_URL}/api/withdrawReq/withdrawals/cancel`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
