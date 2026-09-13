@@ -189,7 +189,8 @@ const BonusConfigurationPage = () => {
     });
 
     // NOTE: In a real Next.js app, NEXT_PUBLIC_API_BASE_URL should be defined in .env files.
-    const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+    const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!BASE_URL) throw new Error('NEXT_PUBLIC_API_BASE_URL is not configured.');
     const API_URL = `${BASE_URL}/api/bonus`; 
 
     // 1. Fetch current settings (fetchSettings remains largely the same, using the updated parseCronToLocalTime)
