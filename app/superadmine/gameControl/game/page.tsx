@@ -202,7 +202,11 @@ const fetchToggleState = useCallback(async () => {
     setToggleLoading(true);
     try {
       const path = allowNewGames ? 'disable' : 'enable';
-      const res = await fetch(`${API_BASE}/system/rounds/${path}`, { method: 'PUT' });
+      const res = await fetch(`${API_BASE}/system/rounds/${path}`, {
+      method:  'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ message: '' }),
+  });
       if (!res.ok) throw new Error("Toggle failed");
       await fetchToggleState();
       await fetchGames();
@@ -274,7 +278,7 @@ useEffect(() => {
           </button>
         </div>
 
-        {/* Game Table */}
+        {/* Game Tables */}
         <div className="mt-4 bg-white rounded-xl shadow-md overflow-hidden transition-shadow hover:shadow-xl">
           <GameTable
             rows={games}

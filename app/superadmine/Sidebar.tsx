@@ -44,7 +44,8 @@ const sidebarLinks = [
     category: 'Financials',
     links: [
       { name: 'Transactions', icon: <FaMoneyBillWave />, href: '/superadmine/transcations' },
-      { name: 'Withdrawals', icon: <FaMoneyBillTransfer />, href: '/superadmine/withdraw' }
+      { name: 'Withdrawals', icon: <FaMoneyBillTransfer />, href: '/superadmine/withdraw' },
+      { name: 'finance tracking', icon: <FaMoneyBillWave />, href: '/superadmine/finance'}
     ]
   },
   {

@@ -15,7 +15,6 @@ export default function Home() {
     const isSessionValid = expiry ? now < parseInt(expiry) : false;
 
     if (username && role && isSessionValid) {
-      // Redirect based on role
       if (role === 'superadmin') router.push('/superadmine');
       else if (role === 'admin') router.push('/admine');
     } else {
