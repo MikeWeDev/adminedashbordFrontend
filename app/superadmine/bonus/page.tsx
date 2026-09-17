@@ -655,47 +655,35 @@ const InputField: React.FC<{
 // ----------------------------------------------------
 
 // --- Time Input Group Component ---
-const TimeInputGroup: React.FC<{ 
-    localTime: string; 
-    minute: string; 
-    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void; 
-    disabled: boolean; 
-}> = ({ localTime, minute, onChange, disabled }) => {
+const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void; disabled: boolean; }> = ({ localTime, minute, onChange, disabled }) => {
     
+    // Generate options for 12-hour format (01 to 12)
     const hours12 = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
-    const minutes = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
+    // Generate options for minutes (00, 15, 30, 45)
+    const minutes = ['00', '15', '30', '45'];
     const periods: ('AM' | 'PM')[] = ['AM', 'PM'];
     
-    // Extract current hour and period safely
-    const timeParts = localTime.split(' '); 
-    const currentHour12 = timeParts[0]?.split(':')[0] || '12'; 
-    const currentPeriod = timeParts[1] || 'PM'; 
-
-    // Helper function to keep both `broadcastTimeLocal` and `broadcastMinute` synced
-    const updateTimeState = (newHour: string, newMin: string, newPeriod: string) => {
-        // 1. Update broadcastTimeLocal string (e.g. "04:25 PM")
-        const updatedFormattedTime = `${newHour}:${newMin} ${newPeriod}`;
-        onChange({ 
-            target: { name: 'broadcastTimeLocal', value: updatedFormattedTime } 
-        } as React.ChangeEvent<HTMLSelectElement>);
-
-        // 2. Update broadcastMinute field
-        onChange({ 
-            target: { name: 'broadcastMinute', value: newMin } 
-        } as React.ChangeEvent<HTMLSelectElement>);
-    };
+    // Extract the currently selected 12-hour hour (HH) and period (AM/PM)
+    const timeParts = localTime.split(' '); // e.g., ["02:30", "PM"]
+    const currentHour12 = timeParts[0]?.split(':')[0] || '12'; // Default hour
+    const currentPeriod = timeParts[1] || 'PM'; // Default period
 
     const handleHourChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        updateTimeState(e.target.value, minute, currentPeriod);
-    };
-
-    const handleMinuteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        updateTimeState(currentHour12, e.target.value, currentPeriod);
+        // When hour changes, reconstruct the full HH:MM AM/PM string for local state
+        const newHour12 = e.target.value;
+        const newTime = `${newHour12}:${minute} ${currentPeriod}`;
+        // Create a synthetic event object to pass to the main handler
+        onChange({ target: { name: 'broadcastTimeLocal', value: newTime } } as React.ChangeEvent<HTMLSelectElement>);
     };
 
     const handlePeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        updateTimeState(currentHour12, minute, e.target.value);
+        // When period changes, reconstruct the full HH:MM AM/PM string for local state
+        const newPeriod = e.target.value;
+        const newTime = `${currentHour12}:${minute} ${newPeriod}`;
+        // Create a synthetic event object to pass to the main handler
+        onChange({ target: { name: 'broadcastTimeLocal', value: newTime } } as React.ChangeEvent<HTMLSelectElement>);
     };
+
 
     return (
         <div className="lg:col-span-1">
@@ -704,9 +692,9 @@ const TimeInputGroup: React.FC<{
             </label>
             <div className="flex space-x-2">
                 
-                {/* Hour Selector (HH) */}
+                {/* Hour Selector (HH) in 12h format */}
                 <select
-                    name="broadcastHour12"
+                    name="broadcastHour12" // temporary name, we handle change manually
                     value={currentHour12}
                     onChange={handleHourChange}
                     required
@@ -718,14 +706,14 @@ const TimeInputGroup: React.FC<{
                     ))}
                 </select>
                 
-                {/* Minute Selector (MM) - Now calls handleMinuteChange */}
+                {/* Minute Selector (MM) - Same as before */}
                 <select
                     name="broadcastMinute"
                     value={minute}
-                    onChange={handleMinuteChange}
+                    onChange={onChange}
                     required
                     disabled={disabled}
-                    className="mt-1 block w-24 px-2 py-3 border border-gray-700 rounded-xl shadow-inner bg-gray-900 text-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition duration-150 text-lg font-mono appearance-none"
+                    className="mt-1 block w-20 px-2 py-3 border border-gray-700 rounded-xl shadow-inner bg-gray-900 text-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition duration-150 text-lg font-mono appearance-none"
                 >
                     {minutes.map(m => (
                         <option key={m} value={m}>{m}</option>
@@ -734,7 +722,7 @@ const TimeInputGroup: React.FC<{
 
                 {/* AM/PM Selector */}
                 <select
-                    name="broadcastPeriod"
+                    name="broadcastPeriod" // temporary name, we handle change manually
                     value={currentPeriod}
                     onChange={handlePeriodChange}
                     required
@@ -747,8 +735,9 @@ const TimeInputGroup: React.FC<{
                 </select>
 
             </div>
-            <p className="text-xs text-gray-500 mt-1">Select the desired hour, minute (5-min intervals), and AM/PM in EAT.</p>
+            <p className="text-xs text-gray-500 mt-1">Select the desired hour, minute, and AM/PM in EAT.</p>
         </div>
     );
 };
+
 export default BonusConfigurationPage;
