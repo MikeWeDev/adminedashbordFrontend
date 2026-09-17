@@ -640,8 +640,10 @@ const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e
     
     // Generate options for 12-hour format (01 to 12)
     const hours12 = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
-    // Generate options for minutes (00, 15, 30, 45)
-    const minutes = ['00', '15', '30', '45'];
+
+    // 💡 1. Dynamically generate minutes in steps of 5 from 00 to 55
+    const minutes = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
+
     const periods: ('AM' | 'PM')[] = ['AM', 'PM'];
     
     // Extract the currently selected 12-hour hour (HH) and period (AM/PM)
@@ -650,21 +652,16 @@ const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e
     const currentPeriod = timeParts[1] || 'PM'; // Default period
 
     const handleHourChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        // When hour changes, reconstruct the full HH:MM AM/PM string for local state
         const newHour12 = e.target.value;
         const newTime = `${newHour12}:${minute} ${currentPeriod}`;
-        // Create a synthetic event object to pass to the main handler
         onChange({ target: { name: 'broadcastTimeLocal', value: newTime } } as React.ChangeEvent<HTMLSelectElement>);
     };
 
     const handlePeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        // When period changes, reconstruct the full HH:MM AM/PM string for local state
         const newPeriod = e.target.value;
         const newTime = `${currentHour12}:${minute} ${newPeriod}`;
-        // Create a synthetic event object to pass to the main handler
         onChange({ target: { name: 'broadcastTimeLocal', value: newTime } } as React.ChangeEvent<HTMLSelectElement>);
     };
-
 
     return (
         <div className="lg:col-span-1">
@@ -675,7 +672,7 @@ const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e
                 
                 {/* Hour Selector (HH) in 12h format */}
                 <select
-                    name="broadcastHour12" // temporary name, we handle change manually
+                    name="broadcastHour12"
                     value={currentHour12}
                     onChange={handleHourChange}
                     required
@@ -687,14 +684,14 @@ const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e
                     ))}
                 </select>
                 
-                {/* Minute Selector (MM) - Same as before */}
+                {/* Minute Selector (MM) - Updated to show 00 through 55 in 5-min increments */}
                 <select
                     name="broadcastMinute"
                     value={minute}
                     onChange={onChange}
                     required
                     disabled={disabled}
-                    className="mt-1 block w-20 px-2 py-3 border border-gray-700 rounded-xl shadow-inner bg-gray-900 text-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition duration-150 text-lg font-mono appearance-none"
+                    className="mt-1 block w-24 px-2 py-3 border border-gray-700 rounded-xl shadow-inner bg-gray-900 text-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition duration-150 text-lg font-mono appearance-none"
                 >
                     {minutes.map(m => (
                         <option key={m} value={m}>{m}</option>
@@ -703,7 +700,7 @@ const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e
 
                 {/* AM/PM Selector */}
                 <select
-                    name="broadcastPeriod" // temporary name, we handle change manually
+                    name="broadcastPeriod"
                     value={currentPeriod}
                     onChange={handlePeriodChange}
                     required
@@ -716,7 +713,7 @@ const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e
                 </select>
 
             </div>
-            <p className="text-xs text-gray-500 mt-1">Select the desired hour, minute, and AM/PM in EAT.</p>
+            <p className="text-xs text-gray-500 mt-1">Select the desired hour, minute (5-min intervals), and AM/PM in EAT.</p>
         </div>
     );
 };
