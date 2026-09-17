@@ -170,13 +170,13 @@ const BonusConfigurationPage = () => {
     const [state, setState] = useState<BonusState>({
         currentSettings: { 
             initiationBonus: 0, depositBonus: 0, weeklyTopPlayerBonus: 0, fiveWinDailyBonus: 0, registerationBonus: 0,
-            claimLimitBonus: 50, bonusAmountClaimBonus: 0, broadcastCronSchedule: initialCron, 
+            claimLimitBonus: 50, bonusAmountClaimBonus: 10, broadcastCronSchedule: initialCron, 
             registrationBonusLimit: 2, // Matches default in your schema snippet
              registrationBonusCount: 0,
         },
         newSettings: { 
             initiationBonus: 0, depositBonus: 0, weeklyTopPlayerBonus: 0, fiveWinDailyBonus: 0, registerationBonus: 0,
-            claimLimitBonus: 50, bonusAmountClaimBonus: 0, broadcastCronSchedule: initialCron, 
+            claimLimitBonus: 50, bonusAmountClaimBonus: 10, broadcastCronSchedule: initialCron, 
             broadcastTimeLocal: initialTimeData.localTime,
             broadcastMinute: initialTimeData.minute,
             registrationBonusLimit: 2,
@@ -212,10 +212,10 @@ const BonusConfigurationPage = () => {
                 weeklyTopPlayerBonus: data.weeklyTopPlayerBonus || 0,
                 fiveWinDailyBonus: data.fiveWinDailyBonus || 0,
                 registerationBonus: data.registerationBonus || 0,
-                claimLimitBonus: data.claimLimitBonus ?? 1,                // Safely handle if the API returns the old name (bonusAmountClimBonus)
-                bonusAmountClaimBonus: data.bonusAmountClaimBonus || data.bonusAmountClimBonus || 0, 
+                claimLimitBonus: data.claimLimitBonus ?? 0,                // Safely handle if the API returns the old name (bonusAmountClimBonus)
+                bonusAmountClaimBonus: data.bonusAmountClaimBonus ?? data.bonusAmountClimBonus ?? 0, 
                 broadcastCronSchedule: data.broadcastCronSchedule || initialCron,
-                registrationBonusLimit: data.registrationBonusLimit ?? 2, // Use 2 as the default if not present
+                registrationBonusLimit: data.registrationBonusLimit ?? 0, // Use 2 as the default if not present
                 registrationBonusCount: data.registrationBonusCount || 0, // Use 0 as the default if not present
             };
 
@@ -352,7 +352,7 @@ const BonusConfigurationPage = () => {
             registerationBonus: parseFloat(String(state.newSettings.registerationBonus)) || 0,
             claimLimitBonus: parseFloat(String(state.newSettings.claimLimitBonus)) || 0,
             // CORRECTED FIELD NAME
-            bonusAmountClaimBonus: parseFloat(String(state.newSettings.bonusAmountClaimBonus)) || 0,
+            bonusAmountClaimBonus: parseFloat(String(state.newSettings.bonusAmountClaimBonus)) ?? 0,
             // Use the calculated UTC CRON string
             broadcastCronSchedule: finalCronSchedule,
             registrationBonusLimit: parseFloat(String(state.newSettings.registrationBonusLimit)) || 0,
@@ -394,6 +394,7 @@ const BonusConfigurationPage = () => {
             const savedSettings: BonusSettings = {
                 ...result.settings, 
                 broadcastCronSchedule: result.settings?.broadcastCronSchedule || submissionData.broadcastCronSchedule,
+                claimLimitBonus: result.settings?.claimLimitBonus ?? 0,
                 // Handle the API potentially sending the old 'Clim' field, ensuring the new one is prioritized/set
                 bonusAmountClaimBonus: result.settings?.bonusAmountClaimBonus || result.settings?.bonusAmountClimBonus || 0,
                 registrationBonusLimit: result.settings?.registrationBonusLimit || 0,
@@ -519,7 +520,7 @@ const BonusConfigurationPage = () => {
                                     subtext={`(Stored as UTC Hour: ${currentLocalTimeData.utcHour})`}
                                 />
                                <SettingDisplay 
-                                       title="Max Eligible Users for Reg Bonus" 
+                                       title="Registration Limit (Total Users)" 
                                        value={currentSettings.registrationBonusLimit} 
                                        icon="👥" 
                                            />
@@ -551,20 +552,19 @@ const BonusConfigurationPage = () => {
                                     <InputField label="New Max Bonus Claims Per Day" name="claimLimitBonus" value={newSettings.claimLimitBonus} onChange={handleChange} disabled={isSaving} />
                                     <InputField label="New Claim Bonus Amount" name="bonusAmountClaimBonus" value={newSettings.bonusAmountClaimBonus} onChange={handleChange} disabled={isSaving} />
                                     <InputField 
-                                        label="Max Eligible Users for Reg Bonus" 
-                                        name="registrationBonusLimit" 
-                                        value={newSettings.registrationBonusLimit} 
-                                        onChange={handleChange} 
-                                        disabled={isSaving} 
-                                    />
-                                    {/* ⭐ NEW INPUT FIELD FOR MANUAL COUNT UPDATE/RESET */}
-                                    <InputField 
-                                        label="New Registration Count (Manual Reset)" 
-                                        name="registrationBonusLimit" 
-                                        value={newSettings.registrationBonusCount} 
-                                        onChange={handleChange} 
-                                        disabled={isSaving} 
-                                    />
+    label="New Registration Bonus Limit (Users)" 
+    name="registrationBonusLimit" 
+    value={newSettings.registrationBonusLimit} 
+    onChange={handleChange} 
+    disabled={isSaving} 
+/>
+<InputField 
+    label="New Registration Count (Manual Reset)" 
+    name="registrationBonusCount" // ✅ FIXED
+    value={newSettings.registrationBonusCount} 
+    onChange={handleChange} 
+    disabled={isSaving} 
+/>
                                     {/* 🔄 UPDATED TIME INPUT */}
                                     <TimeInputGroup
                                         localTime={newSettings.broadcastTimeLocal}
@@ -736,5 +736,4 @@ const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e
         </div>
     );
 };
-
 export default BonusConfigurationPage;
