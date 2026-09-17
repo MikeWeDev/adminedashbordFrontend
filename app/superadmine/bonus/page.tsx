@@ -212,10 +212,10 @@ const BonusConfigurationPage = () => {
                 weeklyTopPlayerBonus: data.weeklyTopPlayerBonus || 0,
                 fiveWinDailyBonus: data.fiveWinDailyBonus || 0,
                 registerationBonus: data.registerationBonus || 0,
-                claimLimitBonus: data.claimLimitBonus ?? 1,                // Safely handle if the API returns the old name (bonusAmountClimBonus)
-                bonusAmountClaimBonus: data.bonusAmountClaimBonus || data.bonusAmountClimBonus || 10, 
+                claimLimitBonus: data.claimLimitBonus ?? 0,                // Safely handle if the API returns the old name (bonusAmountClimBonus)
+                bonusAmountClaimBonus: data.bonusAmountClaimBonus ?? data.bonusAmountClimBonus ?? 0, 
                 broadcastCronSchedule: data.broadcastCronSchedule || initialCron,
-                registrationBonusLimit: data.registrationBonusLimit ?? 2, // Use 2 as the default if not present
+                registrationBonusLimit: data.registrationBonusLimit ?? 0, // Use 2 as the default if not present
                 registrationBonusCount: data.registrationBonusCount || 0, // Use 0 as the default if not present
             };
 
@@ -352,7 +352,7 @@ const BonusConfigurationPage = () => {
             registerationBonus: parseFloat(String(state.newSettings.registerationBonus)) || 0,
             claimLimitBonus: parseFloat(String(state.newSettings.claimLimitBonus)) || 0,
             // CORRECTED FIELD NAME
-            bonusAmountClaimBonus: parseFloat(String(state.newSettings.bonusAmountClaimBonus)) || 0,
+            bonusAmountClaimBonus: parseFloat(String(state.newSettings.bonusAmountClaimBonus)) ?? 0,
             // Use the calculated UTC CRON string
             broadcastCronSchedule: finalCronSchedule,
             registrationBonusLimit: parseFloat(String(state.newSettings.registrationBonusLimit)) || 0,
@@ -394,6 +394,7 @@ const BonusConfigurationPage = () => {
             const savedSettings: BonusSettings = {
                 ...result.settings, 
                 broadcastCronSchedule: result.settings?.broadcastCronSchedule || submissionData.broadcastCronSchedule,
+                claimLimitBonus: result.settings?.claimLimitBonus ?? 0,
                 // Handle the API potentially sending the old 'Clim' field, ensuring the new one is prioritized/set
                 bonusAmountClaimBonus: result.settings?.bonusAmountClaimBonus || result.settings?.bonusAmountClimBonus || 0,
                 registrationBonusLimit: result.settings?.registrationBonusLimit || 0,
@@ -467,13 +468,32 @@ const BonusConfigurationPage = () => {
                     <div className="flex flex-col flex-grow w-full gap-6">
                         
                         {/* Status Messages - Always visible at the top of the main area */}
-                        {(error || message) && (
-                            <div className={`p-4 rounded-xl font-medium text-sm sm:text-base shadow-lg ${
-                                error ? 'bg-red-900 text-red-300 border border-red-700' : 'bg-green-900 text-green-300 border border-green-700'
-                            }`} role="alert">
-                                {error ? `ERROR: ${error}` : `SUCCESS: ${message}`}
-                            </div>
-                        )}
+                       {(error || message) && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 max-w-md w-full shadow-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-200">
+            {error ? (
+                <div className="text-4xl mb-2">❌</div>
+            ) : (
+                <div className="text-4xl mb-2">🎉</div>
+            )}
+            
+            <h3 className={`text-xl font-bold mb-2 ${error ? 'text-red-400' : 'text-teal-400'}`}>
+                {error ? 'Action Failed' : 'Success!'}
+            </h3>
+            
+            <p className="text-gray-300 text-sm mb-6">
+                {error ? error : message}
+            </p>
+            
+            <button
+                onClick={() => setState(s => ({ ...s, error: null, message: null }))}
+                className="w-full py-2.5 px-4 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition duration-150"
+            >
+                OK
+            </button>
+        </div>
+    </div>
+)}
 
                         {/* Main Content Area: Current Settings */}
                         <div className="bg-gray-800 p-6 rounded-2xl shadow-2xl border-t-4 border-teal-500">
@@ -532,20 +552,19 @@ const BonusConfigurationPage = () => {
                                     <InputField label="New Max Bonus Claims Per Day" name="claimLimitBonus" value={newSettings.claimLimitBonus} onChange={handleChange} disabled={isSaving} />
                                     <InputField label="New Claim Bonus Amount" name="bonusAmountClaimBonus" value={newSettings.bonusAmountClaimBonus} onChange={handleChange} disabled={isSaving} />
                                     <InputField 
-                                        label="New Registration Bonus Limit (Users)" 
-                                        name="registrationBonusLimit" 
-                                        value={newSettings.registrationBonusLimit} 
-                                        onChange={handleChange} 
-                                        disabled={isSaving} 
-                                    />
-                                    {/* ⭐ NEW INPUT FIELD FOR MANUAL COUNT UPDATE/RESET */}
-                                    <InputField 
-                                        label="New Registration Count (Manual Reset)" 
-                                        name="registrationBonusCount" 
-                                        value={newSettings.registrationBonusCount} 
-                                        onChange={handleChange} 
-                                        disabled={isSaving} 
-                                    />
+    label="New Registration Bonus Limit (Users)" 
+    name="registrationBonusLimit" 
+    value={newSettings.registrationBonusLimit} 
+    onChange={handleChange} 
+    disabled={isSaving} 
+/>
+<InputField 
+    label="New Registration Count (Manual Reset)" 
+    name="registrationBonusCount" // ✅ FIXED
+    value={newSettings.registrationBonusCount} 
+    onChange={handleChange} 
+    disabled={isSaving} 
+/>
                                     {/* 🔄 UPDATED TIME INPUT */}
                                     <TimeInputGroup
                                         localTime={newSettings.broadcastTimeLocal}
