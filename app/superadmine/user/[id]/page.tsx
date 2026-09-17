@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation'; 
-import Link from 'link'; // If using next/link, standard import is 'next/link'
 import LinkComponent from 'next/link'; 
 import { FaUserEdit, FaSave, FaArrowLeft, FaSpinner, FaTrash } from 'react-icons/fa'; 
 
