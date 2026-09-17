@@ -170,13 +170,13 @@ const BonusConfigurationPage = () => {
     const [state, setState] = useState<BonusState>({
         currentSettings: { 
             initiationBonus: 0, depositBonus: 0, weeklyTopPlayerBonus: 0, fiveWinDailyBonus: 0, registerationBonus: 0,
-            claimLimitBonus: 50, bonusAmountClaimBonus: 10, broadcastCronSchedule: initialCron, 
+            claimLimitBonus: 50, bonusAmountClaimBonus: 0, broadcastCronSchedule: initialCron, 
             registrationBonusLimit: 2, // Matches default in your schema snippet
              registrationBonusCount: 0,
         },
         newSettings: { 
             initiationBonus: 0, depositBonus: 0, weeklyTopPlayerBonus: 0, fiveWinDailyBonus: 0, registerationBonus: 0,
-            claimLimitBonus: 50, bonusAmountClaimBonus: 10, broadcastCronSchedule: initialCron, 
+            claimLimitBonus: 50, bonusAmountClaimBonus: 0, broadcastCronSchedule: initialCron, 
             broadcastTimeLocal: initialTimeData.localTime,
             broadcastMinute: initialTimeData.minute,
             registrationBonusLimit: 2,
@@ -213,7 +213,7 @@ const BonusConfigurationPage = () => {
                 fiveWinDailyBonus: data.fiveWinDailyBonus || 0,
                 registerationBonus: data.registerationBonus || 0,
                 claimLimitBonus: data.claimLimitBonus ?? 1,                // Safely handle if the API returns the old name (bonusAmountClimBonus)
-                bonusAmountClaimBonus: data.bonusAmountClaimBonus || data.bonusAmountClimBonus || 10, 
+                bonusAmountClaimBonus: data.bonusAmountClaimBonus || data.bonusAmountClimBonus || 0, 
                 broadcastCronSchedule: data.broadcastCronSchedule || initialCron,
                 registrationBonusLimit: data.registrationBonusLimit ?? 2, // Use 2 as the default if not present
                 registrationBonusCount: data.registrationBonusCount || 0, // Use 0 as the default if not present
