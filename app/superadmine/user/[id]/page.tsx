@@ -236,19 +236,44 @@ export default function SuperAdminUserEditPage() {
       {/* Form Section */}
       <div className="bg-white p-8 rounded-lg shadow-md">
         {/* Success/Error Messages */}
-        {successMessage && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <strong className="font-bold">Success!</strong>
-            <span className="block sm:inline ml-2">{successMessage}</span>
-          </div>
-        )}
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <strong className="font-bold">Error!</strong>
-            <span className="block sm:inline ml-2">{error}</span>
-          </div>
-        )}
+       {/* Modal Overlay for Success and Error Notifications */}
+{(error || successMessage) && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 max-w-sm w-full shadow-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-200">
+      
+      {/* Icon Badge */}
+      <div className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-4 ${
+        error ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+      }`}>
+        {error ? '❌' : '🎉'}
+      </div>
 
+      {/* Heading */}
+      <h3 className={`text-xl font-extrabold mb-2 ${error ? 'text-red-600' : 'text-green-600'}`}>
+        {error ? 'Action Failed' : 'Success!'}
+      </h3>
+
+      {/* Message Text */}
+      <p className="text-gray-600 text-sm mb-6">
+        {error ? error : successMessage}
+      </p>
+
+      {/* Close Button */}
+      <button
+        type="button"
+        onClick={() => {
+          setError(null);
+          setSuccessMessage(null);
+        }}
+        className={`w-full py-2.5 px-4 font-bold rounded-xl text-white transition duration-200 ${
+          error ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'
+        }`}
+      >
+        OK
+      </button>
+    </div>
+  </div>
+)}
         {/* Updated Form Layout with 4 columns for balance types */}
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Username */}
