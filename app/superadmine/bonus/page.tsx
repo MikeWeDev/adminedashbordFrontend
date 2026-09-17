@@ -550,21 +550,23 @@ const BonusConfigurationPage = () => {
                                     <InputField label="New 5-Win Daily Streak Bonus" name="fiveWinDailyBonus" value={newSettings.fiveWinDailyBonus} onChange={handleChange} disabled={isSaving} />
                                     <InputField label="New Max Bonus Claims Per Day" name="claimLimitBonus" value={newSettings.claimLimitBonus} onChange={handleChange} disabled={isSaving} />
                                     <InputField label="New Claim Bonus Amount" name="bonusAmountClaimBonus" value={newSettings.bonusAmountClaimBonus} onChange={handleChange} disabled={isSaving} />
-                                    <InputField 
-                                        label="Max Eligible Users for Reg Bonus" 
-                                        name="registrationBonusLimit" 
-                                        value={newSettings.registrationBonusLimit} 
-                                        onChange={handleChange} 
-                                        disabled={isSaving} 
-                                    />
-                                    {/* ⭐ NEW INPUT FIELD FOR MANUAL COUNT UPDATE/RESET */}
-                                    <InputField 
-                                        label="New Registration Count (Manual Reset)" 
-                                        name="registrationBonusLimit" 
-                                        value={newSettings.registrationBonusCount} 
-                                        onChange={handleChange} 
-                                        disabled={isSaving} 
-                                    />
+                                    {/* Max Limit Field */}
+<InputField 
+    label="Max Eligible Users for Reg Bonus" 
+    name="registrationBonusLimit" 
+    value={newSettings.registrationBonusLimit} 
+    onChange={handleChange} 
+    disabled={isSaving} 
+/>
+
+{/* ⭐ FIXED: Now correctly binds name="registrationBonusCount" */}
+<InputField 
+    label="New Registration Count (Manual Reset)" 
+    name="registrationBonusCount" 
+    value={newSettings.registrationBonusCount} 
+    onChange={handleChange} 
+    disabled={isSaving} 
+/>
                                     {/* 🔄 UPDATED TIME INPUT */}
                                     <TimeInputGroup
                                         localTime={newSettings.broadcastTimeLocal}
