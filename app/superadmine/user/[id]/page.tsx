@@ -1,10 +1,10 @@
-// src/app/super-admin/users/[userId]/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation'; 
-import Link from 'next/link'; 
-import { FaUserEdit, FaSave, FaArrowLeft, FaSpinner } from 'react-icons/fa'; 
+import Link from 'link'; // If using next/link, standard import is 'next/link'
+import LinkComponent from 'next/link'; 
+import { FaUserEdit, FaSave, FaArrowLeft, FaSpinner, FaTrash } from 'react-icons/fa'; 
 
 /**
  * Interface defining the structure of a single User document.
@@ -34,6 +34,8 @@ export default function SuperAdminUserEditPage() {
   const [formData, setFormData] = useState<Partial<User>>({}); 
   const [loading, setLoading] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [deleting, setDeleting] = useState<boolean>(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -140,23 +142,20 @@ export default function SuperAdminUserEditPage() {
       setSuccessMessage(null);
 
       // ⭐ IMPORTANT: Map the snake_case formData back to the camelCase expected by the backend route
-      // The backend route is expecting: { username, phoneNumber, balance, bonusBalance, coinBalance }
       const payload = {
           username: formData.username,
           phoneNumber: formData.phoneNumber,
           balance: formData.balance,
-          // Map back to camelCase for the API payload
           bonusBalance: formData.bonus_balance, 
           coinBalance: formData.coin_balance,  
       };
-
 
       const res = await fetch(`${SUPER_ADMIN_API_BASE_URL}/${userId}`, {
         method: 'PUT', 
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload), // Send the new payload
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -173,6 +172,42 @@ export default function SuperAdminUserEditPage() {
       setError((err as Error).message || "An unknown error occurred during update.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  /**
+   * Handles permanently deleting the current user document.
+   */
+  const handleDeleteUser = async () => {
+    if (!userId) {
+      setError("Cannot delete: User ID is missing.");
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      setError(null);
+      setShowDeleteConfirm(false);
+
+      const res = await fetch(`${SUPER_ADMIN_API_BASE_URL}/${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to delete user: ${res.status}`);
+      }
+
+      setSuccessMessage('User deleted successfully! Redirecting...');
+      setTimeout(() => {
+        router.push('/superadmine/userMangment');
+      }, 1500);
+
+    } catch (err: unknown) {
+      console.error("Error deleting user:", err);
+      setError((err as Error).message || "An error occurred while deleting the user.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -202,78 +237,112 @@ export default function SuperAdminUserEditPage() {
         <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative" role="alert">
           <strong className="font-bold">Not Found!</strong>
           <span className="block sm:inline ml-2">User details could not be loaded.</span>
-          <Link href="/superadmine/userMangment">
+          <LinkComponent href="/superadmine/userMangment">
              <span className="ml-4 text-indigo-600 hover:underline">Back to User List</span>
-          </Link>
+          </LinkComponent>
         </div>
       </div>
     );
   }
 
-
   return (
     <div className="p-8 bg-gray-100 min-h-screen text-black">
       {/* Page Header */}
-    <div className="bg-white p-6 rounded-lg shadow-md mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
-  <div className="w-full md:w-auto">
-    <h1 className="text-2xl sm:text-3xl font-extrabold mb-2 flex items-center flex-wrap gap-2">
-      <FaUserEdit className="text-indigo-600" />
-      Edit User: {user.username}
-    </h1>
-    <p className=" text-sm sm:text-lg">
-      Modify user data and audit balance changes.
-    </p>
-  </div>
-  <Link href="/superadmine/userMangment" className="w-full md:w-auto">
-    <button className="w-full md:w-auto bg-gray-300 hover:bg-gray-400 font-bold py-2 px-4 rounded-lg flex justify-center items-center gap-2 transition-colors duration-200">
-      <FaArrowLeft />
-      Back
-    </button>
-  </Link>
-</div>
-
+      <div className="bg-white p-6 rounded-lg shadow-md mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
+        <div className="w-full md:w-auto">
+          <h1 className="text-2xl sm:text-3xl font-extrabold mb-2 flex items-center flex-wrap gap-2">
+            <FaUserEdit className="text-indigo-600" />
+            Edit User: {user.username}
+          </h1>
+          <p className="text-sm sm:text-lg">
+            Modify user data and audit balance changes.
+          </p>
+        </div>
+        <LinkComponent href="/superadmine/userMangment" className="w-full md:w-auto">
+          <button className="w-full md:w-auto bg-gray-300 hover:bg-gray-400 font-bold py-2 px-4 rounded-lg flex justify-center items-center gap-2 transition-colors duration-200">
+            <FaArrowLeft />
+            Back
+          </button>
+        </LinkComponent>
+      </div>
 
       {/* Form Section */}
       <div className="bg-white p-8 rounded-lg shadow-md">
-        {/* Success/Error Messages */}
-       {/* Modal Overlay for Success and Error Notifications */}
-{(error || successMessage) && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 max-w-sm w-full shadow-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-200">
-      
-      {/* Icon Badge */}
-      <div className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-4 ${
-        error ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
-      }`}>
-        {error ? '❌' : '🎉'}
-      </div>
+        {/* Modal Overlay for Success and Error Notifications */}
+        {(error || successMessage) && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 max-w-sm w-full shadow-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-200">
+              
+              {/* Icon Badge */}
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-4 ${
+                error ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+              }`}>
+                {error ? '❌' : '🎉'}
+              </div>
 
-      {/* Heading */}
-      <h3 className={`text-xl font-extrabold mb-2 ${error ? 'text-red-600' : 'text-green-600'}`}>
-        {error ? 'Action Failed' : 'Success!'}
-      </h3>
+              {/* Heading */}
+              <h3 className={`text-xl font-extrabold mb-2 ${error ? 'text-red-600' : 'text-green-600'}`}>
+                {error ? 'Action Failed' : 'Success!'}
+              </h3>
 
-      {/* Message Text */}
-      <p className="text-gray-600 text-sm mb-6">
-        {error ? error : successMessage}
-      </p>
+              {/* Message Text */}
+              <p className="text-gray-600 text-sm mb-6">
+                {error ? error : successMessage}
+              </p>
 
-      {/* Close Button */}
-      <button
-        type="button"
-        onClick={() => {
-          setError(null);
-          setSuccessMessage(null);
-        }}
-        className={`w-full py-2.5 px-4 font-bold rounded-xl text-white transition duration-200 ${
-          error ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'
-        }`}
-      >
-        OK
-      </button>
-    </div>
-  </div>
-)}
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setSuccessMessage(null);
+                }}
+                className={`w-full py-2.5 px-4 font-bold rounded-xl text-white transition duration-200 ${
+                  error ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'
+                }`}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal Overlay */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 max-w-sm w-full shadow-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-200">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-4 bg-red-100 text-red-600">
+                ⚠️
+              </div>
+              
+              <h3 className="text-xl font-extrabold mb-2 text-gray-900">
+                Delete User?
+              </h3>
+              
+              <p className="text-gray-600 text-sm mb-6">
+                Are you sure you want to permanently delete <strong>{user?.username}</strong>? This action cannot be undone.
+              </p>
+
+              <div className="flex w-full gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="w-1/2 py-2.5 px-4 font-bold rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-800 transition duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteUser}
+                  className="w-1/2 py-2.5 px-4 font-bold rounded-xl bg-red-600 hover:bg-red-700 text-white transition duration-200"
+                >
+                  Yes, Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Updated Form Layout with 4 columns for balance types */}
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Username */}
@@ -302,7 +371,6 @@ export default function SuperAdminUserEditPage() {
               readOnly
             />
           </div>
-          
 
           {/* Phone Number */}
           <div>
@@ -353,39 +421,39 @@ export default function SuperAdminUserEditPage() {
             )}
           </div>
           
-          {/* ⭐ CORRECTED: Bonus Balance Input (name="bonus_balance") */}
+          {/* Bonus Balance Input */}
           <div>
             <label htmlFor="bonus_balance" className="block text-gray-700 text-sm font-bold mb-2">Bonus Balance (Birr):</label>
             <input
               type="number"
               id="bonus_balance"
-              name="bonus_balance" // ⭐ CORRECTED
-              value={typeof formData.bonus_balance === 'number' ? formData.bonus_balance : ''} // ⭐ CORRECTED
+              name="bonus_balance"
+              value={typeof formData.bonus_balance === 'number' ? formData.bonus_balance : ''}
               onChange={handleChange}
               className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500"
               step="0.01" 
               required
             />
-            {user.bonus_balance !== undefined && ( // ⭐ CORRECTED
-              <p className="text-xs mt-1">Current: {user.bonus_balance.toFixed(2)} Birr</p> // ⭐ CORRECTED
+            {user.bonus_balance !== undefined && (
+              <p className="text-xs mt-1">Current: {user.bonus_balance.toFixed(2)} Birr</p>
             )}
           </div>
 
-          {/* ⭐ CORRECTED: Coin Balance Input (name="coin_balance") */}
+          {/* Coin Balance Input */}
           <div>
             <label htmlFor="coin_balance" className="block text-gray-700 text-sm font-bold mb-2">Coin Balance (Coins):</label>
             <input
               type="number"
               id="coin_balance"
-              name="coin_balance" // ⭐ CORRECTED
-              value={typeof formData.coin_balance === 'number' ? formData.coin_balance : ''} // ⭐ CORRECTED
+              name="coin_balance"
+              value={typeof formData.coin_balance === 'number' ? formData.coin_balance : ''}
               onChange={handleChange}
               className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-indigo-500"
               step="1" 
               required
             />
-            {user.coin_balance !== undefined && ( // ⭐ CORRECTED
-              <p className="text-xs mt-1">Current: {user.coin_balance.toFixed(0)} Coins</p> // ⭐ CORRECTED
+            {user.coin_balance !== undefined && (
+              <p className="text-xs mt-1">Current: {user.coin_balance.toFixed(0)} Coins</p>
             )}
           </div>
           
@@ -402,11 +470,12 @@ export default function SuperAdminUserEditPage() {
             />
           </div>
 
-          {/* Submit Button */}
-          <div className="md:col-span-2 text-right mt-4">
+          {/* Action Buttons (Save Changes & Delete User) */}
+          <div className="md:col-span-2 flex justify-end items-center gap-3 mt-4">
+            {/* Save Button */}
             <button
               type="submit"
-              disabled={submitting || loading}
+              disabled={submitting || deleting || loading}
               className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg inline-flex items-center gap-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? (
@@ -416,6 +485,24 @@ export default function SuperAdminUserEditPage() {
               ) : (
                 <>
                   <FaSave /> Save Changes
+                </>
+              )}
+            </button>
+
+            {/* Delete User Button */}
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={submitting || deleting || loading}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg inline-flex items-center gap-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {deleting ? (
+                <>
+                  <FaSpinner className="animate-spin" /> Deleting...
+                </>
+              ) : (
+                <>
+                  <FaTrash /> Delete User
                 </>
               )}
             </button>
