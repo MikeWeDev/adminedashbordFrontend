@@ -170,13 +170,13 @@ const BonusConfigurationPage = () => {
     const [state, setState] = useState<BonusState>({
         currentSettings: { 
             initiationBonus: 0, depositBonus: 0, weeklyTopPlayerBonus: 0, fiveWinDailyBonus: 0, registerationBonus: 0,
-            claimLimitBonus: 50, bonusAmountClaimBonus: 10, broadcastCronSchedule: initialCron, 
+            claimLimitBonus: 50, bonusAmountClaimBonus: 0, broadcastCronSchedule: initialCron, 
             registrationBonusLimit: 2, // Matches default in your schema snippet
              registrationBonusCount: 0,
         },
         newSettings: { 
             initiationBonus: 0, depositBonus: 0, weeklyTopPlayerBonus: 0, fiveWinDailyBonus: 0, registerationBonus: 0,
-            claimLimitBonus: 50, bonusAmountClaimBonus: 10, broadcastCronSchedule: initialCron, 
+            claimLimitBonus: 50, bonusAmountClaimBonus: 0, broadcastCronSchedule: initialCron, 
             broadcastTimeLocal: initialTimeData.localTime,
             broadcastMinute: initialTimeData.minute,
             registrationBonusLimit: 2,
@@ -213,7 +213,7 @@ const BonusConfigurationPage = () => {
                 fiveWinDailyBonus: data.fiveWinDailyBonus || 0,
                 registerationBonus: data.registerationBonus || 0,
                 claimLimitBonus: data.claimLimitBonus ?? 1,                // Safely handle if the API returns the old name (bonusAmountClimBonus)
-                bonusAmountClaimBonus: data.bonusAmountClaimBonus || data.bonusAmountClimBonus || 10, 
+                bonusAmountClaimBonus: data.bonusAmountClaimBonus || data.bonusAmountClimBonus || 0, 
                 broadcastCronSchedule: data.broadcastCronSchedule || initialCron,
                 registrationBonusLimit: data.registrationBonusLimit ?? 2, // Use 2 as the default if not present
                 registrationBonusCount: data.registrationBonusCount || 0, // Use 0 as the default if not present
@@ -467,13 +467,32 @@ const BonusConfigurationPage = () => {
                     <div className="flex flex-col flex-grow w-full gap-6">
                         
                         {/* Status Messages - Always visible at the top of the main area */}
-                        {(error || message) && (
-                            <div className={`p-4 rounded-xl font-medium text-sm sm:text-base shadow-lg ${
-                                error ? 'bg-red-900 text-red-300 border border-red-700' : 'bg-green-900 text-green-300 border border-green-700'
-                            }`} role="alert">
-                                {error ? `ERROR: ${error}` : `SUCCESS: ${message}`}
-                            </div>
-                        )}
+                       {(error || message) && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 max-w-md w-full shadow-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-200">
+            {error ? (
+                <div className="text-4xl mb-2">❌</div>
+            ) : (
+                <div className="text-4xl mb-2">🎉</div>
+            )}
+            
+            <h3 className={`text-xl font-bold mb-2 ${error ? 'text-red-400' : 'text-teal-400'}`}>
+                {error ? 'Action Failed' : 'Success!'}
+            </h3>
+            
+            <p className="text-gray-300 text-sm mb-6">
+                {error ? error : message}
+            </p>
+            
+            <button
+                onClick={() => setState(s => ({ ...s, error: null, message: null }))}
+                className="w-full py-2.5 px-4 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition duration-150"
+            >
+                OK
+            </button>
+        </div>
+    </div>
+)}
 
                         {/* Main Content Area: Current Settings */}
                         <div className="bg-gray-800 p-6 rounded-2xl shadow-2xl border-t-4 border-teal-500">
@@ -500,7 +519,7 @@ const BonusConfigurationPage = () => {
                                     subtext={`(Stored as UTC Hour: ${currentLocalTimeData.utcHour})`}
                                 />
                                <SettingDisplay 
-                                       title="Registration Limit (Total Users)" 
+                                       title="Max Eligible Users for Reg Bonus" 
                                        value={currentSettings.registrationBonusLimit} 
                                        icon="👥" 
                                            />
@@ -532,7 +551,7 @@ const BonusConfigurationPage = () => {
                                     <InputField label="New Max Bonus Claims Per Day" name="claimLimitBonus" value={newSettings.claimLimitBonus} onChange={handleChange} disabled={isSaving} />
                                     <InputField label="New Claim Bonus Amount" name="bonusAmountClaimBonus" value={newSettings.bonusAmountClaimBonus} onChange={handleChange} disabled={isSaving} />
                                     <InputField 
-                                        label="New Registration Bonus Limit (Users)" 
+                                        label="Max Eligible Users for Reg Bonus" 
                                         name="registrationBonusLimit" 
                                         value={newSettings.registrationBonusLimit} 
                                         onChange={handleChange} 
@@ -541,7 +560,7 @@ const BonusConfigurationPage = () => {
                                     {/* ⭐ NEW INPUT FIELD FOR MANUAL COUNT UPDATE/RESET */}
                                     <InputField 
                                         label="New Registration Count (Manual Reset)" 
-                                        name="registrationBonusCount" 
+                                        name="registrationBonusLimit" 
                                         value={newSettings.registrationBonusCount} 
                                         onChange={handleChange} 
                                         disabled={isSaving} 
@@ -640,8 +659,10 @@ const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e
     
     // Generate options for 12-hour format (01 to 12)
     const hours12 = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
-    // Generate options for minutes (00, 15, 30, 45)
-    const minutes = ['00', '15', '30', '45'];
+
+    // 💡 1. Dynamically generate minutes in steps of 5 from 00 to 55
+    const minutes = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
+
     const periods: ('AM' | 'PM')[] = ['AM', 'PM'];
     
     // Extract the currently selected 12-hour hour (HH) and period (AM/PM)
@@ -650,21 +671,16 @@ const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e
     const currentPeriod = timeParts[1] || 'PM'; // Default period
 
     const handleHourChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        // When hour changes, reconstruct the full HH:MM AM/PM string for local state
         const newHour12 = e.target.value;
         const newTime = `${newHour12}:${minute} ${currentPeriod}`;
-        // Create a synthetic event object to pass to the main handler
         onChange({ target: { name: 'broadcastTimeLocal', value: newTime } } as React.ChangeEvent<HTMLSelectElement>);
     };
 
     const handlePeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        // When period changes, reconstruct the full HH:MM AM/PM string for local state
         const newPeriod = e.target.value;
         const newTime = `${currentHour12}:${minute} ${newPeriod}`;
-        // Create a synthetic event object to pass to the main handler
         onChange({ target: { name: 'broadcastTimeLocal', value: newTime } } as React.ChangeEvent<HTMLSelectElement>);
     };
-
 
     return (
         <div className="lg:col-span-1">
@@ -675,7 +691,7 @@ const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e
                 
                 {/* Hour Selector (HH) in 12h format */}
                 <select
-                    name="broadcastHour12" // temporary name, we handle change manually
+                    name="broadcastHour12"
                     value={currentHour12}
                     onChange={handleHourChange}
                     required
@@ -687,14 +703,14 @@ const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e
                     ))}
                 </select>
                 
-                {/* Minute Selector (MM) - Same as before */}
+                {/* Minute Selector (MM) - Updated to show 00 through 55 in 5-min increments */}
                 <select
                     name="broadcastMinute"
                     value={minute}
                     onChange={onChange}
                     required
                     disabled={disabled}
-                    className="mt-1 block w-20 px-2 py-3 border border-gray-700 rounded-xl shadow-inner bg-gray-900 text-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition duration-150 text-lg font-mono appearance-none"
+                    className="mt-1 block w-24 px-2 py-3 border border-gray-700 rounded-xl shadow-inner bg-gray-900 text-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition duration-150 text-lg font-mono appearance-none"
                 >
                     {minutes.map(m => (
                         <option key={m} value={m}>{m}</option>
@@ -703,7 +719,7 @@ const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e
 
                 {/* AM/PM Selector */}
                 <select
-                    name="broadcastPeriod" // temporary name, we handle change manually
+                    name="broadcastPeriod"
                     value={currentPeriod}
                     onChange={handlePeriodChange}
                     required
@@ -716,7 +732,7 @@ const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e
                 </select>
 
             </div>
-            <p className="text-xs text-gray-500 mt-1">Select the desired hour, minute, and AM/PM in EAT.</p>
+            <p className="text-xs text-gray-500 mt-1">Select the desired hour, minute (5-min intervals), and AM/PM in EAT.</p>
         </div>
     );
 };
