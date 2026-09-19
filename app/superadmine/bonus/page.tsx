@@ -660,7 +660,7 @@ const TimeInputGroup: React.FC<{ localTime: string; minute: string; onChange: (e
     // Generate options for 12-hour format (01 to 12)
     const hours12 = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
     // Generate options for minutes (00, 15, 30, 45)
-    const minutes = ['00', '15', '30', '45'];
+    const minutes = ['00','05','10','15','20','25', '30','35','40' ,'45','50','55'];
     const periods: ('AM' | 'PM')[] = ['AM', 'PM'];
     
     // Extract the currently selected 12-hour hour (HH) and period (AM/PM)
